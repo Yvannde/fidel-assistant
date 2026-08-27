@@ -1,13 +1,19 @@
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+from alembic import context
 from app.core.config import settings
 from app.db.base import Base
 
-# Importer les modèles ici quand ils existent pour autogenerate
-# from app.models import user, patient, ...
+# Import modèles pour autogenerate Alembic
+from app.models import (  # noqa: F401
+    CguAcceptance,
+    ConsentementSante,
+    OtpCode,
+    Session,
+    User,
+)
 
 config = context.config
 if config.config_file_name is not None:
@@ -15,9 +21,18 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-# Remplacer l'URL placeholder par celle des Settings (sync driver pour Alembic)
-_sync_url = settings.database_url.replace("postgresql+asyncpg://", "postgresql://")
-config.set_main_option("sqlalchemy.url", _sync_url)
+
+def _to_sync_url(url: str) -> str:
+    """Convertit l'URL asyncpg applicative en URL psycopg pour Alembic."""
+    sync = url.replace("postgresql+asyncpg://", "postgresql+psycopg://")
+    if sync.startswith("postgresql://"):
+        sync = sync.replace("postgresql://", "postgresql+psycopg://", 1)
+    # asyncpg utilise ssl= ; psycopg3 utilise sslmode=
+    sync = sync.replace("ssl=require", "sslmode=require")
+    return sync
+
+
+config.set_main_option("sqlalchemy.url", _to_sync_url(settings.database_url))
 
 
 def run_migrations_offline() -> None:
