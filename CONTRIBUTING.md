@@ -14,6 +14,7 @@ Merci de contribuer à **Fidel Assistant**. Ce projet aide des patients (souvent
 2. Branche descriptive : `feat/auth-otp`, `fix/prise-offline-sync`, `docs/...`
 3. Commits clairs, en français ou anglais, style présent : `add OTP verification endpoint`
 4. Ouvre une Pull Request vers `main` avec le template
+5. Après merge, la branche source est **supprimée automatiquement** (réglage GitHub du dépôt) — c’est voulu : l’historique reste dans `main` et dans la PR
 
 ## Standards techniques
 
