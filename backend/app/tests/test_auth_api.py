@@ -121,7 +121,7 @@ async def test_full_email_auth_flow(
     tokens = await _login(client, auth_prefix)
     assert "access_token" in tokens
     assert "refresh_token" in tokens
-    assert tokens["onboarding_step"] == "choix_role"
+    assert tokens["onboarding_step"] == "infos"
 
     headers = {"Authorization": f"Bearer {tokens['access_token']}"}
     r = await client.get(f"{auth_prefix}/me", headers=headers)

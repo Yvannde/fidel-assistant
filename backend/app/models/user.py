@@ -1,12 +1,18 @@
-from datetime import datetime
+from __future__ import annotations
+
+from datetime import date, datetime
+from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func, text
+from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, Text, func, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+
+if TYPE_CHECKING:
+    from app.models.patient import Patient, PatientAidant
 
 
 class User(Base):
@@ -23,7 +29,11 @@ class User(Base):
     email_verified_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
-    role: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    nom_complet: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    date_naissance: Mapped[date | None] = mapped_column(Date, nullable=True)
+    sexe: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    localisation: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    role: Mapped[str | None] = mapped_column(String(64), nullable=True)  # déprécié
     onboarding_step: Mapped[str | None] = mapped_column(String(64), nullable=True)
     langue: Mapped[str | None] = mapped_column(String(16), nullable=True)
     fuseau_horaire: Mapped[str | None] = mapped_column(String(64), nullable=True)
@@ -36,10 +46,15 @@ class User(Base):
     )
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    otp_codes: Mapped[list["OtpCode"]] = relationship(back_populates="user")
-    sessions: Mapped[list["Session"]] = relationship(back_populates="user")
-    cgu_acceptances: Mapped[list["CguAcceptance"]] = relationship(back_populates="user")
-    consentement_sante: Mapped["ConsentementSante | None"] = relationship(back_populates="user")
+    otp_codes: Mapped[list[OtpCode]] = relationship(back_populates="user")
+    sessions: Mapped[list[Session]] = relationship(back_populates="user")
+    cgu_acceptances: Mapped[list[CguAcceptance]] = relationship(back_populates="user")
+    consentement_sante: Mapped[ConsentementSante | None] = relationship(back_populates="user")
+    patient: Mapped[Patient | None] = relationship(back_populates="user", uselist=False)
+    aidant_relations: Mapped[list[PatientAidant]] = relationship(
+        back_populates="aidant",
+        foreign_keys="PatientAidant.aidant_id",
+    )
 
 
 class OtpCode(Base):
@@ -50,7 +65,7 @@ class OtpCode(Base):
         PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
     code_hash: Mapped[str] = mapped_column(String(255), nullable=False)
-    type: Mapped[str] = mapped_column(String(32), nullable=False)  # inscription | reset_password
+    type: Mapped[str] = mapped_column(String(32), nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     tentatives: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")

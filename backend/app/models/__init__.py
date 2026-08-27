@@ -1,5 +1,12 @@
 """Modèles SQLAlchemy — voir skills/data-model/SKILL.md."""
 
+from app.models.patient import (
+    Maladie,
+    Patient,
+    PatientAidant,
+    PatientTraitement,
+    SyncCode,
+)
 from app.models.user import (
     CguAcceptance,
     ConsentementSante,
@@ -14,4 +21,9 @@ __all__ = [
     "CguAcceptance",
     "ConsentementSante",
     "Session",
+    "Patient",
+    "Maladie",
+    "PatientTraitement",
+    "PatientAidant",
+    "SyncCode",
 ]

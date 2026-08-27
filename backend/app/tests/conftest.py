@@ -18,7 +18,14 @@ from sqlalchemy.pool import StaticPool
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
-from app.models import User  # noqa: F401 — enregistre les tables
+from app.models import (  # noqa: F401 — register metadata
+    Maladie,
+    Patient,
+    PatientAidant,
+    PatientTraitement,
+    SyncCode,
+    User,
+)
 from app.models.user import CguAcceptance, ConsentementSante, OtpCode, Session  # noqa: F401
 
 
@@ -53,10 +60,14 @@ async def db_session() -> AsyncIterator[AsyncSession]:
         poolclass=StaticPool,
     )
 
-    # SQLite ne comprend pas le server_default Postgres `'[]'::jsonb`
-    auth_col = User.__table__.c.auth_providers
-    previous_default = auth_col.server_default
-    auth_col.server_default = None
+    # SQLite ne comprend pas les server_default Postgres jsonb / bool
+    cols_to_clear = [
+        User.__table__.c.auth_providers,
+        PatientAidant.__table__.c.niveau_permission,
+    ]
+    previous_defaults = {c: c.server_default for c in cols_to_clear}
+    for col in cols_to_clear:
+        col.server_default = None
 
     @event.listens_for(engine.sync_engine, "connect")
     def _fk_on(dbapi_conn: Any, _connection_record: Any) -> None:
@@ -76,7 +87,8 @@ async def db_session() -> AsyncIterator[AsyncSession]:
         async with session_factory() as session:
             yield session
     finally:
-        auth_col.server_default = previous_default
+        for col, default in previous_defaults.items():
+            col.server_default = default
         await engine.dispose()
 
 
@@ -97,6 +109,13 @@ def auth_prefix() -> str:
     from app.core.config import settings
 
     return f"{settings.api_v1_prefix}/auth"
+
+
+@pytest.fixture
+def onboarding_prefix() -> str:
+    from app.core.config import settings
+
+    return f"{settings.api_v1_prefix}/onboarding"
 
 
 @pytest.fixture

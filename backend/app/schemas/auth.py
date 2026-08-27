@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
@@ -51,8 +51,9 @@ class LoginIn(BaseModel):
 class TokenPairOut(BaseModel):
     access_token: str
     refresh_token: str
-    role: str | None = None
     onboarding_step: str | None = None
+    has_patient_profile: bool = False
+    is_aidant: bool = False
 
 
 class GoogleAuthIn(BaseModel):
@@ -94,8 +95,13 @@ class MeOut(BaseModel):
     id: UUID
     email: EmailStr
     phone: str | None
-    role: str | None
+    nom_complet: str | None = None
+    date_naissance: date | None = None
+    sexe: str | None = None
+    localisation: str | None = None
     onboarding_step: str | None
+    has_patient_profile: bool = False
+    is_aidant: bool = False
     langue: str | None
     fuseau_horaire: str | None
     auth_providers: list[str]

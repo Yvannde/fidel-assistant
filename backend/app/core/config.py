@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     temp_token_expire_minutes: int = 15
     password_min_length: int = 8
     cgu_current_version: str = "v1.0"
+    sync_code_expire_minutes: int = 10
 
     google_client_id_android: str = ""
     google_client_id_ios: str = ""

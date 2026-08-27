@@ -50,6 +50,8 @@ async def get_user_by_id(db: AsyncSession, user_id: UUID) -> User | None:
         .options(
             selectinload(User.cgu_acceptances),
             selectinload(User.consentement_sante),
+            selectinload(User.patient),
+            selectinload(User.aidant_relations),
         )
     )
     return result.scalar_one_or_none()
@@ -155,7 +157,7 @@ async def accept_consentement_sante(db: AsyncSession, *, user: User) -> str:
     if existing.scalar_one_or_none() is None:
         db.add(ConsentementSante(user_id=user.id))
         if user.onboarding_step is None:
-            user.onboarding_step = "choix_role"
+            user.onboarding_step = "infos"
         await db.commit()
     return "Consentement santé enregistré."
 
@@ -202,11 +204,15 @@ async def login(
 
     refresh = await _create_session(db, user, device_info=device_info)
     await db.commit()
+    user = await get_user_by_id(db, user.id)
+    assert user is not None
+    from app.services.onboarding_service import capabilities
+
     return {
         "access_token": create_access_token(str(user.id)),
         "refresh_token": refresh,
-        "role": user.role,
         "onboarding_step": user.onboarding_step,
+        **capabilities(user),
     }
 
 
@@ -243,7 +249,7 @@ async def google_auth(
             email_verified_at=datetime.now(UTC),
             langue=langue,
             fuseau_horaire=fuseau_horaire,
-            onboarding_step="choix_role",
+            onboarding_step="infos",
         )
         db.add(user)
         await db.flush()
@@ -268,14 +274,16 @@ async def google_auth(
     refresh = await _create_session(db, user, device_info=device_info)
     await db.commit()
 
+    from app.services.onboarding_service import capabilities
+
     return {
         "access_token": create_access_token(str(user.id)),
         "refresh_token": refresh,
-        "role": user.role,
         "onboarding_step": user.onboarding_step,
         "is_new_user": is_new,
         "needs_cgu": needs_cgu,
         "needs_consentement_sante": needs_consent,
+        **capabilities(user),
     }
 
 
@@ -341,6 +349,8 @@ async def reset_password(db: AsyncSession, *, email: str, code: str, nouveau_pas
 
 
 def build_me(user: User) -> dict:
+    from app.services.onboarding_service import capabilities
+
     needs_cgu = not any(
         c.version == settings.cgu_current_version for c in (user.cgu_acceptances or [])
     )
@@ -348,7 +358,10 @@ def build_me(user: User) -> dict:
         "id": user.id,
         "email": user.email,
         "phone": user.phone,
-        "role": user.role,
+        "nom_complet": user.nom_complet,
+        "date_naissance": user.date_naissance,
+        "sexe": user.sexe,
+        "localisation": user.localisation,
         "onboarding_step": user.onboarding_step,
         "langue": user.langue,
         "fuseau_horaire": user.fuseau_horaire,
@@ -358,6 +371,7 @@ def build_me(user: User) -> dict:
         "needs_cgu": needs_cgu,
         "needs_consentement_sante": user.consentement_sante is None,
         "pending_email": user.pending_email,
+        **capabilities(user),
     }
 
 
