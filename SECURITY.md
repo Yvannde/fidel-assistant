@@ -11,8 +11,7 @@
 
 **Ne créez pas d’issue GitHub publique** pour une faille de sécurité.
 
-1. Utilisez [GitHub Security Advisories](https://docs.github.com/en/code-security/security-advisories) sur ce dépôt (onglet *Security* → *Report a vulnerability*), **ou**
-2. Contactez les mainteneurs en privé (email à définir dans le README une fois le remote créé).
+1. Utilisez [GitHub Security Advisories](https://docs.github.com/en/code-security/security-advisories) sur ce dépôt (onglet *Security* → *Report a vulnerability*).
 
 Inclure si possible :
 

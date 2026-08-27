@@ -1,14 +1,48 @@
 # Backend FastAPI — Fidel Assistant
 
-Voir le [README racine](../README.md) pour le démarrage rapide.
+Démarrage rapide : [README racine](../README.md).
 
-## Base de données (Neon)
+## Ce qui est en place
 
-- Projet Neon : `fidel-assistant` (`holy-morning-61098712`)
-- Copier `.env.example` → `.env` et renseigner `DATABASE_URL` (connection **poolée**)
-- Migrations : `alembic upgrade head`
+- Health : `GET /api/v1/health`
+- Auth complète sous `/api/v1/auth/*` (contrat : [`skills/api-contract`](../skills/api-contract/SKILL.md))
+- Emails OTP via Resend — [docs/email-resend.md](../docs/email-resend.md)
+- Google Sign-In (IdP) — [docs/google-auth-setup.md](../docs/google-auth-setup.md)
+- Batterie de tests — [docs/auth-test-battery.md](../docs/auth-test-battery.md)
 
-Tables auth actuelles : `users`, `otp_codes`, `cgu_acceptances`, `consentements_sante`, `sessions`.
+## Configuration
+
+```bash
+cp .env.example .env
+```
+
+Variables minimales :
+
+| Variable | Rôle |
+|---|---|
+| `DATABASE_URL` | Neon (connection **poolée**, `ssl=require`) |
+| `JWT_SECRET` | Secret long et aléatoire |
+| `RESEND_API_KEY` | Optionnel en local (sinon OTP loggé) |
+| `EMAIL_FROM` | Ex. `Fidel Assistant <noreply@educampro.edu.cm>` |
+| `GOOGLE_CLIENT_ID_*` | Android / iOS / Web |
+
+## Base de données
+
+```bash
+alembic upgrade head
+```
+
+Tables auth : `users`, `otp_codes`, `cgu_acceptances`, `consentements_sante`, `sessions`.
+
+## Lancer / tester
+
+```bash
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+pytest -q
+ruff check app
+```
+
+Docs interactives : http://127.0.0.1:8000/docs
 
 ## Structure
 
@@ -27,7 +61,3 @@ app/
 └── tests/
 alembic/
 ```
-
-## Docs interactives
-
-Une fois l’API lancée : `/docs` (Swagger) et `/redoc`.

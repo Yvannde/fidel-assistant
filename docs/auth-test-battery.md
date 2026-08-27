@@ -1,7 +1,10 @@
 # Batterie de tests auth
 
-Branche : `test/auth-battery`  
-Commande : `cd backend && .venv/Scripts/pytest -q`
+```bash
+cd backend
+# venv activé
+pytest -q
+```
 
 ## Couverture
 
@@ -13,9 +16,9 @@ Commande : `cd backend && .venv/Scripts/pytest -q`
 
 Les tests API tournent sur **SQLite en mémoire** (OTP mocké, pas d’appel Resend/Neon).
 
-## Clôture étape Auth V1 (backend)
+## Auth V1 backend — clôturée
 
-Validé côté API FastAPI :
+Validé sur `main` :
 
 - Inscription email → OTP → mot de passe → CGU → consentement santé
 - Login / refresh / logout / sessions
@@ -24,4 +27,4 @@ Validé côté API FastAPI :
 - Soft delete compte
 - Google Sign-In (IdP mocké)
 
-Prochaine étape produit : onboarding rôle (patient / aidant) + app Flutter auth.
+**Suite** : onboarding rôles (patient / aidant) + branchement Flutter auth.

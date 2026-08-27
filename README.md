@@ -5,6 +5,18 @@ Plateforme mobile **gratuite et open source** d’accompagnement des patients da
 > **Ce n’est jamais un outil de diagnostic ni un substitut au médecin.**  
 > C’est un **compagnon d’accompagnement**.
 
+## État du projet (V1)
+
+| Étape | Statut |
+|---|---|
+| Auth API (email OTP, Google IdP, sessions, Resend) | **Fait** — sur `main`, tests verts |
+| Onboarding rôles (patient / aidant) | À faire |
+| App Flutter auth + sync | Scaffold — à brancher |
+| Rappels médicaments offline-first | À faire |
+| Constantes / réseau aidant / SOS / notifications | À faire |
+
+Pour contribuer : commence par [CONTRIBUTING.md](CONTRIBUTING.md). Pour comprendre le produit et les contrats : [`docs/`](docs/) et [`skills/`](skills/).
+
 ## Règle produit absolue
 
 ```
@@ -21,6 +33,7 @@ Le système ne contacte jamais un tiers (aidant, médecin, urgence) automatiquem
 | Base de données | Neon (Postgres serverless) + Alembic |
 | Mobile | Flutter (Android / iOS), offline-first |
 | Auth | JWT + OTP maison + Google OAuth (IdP) |
+| Emails | Resend (`@educampro.edu.cm`) |
 
 ## Structure du dépôt
 
@@ -28,8 +41,8 @@ Le système ne contacte jamais un tiers (aidant, médecin, urgence) automatiquem
 .
 ├── backend/          # API FastAPI
 ├── mobile/           # Application Flutter
-├── skills/           # Specs & contrats pour contributeurs / agents IA
-├── docs/             # Documentation projet
+├── skills/           # Specs & contrats (lire avant de coder)
+├── docs/             # Guides humains (auth Google, Resend, tests…)
 ├── .cursor/          # Architecture Cursor (@architecture)
 └── .github/          # CI, templates issues & PR
 ```
@@ -39,6 +52,7 @@ Le système ne contacte jamais un tiers (aidant, médecin, urgence) automatiquem
 - Python **3.12+**
 - Flutter **3.22+** (stable)
 - Compte [Neon](https://neon.tech) (Postgres) pour le backend
+- Compte [Resend](https://resend.com) pour envoyer les OTP (optionnel en local : OTP loggé si pas de clé)
 - Git
 
 ## Démarrage rapide
@@ -57,33 +71,35 @@ source .venv/bin/activate
 
 pip install -e ".[dev]"
 cp .env.example .env
-# Éditer .env : DATABASE_URL, JWT_SECRET, etc.
+# Éditer .env : DATABASE_URL, JWT_SECRET, RESEND_API_KEY (optionnel), Google Client IDs
 
 alembic upgrade head
-uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-API docs : http://localhost:8000/docs
+- API docs : http://127.0.0.1:8000/docs  
+- Tests : `pytest -q` (voir [docs/auth-test-battery.md](docs/auth-test-battery.md))
 
 ### Mobile
 
 ```bash
 cd mobile
 flutter pub get
-flutter run
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000
 ```
 
-Configurer l’URL de l’API dans `mobile/lib/core/config/` (voir `.env.example` côté backend).
+L’URL API se configure via `API_BASE_URL` (`mobile/lib/core/config/app_config.dart`). Sur émulateur Android, `10.0.2.2` pointe vers le `localhost` de la machine hôte.
 
 ## Documentation
 
 | Document | Contenu |
 |---|---|
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Comment contribuer |
+| [docs/README.md](docs/README.md) | Index des guides |
+| [skills/README.md](skills/README.md) | Index des specs / contrats |
 | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Code de conduite |
 | [SECURITY.md](SECURITY.md) | Signalement de vulnérabilités |
-| [skills/](skills/) | Specs produit & techniques (contrats) |
-| [.cursor/architecture.md](.cursor/architecture.md) | Point d’entrée architecture |
+| [.cursor/architecture.md](.cursor/architecture.md) | Point d’entrée architecture (agents / Cursor) |
 
 ## Rôles (V1)
 
