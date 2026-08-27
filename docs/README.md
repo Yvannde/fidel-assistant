@@ -6,6 +6,7 @@
 | Specs & contrats | [`skills/`](../skills/) |
 | Backend | [`backend/README.md`](../backend/README.md) |
 | Google Sign-In setup | [`google-auth-setup.md`](google-auth-setup.md) |
+| Emails Resend | [`email-resend.md`](email-resend.md) |
 | Contribution | [`CONTRIBUTING.md`](../CONTRIBUTING.md) |
 | Sécurité | [`SECURITY.md`](../SECURITY.md) |
 

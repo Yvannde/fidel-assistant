@@ -36,11 +36,14 @@ class Settings(BaseSettings):
 
     cors_origins: str = "http://localhost:3000,https://educampro.edu.cm"
 
+    # Resend (OTP / emails transactionnels) — prioritaire sur SMTP
+    resend_api_key: str = ""
+    email_from: str = "Fidel Assistant <noreply@educampro.edu.cm>"
+
     smtp_host: str = ""
     smtp_port: int = 587
     smtp_user: str = ""
     smtp_password: str = ""
-    email_from: str = "noreply@fidel.local"
 
     @property
     def cors_origins_list(self) -> list[str]:
