@@ -23,11 +23,11 @@ lib/
 │   └── theme/                   # thème, typographie, tokens de design
 ├── features/
 │   ├── auth/                    # inscription, OTP, login, Google Sign-In, mot de passe oublié
-│   ├── onboarding/               # choix de rôle, infos patient, sync aidant, permissions
+│   ├── onboarding/               # infos communes, besoin suivi?, branche patient, permissions
 │   ├── medicaments/               # ajout traitement, rappels, confirmation de prise
 │   ├── constantes/                 # saisie et suivi poids/tension/etc.
 │   ├── reseau/                     # aidants, contacts d'urgence, check-in, SOS
-│   └── home/
+│   └── home/                       # accueil + activer suivi / accompagner (sync)
 ├── shared/
 │   ├── widgets/                    # composants réutilisables
 │   └── l10n/                        # fichiers de traduction (intl)
@@ -62,7 +62,7 @@ Chaque feature suit le même découpage interne : `presentation/` (écrans, widg
 
 C'est la partie la plus critique techniquement :
 - `flutter_local_notifications` pour la planification, avec le mode **alarme exacte** (`AndroidScheduleMode.exactAllowWhileIdle` ou équivalent) — les rappels de médicaments ne doivent pas être soumis au Doze mode standard d'Android
-- Demander explicitement l'exemption d'**optimisation de batterie** pendant l'onboarding (voir `auth-onboarding/SKILL.md`, étape 4) — sans ça, certains constructeurs Android (Xiaomi, Huawei, Samsung en mode agressif) tuent les alarmes en arrière-plan
+- Demander explicitement l'exemption d'**optimisation de batterie** pendant la branche « suivi pour soi » de l'onboarding (ou à l'activation patient depuis l'accueil) — voir `auth-onboarding/SKILL.md`. Sans ça, certains constructeurs Android tuent les alarmes en arrière-plan.
 - Les notifications de rappel doivent inclure des **actions rapides** ("J'ai pris" / "Pas encore") directement sur la notification (Android `NotificationCompat.Action`, iOS `UNNotificationAction`) pour permettre la confirmation sans ouvrir l'app
 - Support de la **voix personnalisée** : lecture d'un fichier audio (enregistré par un proche) au moment du rappel plutôt qu'un simple son système, via un lecteur audio léger déclenché par la notification
 - Toute planification de rappel doit être **reprogrammée localement** après un redémarrage du téléphone (écouter l'event `BOOT_COMPLETED` sur Android) — sinon les rappels disparaissent après un reboot
@@ -71,9 +71,10 @@ C'est la partie la plus critique techniquement :
 
 Suivre exactement le flux décrit dans `auth-onboarding/SKILL.md` — écran par écran, y compris :
 - bouton **Continuer avec Google** (`google_sign_in`) → envoi de l'`id_token` à `POST /api/v1/auth/google` → stockage des JWT maison dans `flutter_secure_storage`
-- reprise automatique de l'onboarding à l'étape sauvegardée côté serveur (ne pas recalculer cette logique côté client, se fier à ce que retourne l'API au login)
-- écran explicatif avant chaque demande de permission système
-- synchronisation patient-aidant par code ou QR code (utiliser `mobile_scanner` ou équivalent pour le scan QR)
+- **pas** d’écran « Je suis patient / aidant » — infos communes puis « Tu veux un suivi pour toi ? »
+- reprise automatique via `onboarding_step` serveur
+- depuis la **home** : activer mon suivi (`/patients/me/activate`) et/ou accompagner quelqu’un (`/aidants/me/sync` + scan QR)
+- écran explicatif avant chaque demande de permission système (branche suivi perso uniquement à l’onboarding initial)
 
 En production, `AppConfig.apiBaseUrl` pointe vers `https://educampro.edu.cm`.
 

@@ -8,6 +8,7 @@
 | Google Sign-In setup | [`google-auth-setup.md`](google-auth-setup.md) |
 | Emails Resend | [`email-resend.md`](email-resend.md) |
 | Batterie tests auth | [`auth-test-battery.md`](auth-test-battery.md) |
+| Scénario onboarding | [`onboarding-scenario.md`](onboarding-scenario.md) |
 | Contribution | [`CONTRIBUTING.md`](../CONTRIBUTING.md) |
 | Sécurité | [`SECURITY.md`](../SECURITY.md) |
 
@@ -16,8 +17,8 @@
 | # | Étape | Statut |
 |---|---|---|
 | 1a | Auth API (OTP, Google IdP, sessions, Resend) | **Fait** |
-| 1b | Onboarding rôles patient / aidant | À faire |
-| 1c | Auth Flutter branchée sur l’API | À faire |
+| 1b | Onboarding capacités (infos → suivi? → home ; sync aidant / activer patient depuis home) | À faire (contrats à jour) |
+| 1c | Auth + onboarding Flutter | À faire |
 | 2 | Rappels médicaments offline-first | À faire |
 | 3 | Constantes de santé | À faire |
 | 4 | Réseau aidant + check-in + SOS | À faire |

@@ -23,18 +23,18 @@ OBSERVER → ENCOURAGER / INFORMER → PROPOSER → ATTENDRE LE CONSENTEMENT EXP
 
 > Si tu (agent IA) codes une fonctionnalité liée aux notifications, aux alertes de santé, ou au partage de données entre rôles, et que tu ne vois pas clairement l'étape de consentement dans la spec qu'on t'a donnée, arrête-toi et demande — ne comble pas le vide toi-même.
 
-## Rôles utilisateurs
+## Capacités utilisateurs (V1) — pas de rôle exclusif
 
-**V1 (à construire maintenant)**
-- `patient` — utilise l'app pour son propre suivi
-- `aidant` (garde-malade) — accompagne un ou plusieurs patients, synchronisé avec eux
+Un **même compte** peut cumuler :
 
-**V2 (hors scope actuel, mais le modèle de données doit rester extensible pour les accueillir sans tout refondre)**
-- `agent_sante_communautaire`
-- `medecin`
-- `pharmacien`
+- **Profil patient** — suivi personnel (médicaments, constantes, check-in) — *optionnel*, activé à l’onboarding ou depuis l’accueil
+- **Aidant** — accompagne un ou plusieurs patients via sync code/QR — *optionnel*, depuis l’accueil
 
-Relation patient ↔ aidant : **many-to-many**. Un patient peut avoir plusieurs aidants, un aidant peut suivre plusieurs patients. Chaque relation a son propre niveau de permission (voir skill `auth-onboarding`).
+Ce ne sont **pas** deux types de comptes exclusifs. Pas d’écran « Je suis patient ou aidant » qui verrouille le parcours.
+
+**V2** (hors scope actuel, modèle extensible) : `agent_sante_communautaire`, `medecin`, `pharmacien` — comme capacités / profils additionnels, pas comme remplacement exclusif.
+
+Relation patient ↔ aidant : **many-to-many** (`PatientAidant`), permissions par relation. Détail : `auth-onboarding/SKILL.md`.
 
 ## Hébergement (production)
 
@@ -69,7 +69,7 @@ Le backend sera déployé sur ce domaine le moment venu. En développement local
 
 ## Autres fichiers skills du projet
 
-- `auth-onboarding/SKILL.md` — flux complet d'inscription, vérification OTP, onboarding patient et aidant, synchronisation patient-aidant
+- `auth-onboarding/SKILL.md` — inscription, OTP, Google, JWT, onboarding par capacités (suivi perso + aidant cumulables)
 - `backend-fastapi/SKILL.md` — conventions API, structure de dossiers, gestion des erreurs
 - `database-neon/SKILL.md` — conventions de nommage, de migration, usage du MCP Neon
 - `data-model/SKILL.md` — modèle de données formel complet (toutes les entités, champs, relations) — contrat à respecter à la lettre

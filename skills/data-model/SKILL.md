@@ -17,7 +17,7 @@ Les types indiqués sont **conceptuels** (ex: `UUID`, `string`, `enum`, `timesta
 
 ```mermaid
 erDiagram
-    USER ||--o| PATIENT : "si role=patient"
+    USER ||--o| PATIENT : "profil suivi perso optionnel"
     USER ||--o{ SESSION : possede
     USER ||--o{ OTP_CODE : recoit
     USER ||--o{ CGU_ACCEPTANCE : accepte
@@ -33,7 +33,7 @@ erDiagram
     PATIENT ||--o{ VOIX_RAPPEL : configure
     PATIENT ||--o{ PATIENT_AIDANT : est_suivi_par
 
-    USER ||--o{ PATIENT_AIDANT : accompagne
+    USER ||--o{ PATIENT_AIDANT : accompagne_en_tant_qu_aidant
 
     MALADIE ||--o{ PATIENT_TRAITEMENT : concerne
     PATIENT_TRAITEMENT ||--o{ MEDICAMENT : comprend
@@ -43,27 +43,35 @@ erDiagram
 
 ---
 
-## 1. `User` — compte utilisateur (tous rôles)
+## 1. `User` — compte (identité commune)
 
-Voir `auth-onboarding/SKILL.md` pour le flux complet.
+Voir `auth-onboarding/SKILL.md`. **Pas de rôle exclusif** : un user peut cumuler profil patient + liens aidant.
 
 | Champ | Type | Contraintes / Notes |
 |---|---|---|
 | id | UUID | clé primaire |
 | email | string | unique, obligatoire |
-| phone | string | nullable, renseigné pendant l'onboarding, pas à l'inscription |
-| password_hash | string | nullable si compte créé uniquement via Google ; jamais le mot de passe en clair |
-| google_sub | string | nullable, **unique** — identifiant stable Google (`sub` du id_token) ; obligatoire si auth Google |
-| auth_providers | json / string[] | ex: `["email"]`, `["google"]`, `["email","google"]` — providers liés au compte |
-| email_verified_at | timestamp | nullable tant que l'OTP n'est pas validé ; rempli immédiatement pour Google (email vérifié côté Google) |
-| role | enum | `patient`, `aidant` (V1) — extensible à `medecin`, `agent_sante_communautaire`, `pharmacien` (V2) |
-| onboarding_step | enum/string | étape courante de l'onboarding, permet la reprise (cf. `auth-onboarding`) |
-| langue | enum | choisie dès le premier écran, avant l'email |
-| fuseau_horaire | string | capturé automatiquement via l'appareil à l'inscription |
-| pending_email | string | nullable — nouvel email en attente de validation OTP (`change_email`) |
+| phone | string | nullable, renseigné à l'onboarding infos (optionnel) ou plus tard |
+| password_hash | string | nullable si compte Google-only ; jamais en clair |
+| google_sub | string | nullable, **unique** — `sub` Google |
+| auth_providers | json / string[] | ex: `["email"]`, `["google"]`, `["email","google"]` |
+| email_verified_at | timestamp | nullable jusqu'à OTP ; immédiat si Google |
+| nom_complet | string | nullable jusqu'à l'étape onboarding `infos` |
+| date_naissance | date | nullable jusqu'à `infos` |
+| sexe | enum | nullable jusqu'à `infos` |
+| localisation | string | nullable — ville/quartier, renseigné à `infos` |
+| role | enum | **déprécié / nullable** — ne plus utiliser pour le routage ; capacités dérivées à la place. Conservé pour migration douce uniquement. V2 éventuel : `medecin`, etc. comme capacités séparées |
+| onboarding_step | enum/string | `infos` → `besoin_suivi` → (`patient_traitement` → `patient_permissions`) → `termine` |
+| langue | enum | dès le premier écran |
+| fuseau_horaire | string | capturé à l'inscription |
+| pending_email | string | nullable — email en attente OTP `change_email` |
 | created_at | timestamp | |
 | updated_at | timestamp | |
-| deleted_at | timestamp | nullable, soft delete (droit à l'oubli) |
+| deleted_at | timestamp | nullable, soft delete |
+
+**Capacités dérivées (API, non colonnes obligatoires)** :
+- `has_patient_profile` = existe une ligne `Patient` pour ce user
+- `is_aidant` = au moins une `PatientAidant` active où `aidant_id` = ce user
 
 ---
 
@@ -92,7 +100,7 @@ Voir `auth-onboarding/SKILL.md` pour le flux complet.
 | accepted_at | timestamp | |
 | ip | string | nullable |
 
-**Obligatoire pour tous les rôles sans exception** (patient, aidant, et rôles V2).
+**Obligatoire pour tout compte** (avec ou sans profil patient / liens aidant).
 
 ---
 
@@ -123,16 +131,23 @@ Un utilisateur peut avoir plusieurs sessions actives (multi-appareils).
 
 ---
 
-## 6. `Patient` — extension du `User` quand `role = patient`
+## 6. `Patient` — profil de suivi personnel (optionnel)
+
+Créé quand l’utilisateur active un suivi **pour lui-même** (onboarding branche Oui, ou plus tard depuis l’accueil).  
+Un user **sans** ligne `Patient` peut quand même être aidant.
 
 | Champ | Type | Contraintes / Notes |
 |---|---|---|
 | user_id | UUID (FK → User, 1-1) | clé primaire = clé étrangère |
-| localisation | string | ville/quartier, utile pour Volet 4 |
-| nom_complet | string | |
-| date_naissance | date | |
-| sexe | enum | |
+| localisation | string | peut reprendre / affiner `User.localisation` ; utile Volet 4 |
+| nom_complet | string | souvent aligné sur `User.nom_complet` à la création |
+| date_naissance | date | idem |
+| sexe | enum | idem |
 | photo_url | string | nullable |
+| notifications_accordees | boolean | nullable / défaut false — renseigné à l’étape permissions |
+| batterie_exemptee | boolean | nullable / défaut false — Android |
+| created_at | timestamp | |
+| updated_at | timestamp | |
 
 ---
 
@@ -229,7 +244,7 @@ Une ligne `Prise` est générée à chaque échéance prévue par `MedicamentHor
 |---|---|---|
 | id | UUID | |
 | patient_id | UUID (FK → Patient) | |
-| aidant_id | UUID (FK → User, role=aidant) | |
+| aidant_id | UUID (FK → User) | le compte qui accompagne — pas besoin d’un « rôle » exclusif |
 | statut | enum | `actif`, `revoque` |
 | niveau_permission | json | ex: `{"observance": true, "constantes": false}` |
 | created_at | timestamp | |
@@ -323,7 +338,8 @@ Aucune fonctionnalité de notification/alerte ne doit être considérée termin�
 
 ## Règles transverses (à respecter par tout agent, quelle que soit l'entité codée)
 
-1. Toute entité liée à un `User` de rôle `patient` doit passer par `Patient`, pas directement par `User` — garde la séparation claire entre compte (auth) et profil patient (métier).
+1. Toute donnée métier de **suivi personnel** (traitements, prises, constantes, SOS, etc.) passe par `Patient`, pas directement par `User` — séparation compte vs profil de suivi. Un `User` sans `Patient` peut quand même être aidant via `PatientAidant`.
 2. Aucune table de donnée de santé ou de notification ne doit être créée sans qu'un mécanisme de consentement (`PreferenceConsentement`) ou de journalisation (`NotificationLog`) soit prévu si elle déclenche une alerte vers un tiers.
 3. Toute suppression de donnée patient doit respecter le soft delete par défaut (`deleted_at`), sauf demande explicite de suppression définitive.
 4. Si un agent a besoin d'un champ ou d'une entité non listés ici, il modifie ce fichier en premier, puis code — jamais l'inverse.
+5. Ne pas réintroduire un choix de rôle exclusif `patient|aidant` dans l’API ou l’UI — capacités cumulables uniquement (cf. `auth-onboarding`).

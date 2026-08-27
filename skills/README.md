@@ -16,7 +16,7 @@ Tout contributeur (humain ou agent IA) les lit **avant** de coder le module conc
 | Skill | Quand le lire |
 |---|---|
 | [project-overview](project-overview/SKILL.md) | Mission, stack, règle de consentement |
-| [auth-onboarding](auth-onboarding/SKILL.md) | Inscription, OTP, Google, JWT, onboarding patient/aidant |
+| [auth-onboarding](auth-onboarding/SKILL.md) | Inscription, OTP, Google, JWT, onboarding par capacités (pas de rôle exclusif) |
 | [backend-fastapi](backend-fastapi/SKILL.md) | Structure API, erreurs, sécurité |
 | [database-neon](database-neon/SKILL.md) | Migrations, conventions Neon |
 | [data-model](data-model/SKILL.md) | **Contrat** — entités et champs |
