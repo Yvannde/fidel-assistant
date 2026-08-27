@@ -17,6 +17,7 @@ dependencies = [
   "pydantic-settings>=2.6.0",
   "sqlalchemy[asyncio]>=2.0.36",
   "asyncpg>=0.30.0",
+  "psycopg[binary]>=3.2.0",
   "alembic>=1.14.0",
   "python-jose[cryptography]>=3.3.0",
   "passlib[argon2]>=1.7.4",
@@ -43,6 +44,7 @@ testpaths = ["app/tests"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+extend-exclude = ["alembic/versions"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
