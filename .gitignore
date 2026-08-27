@@ -1,0 +1,81 @@
+# --- Secrets & env ---
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+credentials.json
+secrets/
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# --- IDE / editors ---
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+*.swp
+*.swo
+*~
+
+# --- Python / backend ---
+backend/.venv/
+backend/venv/
+backend/**/__pycache__/
+backend/**/*.py[cod]
+backend/**/*.egg-info/
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.ruff_cache/
+backend/htmlcov/
+backend/.coverage
+backend/coverage.xml
+backend/dist/
+backend/build/
+backend/*.egg
+
+# --- Flutter / mobile ---
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/.pub-cache/
+mobile/.pub/
+mobile/build/
+mobile/**/Generated.xcconfig
+mobile/**/flutter_export_environment.sh
+mobile/**/*.iml
+mobile/**/local.properties
+mobile/**/.gradle/
+mobile/**/captures/
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/android/.gradle/
+mobile/android/app/debug/
+mobile/android/app/profile/
+mobile/android/app/release/
+mobile/android/local.properties
+mobile/*.lock
+!mobile/pubspec.lock
+
+# --- Archives / temp ---
+*.zip
+extracted_*/
+*.log
+tmp/
+temp/
+
+# --- Cursor local (keep rules & architecture) ---
+.cursor/*
+!.cursor/architecture.md
+!.cursor/rules/
+!.cursor/rules/**
+
+# --- Misc ---
+*.sqlite
+*.db
+.neon/
