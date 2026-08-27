@@ -25,6 +25,10 @@ class Settings(BaseSettings):
 
     otp_expire_minutes: int = 10
     otp_max_attempts: int = 5
+    otp_resend_max_per_hour: int = 5
+    temp_token_expire_minutes: int = 15
+    password_min_length: int = 8
+    cgu_current_version: str = "v1.0"
 
     google_client_id_android: str = ""
     google_client_id_ios: str = ""

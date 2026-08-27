@@ -1,10 +1,11 @@
-# Documentation
+# Index
 
 | Document | Emplacement |
 |---|---|
 | Architecture Cursor | [`.cursor/architecture.md`](../.cursor/architecture.md) |
 | Specs & contrats | [`skills/`](../skills/) |
 | Backend | [`backend/README.md`](../backend/README.md) |
+| Google Sign-In setup | [`google-auth-setup.md`](google-auth-setup.md) |
 | Contribution | [`CONTRIBUTING.md`](../CONTRIBUTING.md) |
 | Sécurité | [`SECURITY.md`](../SECURITY.md) |
 
