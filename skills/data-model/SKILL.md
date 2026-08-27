@@ -52,8 +52,10 @@ Voir `auth-onboarding/SKILL.md` pour le flux complet.
 | id | UUID | clé primaire |
 | email | string | unique, obligatoire |
 | phone | string | nullable, renseigné pendant l'onboarding, pas à l'inscription |
-| password_hash | string | jamais le mot de passe en clair |
-| email_verified_at | timestamp | nullable tant que l'OTP n'est pas validé |
+| password_hash | string | nullable si compte créé uniquement via Google ; jamais le mot de passe en clair |
+| google_sub | string | nullable, **unique** — identifiant stable Google (`sub` du id_token) ; obligatoire si auth Google |
+| auth_providers | json / string[] | ex: `["email"]`, `["google"]`, `["email","google"]` — providers liés au compte |
+| email_verified_at | timestamp | nullable tant que l'OTP n'est pas validé ; rempli immédiatement pour Google (email vérifié côté Google) |
 | role | enum | `patient`, `aidant` (V1) — extensible à `medecin`, `agent_sante_communautaire`, `pharmacien` (V2) |
 | onboarding_step | enum/string | étape courante de l'onboarding, permet la reprise (cf. `auth-onboarding`) |
 | langue | enum | choisie dès le premier écran, avant l'email |

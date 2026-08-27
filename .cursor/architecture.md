@@ -13,7 +13,7 @@ Quand ce fichier est mentionné via `@architecture`, **lire le dossier `skills/`
 | Skill | Chemin | Quand la lire |
 |---|---|---|
 | Vue d’ensemble | `skills/project-overview/SKILL.md` | **Toujours en premier** — mission, stack, règle de consentement |
-| Auth & onboarding | `skills/auth-onboarding/SKILL.md` | Inscription, OTP, JWT, onboarding patient/aidant, sync |
+| Auth & onboarding | `skills/auth-onboarding/SKILL.md` | Inscription, OTP, Google OAuth, JWT, onboarding patient/aidant, sync |
 | Backend FastAPI | `skills/backend-fastapi/SKILL.md` | Routes, structure `app/`, erreurs, sécurité |
 | Base Neon | `skills/database-neon/SKILL.md` | Migrations, conventions, usage MCP Neon |
 | Modèle de données | `skills/data-model/SKILL.md` | Entités, champs, relations (contrat) |
@@ -25,10 +25,10 @@ Quand ce fichier est mentionné via `@architecture`, **lire le dossier `skills/`
 
 | Couche | Techno |
 |---|---|
-| Backend | Python + FastAPI (`/api/v1`) |
+| Backend | Python + FastAPI (`/api/v1`) — prod : **`https://educampro.edu.cm`** |
 | Base de données | Neon (Postgres) + Alembic + MCP Neon |
 | Mobile | Flutter (offline-first) |
-| Auth | Maison — JWT + OTP (pas Firebase / Auth0 / Supabase Auth) |
+| Auth | Maison — JWT + OTP + **Google OAuth** (IdP uniquement ; pas Firebase Auth / Auth0 / Supabase Auth) |
 
 ## Règle produit absolue
 

@@ -7,9 +7,14 @@ description: Flux complet et détaillé d'inscription, de vérification par OTP,
 
 ## Principe général
 
-L'authentification est **entièrement construite en interne**, aucun service tiers (pas de Firebase Auth, Auth0, Supabase Auth). Le backend FastAPI gère : hashing des mots de passe, génération/validation d'OTP, émission et rotation des tokens JWT, gestion des sessions/appareils.
+La **session applicative** est construite en interne (pas de Firebase Auth, Auth0, Supabase Auth comme fournisseur de session). Le backend FastAPI gère : hashing des mots de passe, génération/validation d'OTP, **vérification des `id_token` Google**, émission et rotation des JWT maison, gestion des sessions/appareils.
 
-Le point d'entrée (email + mot de passe) est **identique pour tous les rôles** (patient, aidant, et les rôles V2 : médecin, agent de santé communautaire). Le choix du rôle et la collecte d'infos spécifiques se font **après** la création du compte, pendant l'onboarding — pas avant.
+Deux chemins d’entrée équivalents (au choix de l’utilisateur) :
+
+1. **Email + OTP + mot de passe** (flux historique)
+2. **Continuer avec Google** — l’app Flutter obtient un `id_token` Google (`google_sign_in`) ; le backend le vérifie auprès de Google, crée ou retrouve le compte, puis émet nos `access_token` / `refresh_token`
+
+Dans les deux cas : le choix du rôle et la collecte d’infos spécifiques se font **après** la création du compte, pendant l’onboarding — pas avant. Les CGU + consentement santé restent **obligatoires** (y compris après un premier login Google si pas encore acceptés).
 
 L'onboarding est **repris automatiquement à la prochaine connexion** si l'utilisateur s'arrête en cours de route : l'état d'avancement est persisté côté serveur (champ `onboarding_step` ou équivalent sur l'utilisateur), jamais uniquement côté client.
 
@@ -52,6 +57,35 @@ L'onboarding est **repris automatiquement à la prochaine connexion** si l'utili
 - **Gestion multi-appareils** : un utilisateur peut être connecté sur plusieurs appareils → prévoir une table `sessions`/`devices` liée à l'utilisateur plutôt qu'un seul refresh token global.
 - **Mot de passe oublié** : email → OTP → nouveau mot de passe, même logique anti brute-force que l'inscription.
 - À la connexion, le backend renvoie l'état d'onboarding de l'utilisateur (terminé, ou étape à reprendre) pour que le client Flutter sache directement où rediriger l'utilisateur — pas de logique de reprise côté client seul.
+
+---
+
+## 2bis. Auth Google (OAuth / OpenID Connect)
+
+Objectif : réduire la friction d’inscription tout en gardant **nos** JWT et le même onboarding.
+
+### Flux mobile (principal)
+
+1. Flutter : `google_sign_in` → l’utilisateur choisit son compte Google → récupération de l’`id_token`.
+2. App envoie `POST /api/v1/auth/google` avec `{ id_token, langue, fuseau_horaire? }`.
+3. Backend :
+   - Vérifie l’`id_token` (signature, `aud` = client IDs configurés Android/iOS/Web, `iss`, expiration, email vérifié côté Google).
+   - Si `google_sub` déjà lié → login (émet JWT + état onboarding).
+   - Si email existe déjà en compte email/OTP → **lier** Google au compte existant (`google_sub`), puis login (pas de doublon).
+   - Sinon → créer l’utilisateur : `email` depuis Google, `email_verified_at` = maintenant, `password_hash` = null, `google_sub` renseigné, `auth_providers` inclut `google`.
+4. Si CGU / consentement santé manquants → le client enchaîne sur les écrans d’acceptation (mêmes endpoints que l’inscription classique, avec access token ou étape dédiée), puis onboarding.
+
+### Règles
+
+- Google **n’est pas** le gestionnaire de session : uniquement IdP. Après vérification, on émet toujours nos access/refresh tokens.
+- Un compte Google-only peut **ajouter un mot de passe** plus tard (option réglages) pour login hors Google.
+- Un compte email peut **lier Google** via le même endpoint (utilisateur déjà connecté ou matching email vérifié).
+- Secrets : `GOOGLE_CLIENT_ID_ANDROID`, `GOOGLE_CLIENT_ID_IOS`, `GOOGLE_CLIENT_ID_WEB` (et secret web si flux serveur) via `Settings` / `.env` — jamais en dur. En prod, les origines / redirect autorisées incluent `https://educampro.edu.cm`.
+- Pas de Firebase Auth / Auth0 : on vérifie le token avec les libs Google (ex. `google-auth` côté Python).
+
+### Erreurs typiques
+
+`GOOGLE_TOKEN_INVALID`, `GOOGLE_EMAIL_NOT_VERIFIED`, `GOOGLE_AUD_MISMATCH`
 
 ---
 
@@ -128,7 +162,7 @@ Deux méthodes équivalentes, au choix :
 
 ## Résumé du modèle de données backend (non exhaustif, à affiner dans `database-neon/SKILL.md`)
 
-- `users` (id, email, phone nullable, password_hash, email_verified_at, role, onboarding_step, langue, fuseau_horaire, created_at)
+- `users` (id, email, phone nullable, password_hash nullable, google_sub nullable unique, auth_providers, email_verified_at, role, onboarding_step, langue, fuseau_horaire, created_at)
 - `otp_codes` (user_id, code_hash, type [inscription/reset], expires_at, used_at, tentatives)
 - `cgu_acceptances` (user_id, version, accepted_at, ip)
 - `consentements_sante` (user_id, accepted_at) — distinct des CGU générales

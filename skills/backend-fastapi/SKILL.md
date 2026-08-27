@@ -39,10 +39,17 @@ Règle : **les routers ne contiennent pas de logique métier**. Un router appell
 
 Voir `auth-onboarding/SKILL.md` pour le flux complet. Côté implémentation FastAPI :
 - `core/security.py` : fonctions `hash_password`, `verify_password` (argon2 via `passlib` ou `argon2-cffi`), `create_access_token`, `create_refresh_token`, `decode_token`
+- Service dédié (ex. `services/google_auth_service.py`) : vérification de l'`id_token` Google via `google-auth` / certs Google ; accepter les `GOOGLE_CLIENT_ID_*` (Android, iOS, Web) comme `aud` valides
 - Dépendance `get_current_user` dans `deps.py` : décode le JWT depuis le header `Authorization: Bearer ...`, lève une `HTTPException(401)` si invalide/expiré
 - Dépendance additionnelle `require_role(role)` pour restreindre certaines routes par rôle (ex: routes aidant vs patient)
 - OTP : stocker un **hash** du code (pas le code en clair) en base, comme un mot de passe, avec expiration et compteur de tentatives
 - Ne jamais renvoyer d'information sensible (hash, token complet d'un autre user, etc.) dans une réponse d'erreur
+
+## Hébergement
+
+- Domaine de production du backend : **`educampro.edu.cm`** (`https://educampro.edu.cm/api/v1/...`)
+- `CORS_ORIGINS` et redirect URIs Google doivent inclure ce domaine en prod
+- Chaîne de connexion Neon, clé de signature JWT, credentials SMTP/email, `GOOGLE_CLIENT_ID_*` : toujours via `Settings`, jamais en dur dans le code
 
 ## Gestion des erreurs
 
@@ -66,7 +73,7 @@ Voir `auth-onboarding/SKILL.md` pour le flux complet. Côté implémentation Fas
 ## Config et secrets
 
 - `pydantic-settings` pour charger la config depuis les variables d'environnement (`.env` en dev, variables d'environnement réelles en prod — jamais de `.env` commité)
-- Chaîne de connexion Neon, clé de signature JWT, credentials SMTP/email : toujours via `Settings`, jamais en dur dans le code
+- Chaîne de connexion Neon, clé de signature JWT, credentials SMTP/email, client IDs Google : toujours via `Settings`, jamais en dur dans le code
 
 ## Notifications et le moteur "Observer → Proposer → Consentement"
 

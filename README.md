@@ -17,10 +17,10 @@ Le système ne contacte jamais un tiers (aidant, médecin, urgence) automatiquem
 
 | Couche | Techno |
 |---|---|
-| Backend | Python + FastAPI (`/api/v1`) |
+| Backend | Python + FastAPI (`/api/v1`) — prod : `https://educampro.edu.cm` |
 | Base de données | Neon (Postgres serverless) + Alembic |
 | Mobile | Flutter (Android / iOS), offline-first |
-| Auth | Maison — JWT + OTP (pas Firebase / Auth0 / Supabase Auth) |
+| Auth | JWT + OTP maison + Google OAuth (IdP) |
 
 ## Structure du dépôt
 

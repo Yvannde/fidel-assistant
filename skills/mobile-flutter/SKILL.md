@@ -22,7 +22,7 @@ lib/
 │   ├── storage/                 # flutter_secure_storage (tokens), base locale (sync/cache)
 │   └── theme/                   # thème, typographie, tokens de design
 ├── features/
-│   ├── auth/                    # inscription, OTP, login, mot de passe oublié
+│   ├── auth/                    # inscription, OTP, login, Google Sign-In, mot de passe oublié
 │   ├── onboarding/               # choix de rôle, infos patient, sync aidant, permissions
 │   ├── medicaments/               # ajout traitement, rappels, confirmation de prise
 │   ├── constantes/                 # saisie et suivi poids/tension/etc.
@@ -70,9 +70,12 @@ C'est la partie la plus critique techniquement :
 ## Onboarding et auth (référence)
 
 Suivre exactement le flux décrit dans `auth-onboarding/SKILL.md` — écran par écran, y compris :
+- bouton **Continuer avec Google** (`google_sign_in`) → envoi de l'`id_token` à `POST /api/v1/auth/google` → stockage des JWT maison dans `flutter_secure_storage`
 - reprise automatique de l'onboarding à l'étape sauvegardée côté serveur (ne pas recalculer cette logique côté client, se fier à ce que retourne l'API au login)
 - écran explicatif avant chaque demande de permission système
 - synchronisation patient-aidant par code ou QR code (utiliser `mobile_scanner` ou équivalent pour le scan QR)
+
+En production, `AppConfig.apiBaseUrl` pointe vers `https://educampro.edu.cm`.
 
 ## Internationalisation et accessibilité
 

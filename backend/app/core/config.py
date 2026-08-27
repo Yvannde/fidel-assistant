@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     app_env: str = "development"
     debug: bool = False
     api_v1_prefix: str = "/api/v1"
+    public_base_url: str = "http://localhost:8000"
 
     database_url: str = "postgresql+asyncpg://localhost/fidel"
 
@@ -25,7 +26,11 @@ class Settings(BaseSettings):
     otp_expire_minutes: int = 10
     otp_max_attempts: int = 5
 
-    cors_origins: str = "http://localhost:3000"
+    google_client_id_android: str = ""
+    google_client_id_ios: str = ""
+    google_client_id_web: str = ""
+
+    cors_origins: str = "http://localhost:3000,https://educampro.edu.cm"
 
     smtp_host: str = ""
     smtp_port: int = 587
@@ -36,6 +41,18 @@ class Settings(BaseSettings):
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
+    @property
+    def google_client_ids(self) -> list[str]:
+        return [
+            cid
+            for cid in (
+                self.google_client_id_android,
+                self.google_client_id_ios,
+                self.google_client_id_web,
+            )
+            if cid
+        ]
 
 
 @lru_cache

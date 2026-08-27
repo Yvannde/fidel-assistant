@@ -24,12 +24,15 @@ Toutes les routes sont préfixées `/api/v1`. Toutes les routes marquées 🔒 n
 | POST | `/auth/accept-cgu` | `temp_token` ou 🔒, `version` | `{message}` | `CGU_VERSION_OUTDATED` |
 | POST | `/auth/accept-consentement-sante` | `temp_token` ou 🔒 | `{message}` | — |
 | POST | `/auth/login` | `email`, `password` | `{access_token, refresh_token, role, onboarding_step}` | `INVALID_CREDENTIALS`, `EMAIL_NOT_VERIFIED` |
+| POST | `/auth/google` | `id_token`, `langue`, `fuseau_horaire?` | `{access_token, refresh_token, role, onboarding_step, is_new_user, needs_cgu, needs_consentement_sante}` | `GOOGLE_TOKEN_INVALID`, `GOOGLE_EMAIL_NOT_VERIFIED`, `GOOGLE_AUD_MISMATCH` |
 | POST | `/auth/refresh` | `refresh_token` | `{access_token}` | `REFRESH_TOKEN_INVALID_OR_EXPIRED` |
 | POST | `/auth/logout` | 🔒 `refresh_token` | `{message}` | — |
 | POST | `/auth/forgot-password` | `email` | `{message}` — envoie OTP type `reset_password` | — |
 | POST | `/auth/reset-password` | `email`, `code`, `nouveau_password` | `{message}` | `OTP_INVALID`, `OTP_EXPIRED` |
 
 > Le `temp_token` (courte durée, ex: 15 min) sert uniquement à enchaîner OTP → mot de passe → CGU → consentement santé sans exposer un access_token complet avant que le compte soit finalisé.
+
+> **Google** : le backend vérifie l'`id_token` Google puis émet nos JWT. Si `needs_cgu` / `needs_consentement_sante` sont `true`, le client appelle les endpoints d'acceptation avec le Bearer token avant de poursuivre l'onboarding. En production, l'API est servie sur `https://educampro.edu.cm`.
 
 ---
 

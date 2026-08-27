@@ -36,6 +36,16 @@ OBSERVER → ENCOURAGER / INFORMER → PROPOSER → ATTENDRE LE CONSENTEMENT EXP
 
 Relation patient ↔ aidant : **many-to-many**. Un patient peut avoir plusieurs aidants, un aidant peut suivre plusieurs patients. Chaque relation a son propre niveau de permission (voir skill `auth-onboarding`).
 
+## Hébergement (production)
+
+| Élément | Valeur |
+|---|---|
+| Domaine backend | **`educampro.edu.cm`** |
+| Base URL API | `https://educampro.edu.cm` (routes sous `/api/v1/...`) |
+| Docs Swagger (prod) | `https://educampro.edu.cm/docs` |
+
+Le backend sera déployé sur ce domaine le moment venu. En développement local, continuer d’utiliser `localhost` / émulateur. CORS, cookies (si un jour web), et redirect URIs Google OAuth doivent inclure `https://educampro.edu.cm`.
+
 ## Stack technique
 
 | Composant | Techno | Notes |
@@ -44,7 +54,8 @@ Relation patient ↔ aidant : **many-to-many**. Un patient peut avoir plusieurs 
 | Base de données | Neon (Postgres serverless) | Administrée via le **MCP Neon** — les agents IA doivent utiliser les outils MCP pour créer/inspecter/migrer le schéma, jamais de modification manuelle en prod |
 | Migrations | Alembic (ou équivalent versionné) | Toute évolution de schéma passe par une migration versionnée, committée dans le repo |
 | Mobile | Flutter | Un seul codebase Android/iOS |
-| Auth | Construite en interne | Pas de Firebase Auth / Auth0 / Supabase Auth. JWT (access + refresh token), hashing des mots de passe (argon2 ou bcrypt), génération/validation d'OTP maison |
+| Auth | Maison (JWT + OTP) + **Google OAuth** | Pas de Firebase Auth / Auth0 / Supabase Auth comme fournisseur de session. Session = JWT maison. Google sert uniquement d’**IdP** (vérification du `id_token` Google côté FastAPI, puis émission de nos access/refresh tokens). Email+OTP reste disponible. |
+| Hébergement API | `educampro.edu.cm` | Domaine de production du backend |
 | Communication agents ↔ DB | MCP | Les agents IA interrogent/modifient Neon via le serveur MCP configuré pour ce projet, pas via des credentials en dur dans le code |
 
 ## Conventions générales pour les agents IA
