@@ -59,7 +59,7 @@ def _require_patient(user: User) -> Patient:
     if user.patient is None:
         raise AppException(
             "NOT_A_PATIENT",
-            "Active d'abord un suivi pour toi.",
+            "Active d'abord ton suivi personnel depuis l'accueil (« Activer mon suivi »).",
             status_code=400,
         )
     return user.patient
@@ -116,7 +116,7 @@ async def set_besoin_suivi(db: AsyncSession, *, user: User, actif: bool) -> dict
             if not refreshed.nom_complet:
                 raise AppException(
                     "ONBOARDING_INCOMPLETE",
-                    "Renseigne d'abord tes informations personnelles.",
+                    "Complète d'abord ton profil (nom, date de naissance…).",
                     status_code=400,
                 )
             patient = create_patient_from_user(refreshed)
@@ -156,7 +156,7 @@ async def save_traitement(
         if not items:
             raise AppException(
                 "ONBOARDING_INCOMPLETE",
-                "Ajoute au moins une maladie / phase de traitement.",
+                "Indique au moins une maladie et sa phase, ou choisis « pas en traitement ».",
                 status_code=400,
             )
         for item in items:
@@ -164,12 +164,16 @@ async def save_traitement(
             if phase not in VALID_PHASES:
                 raise AppException(
                     "TYPE_INVALIDE",
-                    "Phase de traitement invalide.",
+                    "Cette phase de traitement n'est pas reconnue. Choisis-en une dans la liste.",
                     status_code=400,
                 )
             maladie = await db.get(Maladie, item["maladie_id"])
             if maladie is None or not maladie.actif:
-                raise AppException("TYPE_INVALIDE", "Maladie inconnue.", status_code=400)
+                raise AppException(
+                    "TYPE_INVALIDE",
+                    "Cette maladie n'est pas dans notre liste. Actualise et réessaie.",
+                    status_code=400,
+                )
             db.add(
                 PatientTraitement(
                     patient_id=patient.user_id,
@@ -178,7 +182,9 @@ async def save_traitement(
                     date_debut=item.get("date_debut"),
                 )
             )
-    refreshed.onboarding_step = "patient_permissions"
+    # Onboarding initial : avancer ; post-home (déjà termine) : garder termine
+    if refreshed.onboarding_step != "termine":
+        refreshed.onboarding_step = "patient_permissions"
     await db.commit()
     return {"onboarding_step": refreshed.onboarding_step}
 
@@ -195,7 +201,8 @@ async def save_permissions(
     patient = _require_patient(refreshed)
     patient.notifications_accordees = notifications_accordees
     patient.batterie_exemptee = batterie_exemptee
-    refreshed.onboarding_step = "patient_permissions"
+    if refreshed.onboarding_step != "termine":
+        refreshed.onboarding_step = "patient_permissions"
     await db.commit()
     return {"onboarding_step": refreshed.onboarding_step}
 
@@ -208,7 +215,7 @@ async def complete(db: AsyncSession, *, user: User) -> dict:
     if step in (None, "infos"):
         raise AppException(
             "ONBOARDING_INCOMPLETE",
-            "Termine d'abord les informations personnelles.",
+            "Complète d'abord ton profil (nom, date de naissance, etc.).",
             status_code=400,
         )
 
@@ -216,13 +223,13 @@ async def complete(db: AsyncSession, *, user: User) -> dict:
         if step not in ("patient_permissions", "termine"):
             raise AppException(
                 "ONBOARDING_INCOMPLETE",
-                "Termine le parcours suivi (traitement + permissions).",
+                "Il reste une étape : indique ton traitement, puis autorise les rappels.",
                 status_code=400,
             )
     elif step not in ("besoin_suivi", "termine"):
         raise AppException(
             "ONBOARDING_INCOMPLETE",
-            "Réponds d'abord à la question de suivi.",
+            "Dis-nous si tu veux un suivi pour toi, puis continue.",
             status_code=400,
         )
 
@@ -237,16 +244,19 @@ async def activate_patient(db: AsyncSession, *, user: User) -> dict:
     if refreshed.patient is not None:
         raise AppException(
             "PATIENT_ALREADY_ACTIVE",
-            "Ton suivi personnel est déjà actif.",
+            "Ton suivi personnel est déjà activé.",
             status_code=409,
         )
     if not refreshed.nom_complet:
         raise AppException(
             "ONBOARDING_INCOMPLETE",
-            "Renseigne d'abord tes informations (onboarding infos).",
+            "Complète d'abord ton profil (nom, date de naissance…).",
             status_code=400,
         )
-    db.add(create_patient_from_user(refreshed))
+    patient = create_patient_from_user(refreshed)
+    db.add(patient)
+    refreshed.patient = patient
+    # Guide le client vers traitement + permissions sans reset l'onboarding terminé
     await db.commit()
     return {"has_patient_profile": True, "onboarding_hint": "patient_traitement"}
 
@@ -255,8 +265,20 @@ async def create_sync_code(db: AsyncSession, *, user: User) -> dict:
     refreshed = await get_user_with_capabilities(db, user.id)
     assert refreshed is not None
     patient = _require_patient(refreshed)
+
+    # Invalider les codes non utilisés précédents
+    now = datetime.now(UTC)
+    old = await db.execute(
+        select(SyncCode).where(
+            SyncCode.patient_id == patient.user_id,
+            SyncCode.used_at.is_(None),
+        )
+    )
+    for row in old.scalars().all():
+        row.used_at = now
+
     code = f"{randbelow(1_000_000):06d}"
-    expires = datetime.now(UTC) + timedelta(minutes=settings.sync_code_expire_minutes)
+    expires = now + timedelta(minutes=settings.sync_code_expire_minutes)
     db.add(SyncCode(patient_id=patient.user_id, code=code, expires_at=expires))
     await db.commit()
     return {
@@ -267,6 +289,8 @@ async def create_sync_code(db: AsyncSession, *, user: User) -> dict:
 
 
 async def sync_aidant(db: AsyncSession, *, user: User, code: str) -> dict:
+    from app.models import NotificationLog
+
     refreshed = await get_user_with_capabilities(db, user.id)
     assert refreshed is not None
 
@@ -281,7 +305,7 @@ async def sync_aidant(db: AsyncSession, *, user: User, code: str) -> dict:
     if sync is None:
         raise AppException(
             "SYNC_CODE_INVALID",
-            "Code de synchronisation invalide.",
+            "Ce code ne fonctionne pas. Demande un nouveau code à la personne que tu accompagnes.",
             status_code=400,
         )
 
@@ -289,12 +313,16 @@ async def sync_aidant(db: AsyncSession, *, user: User, code: str) -> dict:
     if expires.tzinfo is None:
         expires = expires.replace(tzinfo=UTC)
     if expires < datetime.now(UTC):
-        raise AppException("SYNC_CODE_EXPIRED", "Ce code a expiré.", status_code=400)
+        raise AppException(
+            "SYNC_CODE_EXPIRED",
+            "Ce code a expiré. Demande-en un nouveau (valable quelques minutes).",
+            status_code=400,
+        )
 
     if sync.patient_id == refreshed.id:
         raise AppException(
             "SYNC_SELF_NOT_ALLOWED",
-            "Tu ne peux pas te synchroniser avec toi-même.",
+            "Tu ne peux pas t'associer à ton propre suivi. Utilise le code d'une autre personne.",
             status_code=400,
         )
 
@@ -317,13 +345,32 @@ async def sync_aidant(db: AsyncSession, *, user: User, code: str) -> dict:
         )
 
     sync.used_at = datetime.now(UTC)
+
+    aidant_prenom = (refreshed.nom_complet or "Quelqu'un").split()[0]
+    patient_prenom = (sync.patient.nom_complet or "Patient").split()[0]
+    contenu = (
+        f"{aidant_prenom} est maintenant connecté(e) à ton suivi sur {settings.app_name}."
+    )
+    db.add(
+        NotificationLog(
+            destinataire_id=sync.patient_id,
+            type="aidant_sync",
+            contenu=contenu,
+            declencheur={
+                "aidant_id": str(refreshed.id),
+                "patient_id": str(sync.patient_id),
+                "event": "patient_aidant_linked",
+            },
+        )
+    )
+
     await db.commit()
 
-    prenom = (sync.patient.nom_complet or "Patient").split()[0]
     return {
         "patient_id": sync.patient_id,
-        "patient_prenom": prenom,
+        "patient_prenom": patient_prenom,
         "is_aidant": True,
+        "message": f"Tu accompagnes désormais {patient_prenom}.",
     }
 
 

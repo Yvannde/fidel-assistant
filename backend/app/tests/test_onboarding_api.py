@@ -48,6 +48,8 @@ async def _register_login(
     assert body["onboarding_step"] == "infos"
     assert body["has_patient_profile"] is False
     assert body["is_aidant"] is False
+    assert body["expires_in"] > 0
+    assert body["session_id"] is not None
     return body
 
 
@@ -196,6 +198,7 @@ async def test_onboarding_patient_path_and_sync_aidant(
     assert r.status_code == 200, r.text
     assert r.json()["is_aidant"] is True
     assert r.json()["patient_prenom"] == "Amina"
+    assert "accompagnes" in r.json()["message"].lower() or "Amina" in r.json()["message"]
 
     r = await client.get(f"{onboarding_prefix}/status", headers=headers_b)
     assert r.json()["is_aidant"] is True
@@ -235,3 +238,47 @@ async def test_activate_patient_from_home(
     )
     assert r.status_code == 409
     assert r.json()["error"]["code"] == "PATIENT_ALREADY_ACTIVE"
+
+
+@pytest.mark.asyncio
+async def test_post_home_traitement_after_activate(
+    client: AsyncClient,
+    auth_prefix: str,
+    onboarding_prefix: str,
+    otp_inbox: dict[str, str],
+    cgu_version: str,
+) -> None:
+    from app.core.config import settings
+
+    tokens = await _register_login(
+        client, auth_prefix, otp_inbox, cgu_version, email="post.home@example.com"
+    )
+    headers = _auth(tokens["access_token"])
+    await _infos(client, onboarding_prefix, headers)
+    await client.post(
+        f"{onboarding_prefix}/besoin-suivi", headers=headers, json={"actif": False}
+    )
+    await client.post(f"{onboarding_prefix}/complete", headers=headers)
+
+    await client.post(f"{settings.api_v1_prefix}/patients/me/activate", headers=headers)
+
+    r = await client.get(f"{onboarding_prefix}/maladies")
+    maladie_id = r.json()[0]["id"]
+    r = await client.post(
+        f"{onboarding_prefix}/patient/traitement",
+        headers=headers,
+        json={
+            "en_traitement": True,
+            "traitements": [{"maladie_id": maladie_id, "phase": "debut"}],
+        },
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["onboarding_step"] == "termine"
+
+    r = await client.post(
+        f"{onboarding_prefix}/patient/permissions",
+        headers=headers,
+        json={"notifications_accordees": True, "batterie_exemptee": False},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["onboarding_step"] == "termine"

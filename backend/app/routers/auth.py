@@ -133,8 +133,8 @@ async def google_login(
 
 @router.post("/refresh", response_model=AccessTokenOut)
 async def refresh(body: RefreshIn, db: Annotated[AsyncSession, Depends(get_db)]) -> AccessTokenOut:
-    access = await auth_service.refresh_access(db, refresh_token=body.refresh_token)
-    return AccessTokenOut(access_token=access)
+    data = await auth_service.refresh_access(db, refresh_token=body.refresh_token)
+    return AccessTokenOut(**data)
 
 
 @router.post("/logout", response_model=MessageOut)
@@ -250,17 +250,12 @@ async def confirm_email_change(
 async def sessions(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(get_current_user)],
+    current_session_id: UUID | None = None,
 ) -> list[SessionOut]:
-    rows = await auth_service.list_sessions(db, user_id=user.id)
-    return [
-        SessionOut(
-            id=s.id,
-            device_info=s.device_info,
-            created_at=s.created_at,
-            revoked_at=s.revoked_at,
-        )
-        for s in rows
-    ]
+    rows = await auth_service.list_sessions(
+        db, user_id=user.id, current_session_id=current_session_id
+    )
+    return [SessionOut(**row) for row in rows]
 
 
 @router.post("/logout-all", response_model=MessageOut)

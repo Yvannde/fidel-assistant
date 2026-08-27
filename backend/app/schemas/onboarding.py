@@ -72,6 +72,7 @@ class AidantSyncOut(BaseModel):
     patient_id: UUID
     patient_prenom: str
     is_aidant: bool = True
+    message: str | None = None
 
 
 class PatientOut(BaseModel):

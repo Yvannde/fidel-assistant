@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     password_min_length: int = 8
     cgu_current_version: str = "v1.0"
     sync_code_expire_minutes: int = 10
+    login_max_attempts: int = 8
+    login_window_minutes: int = 15
 
     google_client_id_android: str = ""
     google_client_id_ios: str = ""

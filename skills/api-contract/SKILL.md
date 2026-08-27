@@ -23,9 +23,9 @@ Toutes les routes sont préfixées `/api/v1`. Toutes les routes marquées 🔒 n
 | POST | `/auth/set-password` | `temp_token`, `password` | `{message}` | `TEMP_TOKEN_INVALID`, `PASSWORD_TOO_WEAK` |
 | POST | `/auth/accept-cgu` | `temp_token` ou 🔒, `version` | `{message}` | `CGU_VERSION_OUTDATED` |
 | POST | `/auth/accept-consentement-sante` | `temp_token` ou 🔒 | `{message}` | — |
-| POST | `/auth/login` | `email`, `password` | `{access_token, refresh_token, onboarding_step, has_patient_profile, is_aidant}` | `INVALID_CREDENTIALS`, `EMAIL_NOT_VERIFIED` |
-| POST | `/auth/google` | `id_token`, `langue`, `fuseau_horaire?` | `{access_token, refresh_token, onboarding_step, has_patient_profile, is_aidant, is_new_user, needs_cgu, needs_consentement_sante}` | `GOOGLE_TOKEN_INVALID`, `GOOGLE_EMAIL_NOT_VERIFIED`, `GOOGLE_AUD_MISMATCH` |
-| POST | `/auth/refresh` | `refresh_token` | `{access_token}` | `REFRESH_TOKEN_INVALID_OR_EXPIRED` |
+| POST | `/auth/login` | `email`, `password` | `{access_token, refresh_token, expires_in, session_id, onboarding_step, has_patient_profile, is_aidant}` | `INVALID_CREDENTIALS`, `EMAIL_NOT_VERIFIED`, `LOGIN_RATE_LIMITED` |
+| POST | `/auth/google` | `id_token`, `langue`, `fuseau_horaire?` | `{access_token, refresh_token, expires_in, session_id, onboarding_step, has_patient_profile, is_aidant, is_new_user, needs_cgu, needs_consentement_sante}` | `GOOGLE_TOKEN_INVALID`, `GOOGLE_EMAIL_NOT_VERIFIED`, `GOOGLE_AUD_MISMATCH` |
+| POST | `/auth/refresh` | `refresh_token` | `{access_token, expires_in}` | `REFRESH_TOKEN_INVALID_OR_EXPIRED` |
 | POST | `/auth/logout` | 🔒 `refresh_token` | `{message}` | — |
 | POST | `/auth/forgot-password` | `email` | `{message}` — envoie OTP type `reset_password` | — |
 | POST | `/auth/reset-password` | `email`, `code`, `nouveau_password` | `{message}` | `OTP_INVALID`, `OTP_EXPIRED` |
@@ -35,7 +35,7 @@ Toutes les routes sont préfixées `/api/v1`. Toutes les routes marquées 🔒 n
 | POST | `/auth/link-google` | 🔒 `id_token` | `{message, auth_providers}` | `GOOGLE_TOKEN_INVALID`, `GOOGLE_AUD_MISMATCH`, `GOOGLE_ALREADY_LINKED` |
 | POST | `/auth/request-email-change` | 🔒 `nouvel_email` | `{message}` — OTP envoyé au **nouvel** email | `EMAIL_ALREADY_VERIFIED` |
 | POST | `/auth/confirm-email-change` | 🔒 `nouvel_email`, `code` | `{message, email}` | `OTP_INVALID`, `OTP_EXPIRED` |
-| GET | `/auth/sessions` | 🔒 | `[{id, device_info, created_at, revoked_at}]` — sessions non révoquées | — |
+| GET | `/auth/sessions` | 🔒 `current_session_id?` | `[{id, device_info, created_at, revoked_at, is_current}]` | — |
 | POST | `/auth/logout-all` | 🔒 | `{message}` — révoque toutes les sessions | — |
 | DELETE | `/auth/sessions/{session_id}` | 🔒 | `{message}` | `SESSION_NOT_FOUND` |
 | DELETE | `/auth/me` | 🔒 `password?` | `{message}` — soft delete (`deleted_at`) ; `password` requis si le compte en a un | `INVALID_CREDENTIALS` |
@@ -72,7 +72,7 @@ Pas de `POST /onboarding/role`. Voir `auth-onboarding/SKILL.md`.
 | Méthode | Chemin | Entrée | Sortie | Erreurs possibles |
 |---|---|---|---|---|
 | POST | `/patients/me/activate` | 🔒 | `{has_patient_profile: true, onboarding_hint: "patient_traitement"}` — crée `Patient` si absent (copie infos depuis `User`) | `PATIENT_ALREADY_ACTIVE` |
-| POST | `/aidants/me/sync` | 🔒 `code` | `{patient_id, patient_prenom, is_aidant: true}` — crée `PatientAidant` | `SYNC_CODE_INVALID`, `SYNC_CODE_EXPIRED`, `SYNC_SELF_NOT_ALLOWED` |
+| POST | `/aidants/me/sync` | 🔒 `code` | `{patient_id, patient_prenom, is_aidant, message}` — crée `PatientAidant` + journal `NotificationLog` (transparence patient) | `SYNC_CODE_INVALID`, `SYNC_CODE_EXPIRED`, `SYNC_SELF_NOT_ALLOWED` |
 
 > Anciennes routes `POST /onboarding/role`, `/onboarding/patient/infos`, `/onboarding/aidant/infos`, `/onboarding/aidant/sync` : **retirées** du contrat (remplacées ci-dessus).
 

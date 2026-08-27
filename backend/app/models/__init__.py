@@ -1,5 +1,6 @@
 """Modèles SQLAlchemy — voir skills/data-model/SKILL.md."""
 
+from app.models.notification import NotificationLog
 from app.models.patient import (
     Maladie,
     Patient,
@@ -26,4 +27,5 @@ __all__ = [
     "PatientTraitement",
     "PatientAidant",
     "SyncCode",
+    "NotificationLog",
 ]

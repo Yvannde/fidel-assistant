@@ -51,6 +51,8 @@ class LoginIn(BaseModel):
 class TokenPairOut(BaseModel):
     access_token: str
     refresh_token: str
+    expires_in: int = Field(description="Durée de validité de l'access_token en secondes")
+    session_id: UUID | None = None
     onboarding_step: str | None = None
     has_patient_profile: bool = False
     is_aidant: bool = False
@@ -75,6 +77,7 @@ class RefreshIn(BaseModel):
 
 class AccessTokenOut(BaseModel):
     access_token: str
+    expires_in: int
 
 
 class LogoutIn(BaseModel):
@@ -151,6 +154,7 @@ class SessionOut(BaseModel):
     device_info: str | None
     created_at: datetime
     revoked_at: datetime | None = None
+    is_current: bool = False
 
 
 class DeleteAccountIn(BaseModel):

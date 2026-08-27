@@ -147,12 +147,18 @@ async def test_full_email_auth_flow(
     )
     assert r.status_code == 200, r.text
     assert "access_token" in r.json()
+    assert r.json()["expires_in"] > 0
 
-    r = await client.get(f"{auth_prefix}/sessions", headers=headers)
+    r = await client.get(
+        f"{auth_prefix}/sessions",
+        headers=headers,
+        params={"current_session_id": str(tokens["session_id"])},
+    )
     assert r.status_code == 200, r.text
     sessions = r.json()
     assert len(sessions) >= 1
     assert sessions[0]["device_info"] == "pytest"
+    assert any(s.get("is_current") for s in sessions)
 
     r = await client.post(
         f"{auth_prefix}/logout",
