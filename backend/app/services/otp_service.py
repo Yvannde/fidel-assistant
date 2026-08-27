@@ -79,7 +79,10 @@ async def verify_user_otp(
     if otp is None:
         raise AppException("OTP_INVALID", "Code invalide.", status_code=400)
 
-    if otp.expires_at < datetime.now(UTC):
+    expires_at = otp.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=UTC)
+    if expires_at < datetime.now(UTC):
         raise AppException(
             "OTP_EXPIRED",
             "Le code a expiré, demande-en un nouveau.",

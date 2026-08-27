@@ -258,8 +258,9 @@ async def google_auth(
         if fuseau_horaire:
             user.fuseau_horaire = fuseau_horaire
         await db.flush()
-        user = await get_user_by_id(db, user.id)
-        assert user is not None
+
+    user = await get_user_by_id(db, user.id)
+    assert user is not None
 
     needs_cgu = not any(c.version == settings.cgu_current_version for c in user.cgu_acceptances)
     needs_consent = user.consentement_sante is None
