@@ -30,7 +30,7 @@ async def issue_otp(
     *,
     user: User,
     otp_type: str,
-    background_send: bool = True,
+    send_to_email: str | None = None,
 ) -> str:
     if await _count_recent_otps(db, user.id, otp_type) >= settings.otp_resend_max_per_hour:
         raise AppException(
@@ -50,8 +50,11 @@ async def issue_otp(
     db.add(otp)
     await db.flush()
 
-    if background_send:
-        await send_otp_email(to_email=user.email, code=code, purpose=otp_type)
+    await send_otp_email(
+        to_email=send_to_email or user.email,
+        code=code,
+        purpose=otp_type,
+    )
     return code
 
 

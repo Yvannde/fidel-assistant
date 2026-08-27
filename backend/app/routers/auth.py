@@ -1,4 +1,5 @@
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPAuthorizationCredentials
@@ -17,19 +18,29 @@ from app.schemas.auth import (
     AcceptCguIn,
     AcceptConsentementIn,
     AccessTokenOut,
+    ChangePasswordIn,
+    ConfirmEmailChangeIn,
+    DeleteAccountIn,
+    EmailChangeOut,
     ForgotPasswordIn,
     GoogleAuthIn,
     GoogleAuthOut,
+    LinkGoogleIn,
+    LinkGoogleOut,
     LoginIn,
     LogoutIn,
+    MeOut,
     MessageOut,
     RefreshIn,
     RegisterIn,
+    RequestEmailChangeIn,
     ResendOtpIn,
     ResetPasswordIn,
+    SessionOut,
     SetPasswordIn,
     TempTokenOut,
     TokenPairOut,
+    UpdateMeIn,
     VerifyOtpIn,
 )
 from app.services import auth_service
@@ -39,7 +50,12 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register", response_model=MessageOut)
 async def register(body: RegisterIn, db: Annotated[AsyncSession, Depends(get_db)]) -> MessageOut:
-    message = await auth_service.register(db, email=body.email, langue=body.langue)
+    message = await auth_service.register(
+        db,
+        email=body.email,
+        langue=body.langue,
+        fuseau_horaire=body.fuseau_horaire,
+    )
     return MessageOut(message=message)
 
 
@@ -92,7 +108,12 @@ async def accept_consentement_sante(
 
 @router.post("/login", response_model=TokenPairOut)
 async def login(body: LoginIn, db: Annotated[AsyncSession, Depends(get_db)]) -> TokenPairOut:
-    data = await auth_service.login(db, email=body.email, password=body.password)
+    data = await auth_service.login(
+        db,
+        email=body.email,
+        password=body.password,
+        device_info=body.device_info,
+    )
     return TokenPairOut(**data)
 
 
@@ -105,6 +126,7 @@ async def google_login(
         id_token_str=body.id_token,
         langue=body.langue,
         fuseau_horaire=body.fuseau_horaire,
+        device_info=body.device_info,
     )
     return GoogleAuthOut(**data)
 
@@ -143,4 +165,128 @@ async def reset_password(
         code=body.code,
         nouveau_password=body.nouveau_password,
     )
+    return MessageOut(message=message)
+
+
+@router.get("/me", response_model=MeOut)
+async def me(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> MeOut:
+    refreshed = await auth_service.get_user_by_id(db, user.id)
+    assert refreshed is not None
+    return MeOut(**auth_service.build_me(refreshed))
+
+
+@router.patch("/me", response_model=MeOut)
+async def update_me(
+    body: UpdateMeIn,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> MeOut:
+    data = await auth_service.update_me(
+        db,
+        user=user,
+        langue=body.langue,
+        fuseau_horaire=body.fuseau_horaire,
+        phone=body.phone,
+    )
+    return MeOut(**data)
+
+
+@router.post("/change-password", response_model=MessageOut)
+async def change_password(
+    body: ChangePasswordIn,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> MessageOut:
+    message = await auth_service.change_password(
+        db,
+        user=user,
+        current_password=body.current_password,
+        nouveau_password=body.nouveau_password,
+    )
+    return MessageOut(message=message)
+
+
+@router.post("/link-google", response_model=LinkGoogleOut)
+async def link_google(
+    body: LinkGoogleIn,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> LinkGoogleOut:
+    data = await auth_service.link_google(db, user=user, id_token_str=body.id_token)
+    return LinkGoogleOut(**data)
+
+
+@router.post("/request-email-change", response_model=MessageOut)
+async def request_email_change(
+    body: RequestEmailChangeIn,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> MessageOut:
+    message = await auth_service.request_email_change(
+        db, user=user, nouvel_email=body.nouvel_email
+    )
+    return MessageOut(message=message)
+
+
+@router.post("/confirm-email-change", response_model=EmailChangeOut)
+async def confirm_email_change(
+    body: ConfirmEmailChangeIn,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> EmailChangeOut:
+    data = await auth_service.confirm_email_change(
+        db,
+        user=user,
+        nouvel_email=body.nouvel_email,
+        code=body.code,
+    )
+    return EmailChangeOut(**data)
+
+
+@router.get("/sessions", response_model=list[SessionOut])
+async def sessions(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> list[SessionOut]:
+    rows = await auth_service.list_sessions(db, user_id=user.id)
+    return [
+        SessionOut(
+            id=s.id,
+            device_info=s.device_info,
+            created_at=s.created_at,
+            revoked_at=s.revoked_at,
+        )
+        for s in rows
+    ]
+
+
+@router.post("/logout-all", response_model=MessageOut)
+async def logout_all(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> MessageOut:
+    message = await auth_service.logout_all(db, user_id=user.id)
+    return MessageOut(message=message)
+
+
+@router.delete("/sessions/{session_id}", response_model=MessageOut)
+async def revoke_session(
+    session_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> MessageOut:
+    message = await auth_service.revoke_session(db, user_id=user.id, session_id=session_id)
+    return MessageOut(message=message)
+
+
+@router.delete("/me", response_model=MessageOut)
+async def delete_me(
+    body: DeleteAccountIn,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> MessageOut:
+    message = await auth_service.delete_account(db, user=user, password=body.password)
     return MessageOut(message=message)

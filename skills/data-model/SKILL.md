@@ -60,6 +60,7 @@ Voir `auth-onboarding/SKILL.md` pour le flux complet.
 | onboarding_step | enum/string | étape courante de l'onboarding, permet la reprise (cf. `auth-onboarding`) |
 | langue | enum | choisie dès le premier écran, avant l'email |
 | fuseau_horaire | string | capturé automatiquement via l'appareil à l'inscription |
+| pending_email | string | nullable — nouvel email en attente de validation OTP (`change_email`) |
 | created_at | timestamp | |
 | updated_at | timestamp | |
 | deleted_at | timestamp | nullable, soft delete (droit à l'oubli) |
@@ -73,7 +74,7 @@ Voir `auth-onboarding/SKILL.md` pour le flux complet.
 | id | UUID | |
 | user_id | UUID (FK → User) | |
 | code_hash | string | jamais le code en clair, hashé comme un mot de passe |
-| type | enum | `inscription`, `reset_password` |
+| type | enum | `inscription`, `reset_password`, `change_email` |
 | expires_at | timestamp | courte durée (ex: 10 min) |
 | used_at | timestamp | nullable, usage unique |
 | tentatives | integer | compteur, pour anti brute-force |

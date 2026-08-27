@@ -55,7 +55,13 @@ async def get_user_by_id(db: AsyncSession, user_id: UUID) -> User | None:
     return result.scalar_one_or_none()
 
 
-async def register(db: AsyncSession, *, email: str, langue: str) -> str:
+async def register(
+    db: AsyncSession,
+    *,
+    email: str,
+    langue: str,
+    fuseau_horaire: str | None = None,
+) -> str:
     email_norm = email.lower()
     user = await get_user_by_email(db, email_norm)
 
@@ -70,6 +76,7 @@ async def register(db: AsyncSession, *, email: str, langue: str) -> str:
         user = User(
             email=email_norm,
             langue=langue,
+            fuseau_horaire=fuseau_horaire,
             auth_providers=["email"],
             onboarding_step=None,
         )
@@ -77,6 +84,8 @@ async def register(db: AsyncSession, *, email: str, langue: str) -> str:
         await db.flush()
     else:
         user.langue = langue
+        if fuseau_horaire:
+            user.fuseau_horaire = fuseau_horaire
         user.auth_providers = _providers_add(user.auth_providers, "email")
 
     await otp_service.issue_otp(db, user=user, otp_type="inscription")
@@ -164,7 +173,13 @@ async def _create_session(db: AsyncSession, user: User, device_info: str | None 
     return raw
 
 
-async def login(db: AsyncSession, *, email: str, password: str) -> dict:
+async def login(
+    db: AsyncSession,
+    *,
+    email: str,
+    password: str,
+    device_info: str | None = None,
+) -> dict:
     user = await get_user_by_email(db, email.lower())
     if user is None or not user.password_hash:
         raise AppException(
@@ -185,7 +200,7 @@ async def login(db: AsyncSession, *, email: str, password: str) -> dict:
             status_code=401,
         )
 
-    refresh = await _create_session(db, user)
+    refresh = await _create_session(db, user, device_info=device_info)
     await db.commit()
     return {
         "access_token": create_access_token(str(user.id)),
@@ -201,6 +216,7 @@ async def google_auth(
     id_token_str: str,
     langue: str,
     fuseau_horaire: str | None,
+    device_info: str | None = None,
 ) -> dict:
     payload = verify_google_id_token(id_token_str)
     google_sub = payload["sub"]
@@ -242,14 +258,13 @@ async def google_auth(
         if fuseau_horaire:
             user.fuseau_horaire = fuseau_horaire
         await db.flush()
-        # reload relations
         user = await get_user_by_id(db, user.id)
         assert user is not None
 
     needs_cgu = not any(c.version == settings.cgu_current_version for c in user.cgu_acceptances)
     needs_consent = user.consentement_sante is None
 
-    refresh = await _create_session(db, user)
+    refresh = await _create_session(db, user, device_info=device_info)
     await db.commit()
 
     return {
@@ -322,3 +337,210 @@ async def reset_password(db: AsyncSession, *, email: str, code: str, nouveau_pas
     user.auth_providers = _providers_add(user.auth_providers, "email")
     await db.commit()
     return "Mot de passe mis à jour."
+
+
+def build_me(user: User) -> dict:
+    needs_cgu = not any(
+        c.version == settings.cgu_current_version for c in (user.cgu_acceptances or [])
+    )
+    return {
+        "id": user.id,
+        "email": user.email,
+        "phone": user.phone,
+        "role": user.role,
+        "onboarding_step": user.onboarding_step,
+        "langue": user.langue,
+        "fuseau_horaire": user.fuseau_horaire,
+        "auth_providers": list(user.auth_providers or []),
+        "email_verified_at": user.email_verified_at,
+        "has_password": bool(user.password_hash),
+        "needs_cgu": needs_cgu,
+        "needs_consentement_sante": user.consentement_sante is None,
+        "pending_email": user.pending_email,
+    }
+
+
+async def update_me(
+    db: AsyncSession,
+    *,
+    user: User,
+    langue: str | None,
+    fuseau_horaire: str | None,
+    phone: str | None,
+) -> dict:
+    if langue is not None:
+        user.langue = langue
+    if fuseau_horaire is not None:
+        user.fuseau_horaire = fuseau_horaire
+    if phone is not None:
+        user.phone = phone
+    await db.commit()
+    refreshed = await get_user_by_id(db, user.id)
+    assert refreshed is not None
+    return build_me(refreshed)
+
+
+async def change_password(
+    db: AsyncSession,
+    *,
+    user: User,
+    current_password: str | None,
+    nouveau_password: str,
+) -> str:
+    _validate_password(nouveau_password)
+    if user.password_hash:
+        if not current_password or not verify_password(current_password, user.password_hash):
+            raise AppException(
+                "INVALID_CREDENTIALS",
+                "Mot de passe actuel incorrect.",
+                status_code=401,
+            )
+    user.password_hash = hash_password(nouveau_password)
+    user.auth_providers = _providers_add(user.auth_providers, "email")
+    await db.commit()
+    return "Mot de passe mis à jour."
+
+
+async def link_google(db: AsyncSession, *, user: User, id_token_str: str) -> dict:
+    payload = verify_google_id_token(id_token_str)
+    google_sub = payload["sub"]
+    email = str(payload["email"]).lower()
+
+    if user.google_sub and user.google_sub != google_sub:
+        raise AppException(
+            "GOOGLE_ALREADY_LINKED",
+            "Un autre compte Google est déjà lié.",
+            status_code=409,
+        )
+
+    other = await db.execute(
+        select(User).where(
+            User.google_sub == google_sub,
+            User.id != user.id,
+            User.deleted_at.is_(None),
+        )
+    )
+    if other.scalar_one_or_none() is not None:
+        raise AppException(
+            "GOOGLE_ALREADY_LINKED",
+            "Ce compte Google est déjà utilisé.",
+            status_code=409,
+        )
+
+    if email != user.email and user.email_verified_at:
+        # Lien autorisé même si emails diffèrent, mais on garde l'email du compte
+        pass
+
+    user.google_sub = google_sub
+    user.auth_providers = _providers_add(user.auth_providers, "google")
+    if user.email_verified_at is None:
+        user.email_verified_at = datetime.now(UTC)
+    await db.commit()
+    return {
+        "message": "Compte Google lié.",
+        "auth_providers": list(user.auth_providers or []),
+    }
+
+
+async def request_email_change(db: AsyncSession, *, user: User, nouvel_email: str) -> str:
+    new_email = nouvel_email.lower()
+    if new_email == user.email:
+        return "C'est déjà ton email actuel."
+
+    existing = await get_user_by_email(db, new_email)
+    if existing is not None:
+        raise AppException(
+            "EMAIL_ALREADY_VERIFIED",
+            "Cet email est déjà utilisé par un autre compte.",
+            status_code=409,
+        )
+
+    user.pending_email = new_email
+    await otp_service.issue_otp(
+        db, user=user, otp_type="change_email", send_to_email=new_email
+    )
+    await db.commit()
+    return "Un code a été envoyé à la nouvelle adresse email."
+
+
+async def confirm_email_change(
+    db: AsyncSession, *, user: User, nouvel_email: str, code: str
+) -> dict:
+    new_email = nouvel_email.lower()
+    if user.pending_email != new_email:
+        raise AppException(
+            "OTP_INVALID",
+            "Aucune demande de changement pour cet email.",
+            status_code=400,
+        )
+    await otp_service.verify_user_otp(db, user=user, otp_type="change_email", code=code)
+    existing = await get_user_by_email(db, new_email)
+    if existing is not None and existing.id != user.id:
+        raise AppException(
+            "EMAIL_ALREADY_VERIFIED",
+            "Cet email est déjà utilisé par un autre compte.",
+            status_code=409,
+        )
+    user.email = new_email
+    user.pending_email = None
+    user.email_verified_at = datetime.now(UTC)
+    await db.commit()
+    return {"message": "Email mis à jour.", "email": user.email}
+
+
+async def list_sessions(db: AsyncSession, *, user_id: UUID) -> list[Session]:
+    result = await db.execute(
+        select(Session)
+        .where(Session.user_id == user_id, Session.revoked_at.is_(None))
+        .order_by(Session.created_at.desc())
+    )
+    return list(result.scalars().all())
+
+
+async def logout_all(db: AsyncSession, *, user_id: UUID) -> str:
+    result = await db.execute(
+        select(Session).where(Session.user_id == user_id, Session.revoked_at.is_(None))
+    )
+    now = datetime.now(UTC)
+    for session in result.scalars().all():
+        session.revoked_at = now
+    await db.commit()
+    return "Toutes les sessions ont été révoquées."
+
+
+async def revoke_session(db: AsyncSession, *, user_id: UUID, session_id: UUID) -> str:
+    result = await db.execute(
+        select(Session).where(
+            Session.id == session_id,
+            Session.user_id == user_id,
+            Session.revoked_at.is_(None),
+        )
+    )
+    session = result.scalar_one_or_none()
+    if session is None:
+        raise AppException("SESSION_NOT_FOUND", "Session introuvable.", status_code=404)
+    session.revoked_at = datetime.now(UTC)
+    await db.commit()
+    return "Session révoquée."
+
+
+async def delete_account(db: AsyncSession, *, user: User, password: str | None) -> str:
+    if user.password_hash:
+        if not password or not verify_password(password, user.password_hash):
+            raise AppException(
+                "INVALID_CREDENTIALS",
+                "Mot de passe incorrect.",
+                status_code=401,
+            )
+    result = await db.execute(
+        select(Session).where(Session.user_id == user.id, Session.revoked_at.is_(None))
+    )
+    now = datetime.now(UTC)
+    for session in result.scalars().all():
+        session.revoked_at = now
+    user.deleted_at = now
+    user.email = f"deleted+{user.id}@invalid.local"
+    user.google_sub = None
+    user.pending_email = None
+    await db.commit()
+    return "Compte supprimé."
