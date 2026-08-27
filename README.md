@@ -10,7 +10,7 @@ Plateforme mobile **gratuite et open source** d’accompagnement des patients da
 | Étape | Statut |
 |---|---|
 | Auth API (email OTP, Google IdP, sessions, Resend) | **Fait** — sur `main`, tests verts |
-| Onboarding rôles (patient / aidant) | À faire |
+| Onboarding rôles (patient / aidant) | Remplacé : **capacités cumulables** — à implémenter |
 | App Flutter auth + sync | Scaffold — à brancher |
 | Rappels médicaments offline-first | À faire |
 | Constantes / réseau aidant / SOS / notifications | À faire |
@@ -101,10 +101,11 @@ L’URL API se configure via `API_BASE_URL` (`mobile/lib/core/config/app_config.
 | [SECURITY.md](SECURITY.md) | Signalement de vulnérabilités |
 | [.cursor/architecture.md](.cursor/architecture.md) | Point d’entrée architecture (agents / Cursor) |
 
-## Rôles (V1)
+## Rôles (V1) — capacités cumulables
 
-- **Patient** — suivi personnel (médicaments, constantes, check-in)
-- **Aidant** — accompagne un ou plusieurs patients (permissions par relation)
+- **Profil patient** — suivi personnel (médicaments, constantes, check-in) — optionnel
+- **Aidant** — accompagne un ou plusieurs patients via sync — optionnel  
+Un même compte peut être les **deux**. Pas de choix exclusif à l’inscription.
 
 ## Licence
 

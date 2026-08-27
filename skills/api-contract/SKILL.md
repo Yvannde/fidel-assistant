@@ -23,13 +23,13 @@ Toutes les routes sont préfixées `/api/v1`. Toutes les routes marquées 🔒 n
 | POST | `/auth/set-password` | `temp_token`, `password` | `{message}` | `TEMP_TOKEN_INVALID`, `PASSWORD_TOO_WEAK` |
 | POST | `/auth/accept-cgu` | `temp_token` ou 🔒, `version` | `{message}` | `CGU_VERSION_OUTDATED` |
 | POST | `/auth/accept-consentement-sante` | `temp_token` ou 🔒 | `{message}` | — |
-| POST | `/auth/login` | `email`, `password` | `{access_token, refresh_token, role, onboarding_step}` | `INVALID_CREDENTIALS`, `EMAIL_NOT_VERIFIED` |
-| POST | `/auth/google` | `id_token`, `langue`, `fuseau_horaire?` | `{access_token, refresh_token, role, onboarding_step, is_new_user, needs_cgu, needs_consentement_sante}` | `GOOGLE_TOKEN_INVALID`, `GOOGLE_EMAIL_NOT_VERIFIED`, `GOOGLE_AUD_MISMATCH` |
+| POST | `/auth/login` | `email`, `password` | `{access_token, refresh_token, onboarding_step, has_patient_profile, is_aidant}` | `INVALID_CREDENTIALS`, `EMAIL_NOT_VERIFIED` |
+| POST | `/auth/google` | `id_token`, `langue`, `fuseau_horaire?` | `{access_token, refresh_token, onboarding_step, has_patient_profile, is_aidant, is_new_user, needs_cgu, needs_consentement_sante}` | `GOOGLE_TOKEN_INVALID`, `GOOGLE_EMAIL_NOT_VERIFIED`, `GOOGLE_AUD_MISMATCH` |
 | POST | `/auth/refresh` | `refresh_token` | `{access_token}` | `REFRESH_TOKEN_INVALID_OR_EXPIRED` |
 | POST | `/auth/logout` | 🔒 `refresh_token` | `{message}` | — |
 | POST | `/auth/forgot-password` | `email` | `{message}` — envoie OTP type `reset_password` | — |
 | POST | `/auth/reset-password` | `email`, `code`, `nouveau_password` | `{message}` | `OTP_INVALID`, `OTP_EXPIRED` |
-| GET | `/auth/me` | 🔒 | `{id, email, phone, role, onboarding_step, langue, fuseau_horaire, auth_providers, email_verified_at, has_password, needs_cgu, needs_consentement_sante}` | — |
+| GET | `/auth/me` | 🔒 | `{id, email, phone, nom_complet, date_naissance, sexe, localisation, onboarding_step, has_patient_profile, is_aidant, langue, fuseau_horaire, auth_providers, email_verified_at, has_password, needs_cgu, needs_consentement_sante}` | — |
 | PATCH | `/auth/me` | 🔒 `langue?`, `fuseau_horaire?`, `phone?` | objet `/auth/me` mis à jour | — |
 | POST | `/auth/change-password` | 🔒 `current_password?`, `nouveau_password` | `{message}` — `current_password` requis si un mot de passe existe déjà (compte email) ; optionnel si Google-only | `INVALID_CREDENTIALS`, `PASSWORD_TOO_WEAK` |
 | POST | `/auth/link-google` | 🔒 `id_token` | `{message, auth_providers}` | `GOOGLE_TOKEN_INVALID`, `GOOGLE_AUD_MISMATCH`, `GOOGLE_ALREADY_LINKED` |
@@ -48,19 +48,33 @@ Toutes les routes sont préfixées `/api/v1`. Toutes les routes marquées 🔒 n
 
 ---
 
-## 2. Onboarding
+## 2. Onboarding (initial — capacités, pas de rôle exclusif)
+
+Pas de `POST /onboarding/role`. Voir `auth-onboarding/SKILL.md`.
 
 | Méthode | Chemin | Entrée | Sortie | Erreurs possibles |
 |---|---|---|---|---|
-| GET | `/onboarding/status` | 🔒 | `{onboarding_step, role}` | — |
-| POST | `/onboarding/role` | 🔒 `role` (`patient`\|`aidant`) | `{onboarding_step}` | `ROLE_ALREADY_SET` |
+| GET | `/onboarding/status` | 🔒 | `{onboarding_step, has_patient_profile, is_aidant}` | — |
+| POST | `/onboarding/infos` | 🔒 `nom_complet, date_naissance, sexe, localisation, phone?` | `{onboarding_step}` | — |
+| POST | `/onboarding/besoin-suivi` | 🔒 `actif: bool` | `{onboarding_step, has_patient_profile}` — si `actif=true`, crée le profil `Patient` | — |
 | GET | `/onboarding/maladies` | — | `[{id, nom, description}]` | — |
-| POST | `/onboarding/patient/infos` | 🔒 `nom_complet, date_naissance, sexe, localisation, phone?` | `{onboarding_step}` | `ROLE_MISMATCH` |
-| POST | `/onboarding/patient/traitement` | 🔒 `en_traitement: bool, traitements: [{maladie_id, phase, date_debut?}]` | `{onboarding_step}` | — |
-| POST | `/onboarding/patient/permissions` | 🔒 `notifications_accordees: bool, batterie_exemptee: bool` | `{onboarding_step}` | — |
-| POST | `/onboarding/aidant/infos` | 🔒 `nom_complet, phone?` | `{onboarding_step}` | `ROLE_MISMATCH` |
-| POST | `/onboarding/aidant/sync` | 🔒 `code` | `{patient_id, patient_prenom}` — finalise la relation `PatientAidant` | `SYNC_CODE_INVALID`, `SYNC_CODE_EXPIRED` |
+| POST | `/onboarding/patient/traitement` | 🔒 `en_traitement: bool, traitements?: [{maladie_id, phase, date_debut?}]` | `{onboarding_step}` | `NOT_A_PATIENT` |
+| POST | `/onboarding/patient/permissions` | 🔒 `notifications_accordees: bool, batterie_exemptee: bool` | `{onboarding_step}` | `NOT_A_PATIENT` |
 | POST | `/onboarding/complete` | 🔒 | `{onboarding_step: "termine"}` | `ONBOARDING_INCOMPLETE` |
+
+> Si `besoin-suivi.actif = false` : on peut appeler `complete` immédiatement (parcours court).  
+> Si `true` : enchaîner `patient/traitement` puis `patient/permissions` avant `complete`.
+
+---
+
+## 2bis. Accueil — activer des capacités plus tard
+
+| Méthode | Chemin | Entrée | Sortie | Erreurs possibles |
+|---|---|---|---|---|
+| POST | `/patients/me/activate` | 🔒 | `{has_patient_profile: true, onboarding_hint: "patient_traitement"}` — crée `Patient` si absent (copie infos depuis `User`) | `PATIENT_ALREADY_ACTIVE` |
+| POST | `/aidants/me/sync` | 🔒 `code` | `{patient_id, patient_prenom, is_aidant: true}` — crée `PatientAidant` | `SYNC_CODE_INVALID`, `SYNC_CODE_EXPIRED`, `SYNC_SELF_NOT_ALLOWED` |
+
+> Anciennes routes `POST /onboarding/role`, `/onboarding/patient/infos`, `/onboarding/aidant/infos`, `/onboarding/aidant/sync` : **retirées** du contrat (remplacées ci-dessus).
 
 ---
 

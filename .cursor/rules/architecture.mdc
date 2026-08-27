@@ -12,3 +12,5 @@ Quand l’utilisateur mentionne `@architecture` ou que la tâche touche à la co
 3. Lire les skills du module concerné dans `skills/`
 
 Ne pas inventer d’endpoint, d’entité ou de type d’alerte absents des contrats (`data-model`, `api-contract`, `engagement-principle`).
+
+Ne pas réintroduire un choix de rôle exclusif patient/aidant — capacités cumulables (voir `.cursor/architecture.md` et `auth-onboarding`).

@@ -31,14 +31,14 @@ Neon permet de créer des branches de base de données (comme des branches Git) 
 ## Schéma cœur (V1) — vue d'ensemble
 
 ### Utilisateurs & auth (détail complet dans `auth-onboarding/SKILL.md`)
-- `users` — id, email, phone (nullable), password_hash (nullable si Google-only), google_sub (nullable unique), auth_providers, email_verified_at, role (`patient` / `aidant`, extensible), onboarding_step, langue, fuseau_horaire, created_at, updated_at, deleted_at
+- `users` — id, email, phone (nullable), password_hash (nullable si Google-only), google_sub (nullable unique), auth_providers, email_verified_at, nom_complet / date_naissance / sexe / localisation (nullable jusqu’à onboarding infos), role (**déprécié**, nullable), onboarding_step (`infos`\|`besoin_suivi`\|`patient_traitement`\|`patient_permissions`\|`termine`), langue, fuseau_horaire, created_at, updated_at, deleted_at
 - `otp_codes` — user_id (FK), code_hash, type (`inscription` / `reset_password`), expires_at, used_at, tentatives
 - `cgu_acceptances` — user_id (FK), version, accepted_at, ip
 - `consentements_sante` — user_id (FK), accepted_at
 - `sessions` — user_id (FK), refresh_token_hash, device_info, created_at, revoked_at
 
 ### Patients & traitements
-- `patients` — user_id (FK, 1-1), localisation (ville/quartier), autres champs spécifiques
+- `patients` — profil de suivi personnel **optionnel** (1-1 User) : localisation, infos alignées User, flags permissions device, photo_url
 - `maladies` — table de référence gérée côté backend (id, nom, description) — permet d'enrichir la liste sans redéploiement de l'app
 - `patient_traitements` — patient_id (FK), maladie_id (FK), phase (`debut` / `en_cours` / `maintenance` / `inconnu`), date_debut (nullable), created_at
 - `medicaments` — patient_traitements_id (FK) ou patient_id (FK) selon granularité choisie, nom, dosage, forme, horaires (structure JSON ou table dédiée `medicament_horaires`), stock_restant, seuil_alerte_stock
