@@ -29,10 +29,22 @@ Toutes les routes sont préfixées `/api/v1`. Toutes les routes marquées 🔒 n
 | POST | `/auth/logout` | 🔒 `refresh_token` | `{message}` | — |
 | POST | `/auth/forgot-password` | `email` | `{message}` — envoie OTP type `reset_password` | — |
 | POST | `/auth/reset-password` | `email`, `code`, `nouveau_password` | `{message}` | `OTP_INVALID`, `OTP_EXPIRED` |
+| GET | `/auth/me` | 🔒 | `{id, email, phone, role, onboarding_step, langue, fuseau_horaire, auth_providers, email_verified_at, has_password, needs_cgu, needs_consentement_sante}` | — |
+| PATCH | `/auth/me` | 🔒 `langue?`, `fuseau_horaire?`, `phone?` | objet `/auth/me` mis à jour | — |
+| POST | `/auth/change-password` | 🔒 `current_password?`, `nouveau_password` | `{message}` — `current_password` requis si un mot de passe existe déjà (compte email) ; optionnel si Google-only | `INVALID_CREDENTIALS`, `PASSWORD_TOO_WEAK` |
+| POST | `/auth/link-google` | 🔒 `id_token` | `{message, auth_providers}` | `GOOGLE_TOKEN_INVALID`, `GOOGLE_AUD_MISMATCH`, `GOOGLE_ALREADY_LINKED` |
+| POST | `/auth/request-email-change` | 🔒 `nouvel_email` | `{message}` — OTP envoyé au **nouvel** email | `EMAIL_ALREADY_VERIFIED` |
+| POST | `/auth/confirm-email-change` | 🔒 `nouvel_email`, `code` | `{message, email}` | `OTP_INVALID`, `OTP_EXPIRED` |
+| GET | `/auth/sessions` | 🔒 | `[{id, device_info, created_at, revoked_at}]` — sessions non révoquées | — |
+| POST | `/auth/logout-all` | 🔒 | `{message}` — révoque toutes les sessions | — |
+| DELETE | `/auth/sessions/{session_id}` | 🔒 | `{message}` | `SESSION_NOT_FOUND` |
+| DELETE | `/auth/me` | 🔒 `password?` | `{message}` — soft delete (`deleted_at`) ; `password` requis si le compte en a un | `INVALID_CREDENTIALS` |
 
 > Le `temp_token` (courte durée, ex: 15 min) sert uniquement à enchaîner OTP → mot de passe → CGU → consentement santé sans exposer un access_token complet avant que le compte soit finalisé.
 
 > **Google** : le backend vérifie l'`id_token` Google puis émet nos JWT. Si `needs_cgu` / `needs_consentement_sante` sont `true`, le client appelle les endpoints d'acceptation avec le Bearer token avant de poursuivre l'onboarding. En production, l'API est servie sur `https://educampro.edu.cm`.
+
+> **Changement d'email** : OTP de type `change_email` (voir `otp_codes.type`). Le nouvel email ne remplace l'ancien qu'après validation du code.
 
 ---
 

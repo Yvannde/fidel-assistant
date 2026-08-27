@@ -25,6 +25,10 @@ class Settings(BaseSettings):
 
     otp_expire_minutes: int = 10
     otp_max_attempts: int = 5
+    otp_resend_max_per_hour: int = 5
+    temp_token_expire_minutes: int = 15
+    password_min_length: int = 8
+    cgu_current_version: str = "v1.0"
 
     google_client_id_android: str = ""
     google_client_id_ios: str = ""
@@ -32,11 +36,14 @@ class Settings(BaseSettings):
 
     cors_origins: str = "http://localhost:3000,https://educampro.edu.cm"
 
+    # Resend (OTP / emails transactionnels) — prioritaire sur SMTP
+    resend_api_key: str = ""
+    email_from: str = "Fidel Assistant <noreply@educampro.edu.cm>"
+
     smtp_host: str = ""
     smtp_port: int = 587
     smtp_user: str = ""
     smtp_password: str = ""
-    email_from: str = "noreply@fidel.local"
 
     @property
     def cors_origins_list(self) -> list[str]:

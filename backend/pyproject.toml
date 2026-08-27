@@ -24,12 +24,16 @@ dependencies = [
   "python-multipart>=0.0.17",
   "email-validator>=2.2.0",
   "httpx>=0.28.0",
+  "google-auth>=2.36.0",
+  "resend>=2.0.0",
 ]
 
 [project.optional-dependencies]
 dev = [
   "pytest>=8.3.0",
   "pytest-asyncio>=0.24.0",
+  "httpx>=0.28.0",
+  "aiosqlite>=0.20.0",
   "ruff>=0.8.0",
   "mypy>=1.13.0",
 ]

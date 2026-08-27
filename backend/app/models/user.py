@@ -27,6 +27,7 @@ class User(Base):
     onboarding_step: Mapped[str | None] = mapped_column(String(64), nullable=True)
     langue: Mapped[str | None] = mapped_column(String(16), nullable=True)
     fuseau_horaire: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    pending_email: Mapped[str | None] = mapped_column(String(320), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
