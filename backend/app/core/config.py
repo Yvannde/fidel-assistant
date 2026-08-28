@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     sync_code_expire_minutes: int = 10
     login_max_attempts: int = 8
     login_window_minutes: int = 15
+    # Rate limits /auth — par IP
+    auth_ip_max_per_minute: int = 90
+    auth_sensitive_max_attempts: int = 30
+    auth_sensitive_window_minutes: int = 15
 
     google_client_id_android: str = ""
     google_client_id_ios: str = ""

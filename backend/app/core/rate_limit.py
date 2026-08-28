@@ -11,6 +11,8 @@ from app.core.exceptions import AppException
 _lock = Lock()
 _buckets: dict[str, list[float]] = defaultdict(list)
 
+DEFAULT_MESSAGE = "Trop de requêtes. Attends un moment puis réessaie."
+
 
 def check_rate_limit(
     key: str,
@@ -18,7 +20,7 @@ def check_rate_limit(
     max_attempts: int,
     window_seconds: int,
     error_code: str = "RATE_LIMITED",
-    message: str = "Trop d'essais. Réessaie dans quelques minutes.",
+    message: str = DEFAULT_MESSAGE,
 ) -> None:
     now = time.monotonic()
     cutoff = now - window_seconds
@@ -34,3 +36,8 @@ def check_rate_limit(
 def clear_rate_limit(key: str) -> None:
     with _lock:
         _buckets.pop(key, None)
+
+
+def clear_all_rate_limits() -> None:
+    with _lock:
+        _buckets.clear()

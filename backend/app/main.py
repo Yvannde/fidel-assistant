@@ -6,7 +6,18 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
-from app.routers import aidants, auth, health, onboarding, patients
+from app.routers import (
+    aidants,
+    auth,
+    health,
+    horaires,
+    medicaments,
+    onboarding,
+    patient_suivi,
+    patients,
+    prises,
+    traitements,
+)
 
 
 @asynccontextmanager
@@ -37,4 +48,9 @@ app.include_router(health.router, prefix=settings.api_v1_prefix, tags=["health"]
 app.include_router(auth.router, prefix=settings.api_v1_prefix)
 app.include_router(onboarding.router, prefix=settings.api_v1_prefix)
 app.include_router(patients.router, prefix=settings.api_v1_prefix)
+app.include_router(patient_suivi.router, prefix=settings.api_v1_prefix)
+app.include_router(traitements.router, prefix=settings.api_v1_prefix)
+app.include_router(medicaments.router, prefix=settings.api_v1_prefix)
+app.include_router(horaires.router, prefix=settings.api_v1_prefix)
+app.include_router(prises.router, prefix=settings.api_v1_prefix)
 app.include_router(aidants.router, prefix=settings.api_v1_prefix)

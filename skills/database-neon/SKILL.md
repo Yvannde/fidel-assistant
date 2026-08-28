@@ -38,10 +38,10 @@ Neon permet de créer des branches de base de données (comme des branches Git) 
 - `sessions` — user_id (FK), refresh_token_hash, device_info, created_at, revoked_at
 
 ### Patients & traitements
-- `patients` — profil de suivi personnel **optionnel** (1-1 User) : localisation, infos alignées User, flags permissions device, photo_url
-- `maladies` — table de référence gérée côté backend (id, nom, description) — permet d'enrichir la liste sans redéploiement de l'app
-- `patient_traitements` — patient_id (FK), maladie_id (FK), phase (`debut` / `en_cours` / `maintenance` / `inconnu`), date_debut (nullable), created_at
-- `medicaments` — patient_traitements_id (FK) ou patient_id (FK) selon granularité choisie, nom, dosage, forme, horaires (structure JSON ou table dédiée `medicament_horaires`), stock_restant, seuil_alerte_stock
+- `patients` — profil de suivi personnel **optionnel** (1-1 User) : permissions device, `notifications_discretes`, photo_url
+- **Catalogue (lecture)** : `maladies` (code slug) → `maladie_configs` → `protocoles_traitement` → `protocole_medicaments_suggeres`
+- **Contexte patient** : `patient_traitements` (maladie, phase, dates, protocole_id, lieu_suivi) + `patient_traitement_attributs` (réponses EAV par maladie)
+- **Exécution** : `medicaments` → `medicament_horaires` → `prises`
 
 ### Suivi (Volet 1 et 2)
 - `prises` — medicament_id (FK), heure_prevue, statut (`confirmee` / `manquee` / `en_attente`), confirmee_at, canal (`app` / `sms`)

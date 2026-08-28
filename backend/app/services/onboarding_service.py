@@ -17,6 +17,7 @@ from app.models import (
     Patient,
     PatientAidant,
     PatientTraitement,
+    PatientTraitementAttribut,
     SyncCode,
     User,
 )
@@ -29,9 +30,7 @@ def has_patient_profile(user: User) -> bool:
 
 
 def is_aidant(user: User) -> bool:
-    return any(
-        r.statut == "actif" and r.revoked_at is None for r in (user.aidant_relations or [])
-    )
+    return any(r.statut == "actif" and r.revoked_at is None for r in (user.aidant_relations or []))
 
 
 def capabilities(user: User) -> dict:
@@ -133,11 +132,10 @@ async def set_besoin_suivi(db: AsyncSession, *, user: User, actif: bool) -> dict
     }
 
 
-async def list_maladies(db: AsyncSession) -> list[Maladie]:
-    result = await db.execute(
-        select(Maladie).where(Maladie.actif.is_(True)).order_by(Maladie.nom)
-    )
-    return list(result.scalars().all())
+async def list_maladies(db: AsyncSession) -> list[dict]:
+    from app.services.catalog_seed_service import list_maladies_payload
+
+    return await list_maladies_payload(db)
 
 
 async def save_traitement(
@@ -174,14 +172,29 @@ async def save_traitement(
                     "Cette maladie n'est pas dans notre liste. Actualise et réessaie.",
                     status_code=400,
                 )
-            db.add(
-                PatientTraitement(
-                    patient_id=patient.user_id,
-                    maladie_id=item["maladie_id"],
-                    phase=phase,
-                    date_debut=item.get("date_debut"),
-                )
+            traitement_row = PatientTraitement(
+                patient_id=patient.user_id,
+                maladie_id=item["maladie_id"],
+                protocole_id=item.get("protocole_id"),
+                phase=phase,
+                en_traitement=True,
+                date_debut=item.get("date_debut"),
+                date_fin_prevue=item.get("date_fin_prevue"),
+                maladie_libelle=item.get("maladie_libelle"),
+                lieu_suivi=item.get("lieu_suivi"),
+                statut="actif",
             )
+            db.add(traitement_row)
+            await db.flush()
+            attributs = item.get("attributs") or {}
+            for code, val in attributs.items():
+                db.add(
+                    PatientTraitementAttribut(
+                        patient_traitement_id=traitement_row.id,
+                        code=str(code),
+                        valeur={"value": val},
+                    )
+                )
     # Onboarding initial : avancer ; post-home (déjà termine) : garder termine
     if refreshed.onboarding_step != "termine":
         refreshed.onboarding_step = "patient_permissions"
@@ -348,9 +361,7 @@ async def sync_aidant(db: AsyncSession, *, user: User, code: str) -> dict:
 
     aidant_prenom = (refreshed.nom_complet or "Quelqu'un").split()[0]
     patient_prenom = (sync.patient.nom_complet or "Patient").split()[0]
-    contenu = (
-        f"{aidant_prenom} est maintenant connecté(e) à ton suivi sur {settings.app_name}."
-    )
+    contenu = f"{aidant_prenom} est maintenant connecté(e) à ton suivi sur {settings.app_name}."
     db.add(
         NotificationLog(
             destinataire_id=sync.patient_id,
@@ -390,6 +401,12 @@ async def get_patient_me(db: AsyncSession, *, user: User) -> dict:
     }
 
 
+async def ensure_default_maladies(db: AsyncSession) -> None:
+    from app.services.catalog_seed_service import ensure_catalogue
+
+    await ensure_catalogue(db)
+
+
 DEFAULT_MALADIES = [
     ("Tuberculose", "Traitement antituberculeux"),
     ("Diabète", "Suivi glycémique et traitement"),
@@ -397,12 +414,3 @@ DEFAULT_MALADIES = [
     ("VIH", "Traitement antirétroviral"),
     ("Autre", "Autre pathologie chronique"),
 ]
-
-
-async def ensure_default_maladies(db: AsyncSession) -> None:
-    result = await db.execute(select(Maladie).limit(1))
-    if result.scalar_one_or_none() is not None:
-        return
-    for nom, description in DEFAULT_MALADIES:
-        db.add(Maladie(nom=nom, description=description, actif=True))
-    await db.commit()

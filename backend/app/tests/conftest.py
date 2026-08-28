@@ -20,10 +20,17 @@ from app.db.session import get_db
 from app.main import app
 from app.models import (  # noqa: F401 — register metadata
     Maladie,
+    MaladieConfig,
+    Medicament,
+    MedicamentHoraire,
     NotificationLog,
     Patient,
     PatientAidant,
     PatientTraitement,
+    PatientTraitementAttribut,
+    Prise,
+    ProtocoleMedicamentSuggere,
+    ProtocoleTraitement,
     SyncCode,
     User,
 )
@@ -39,6 +46,7 @@ def _compile_jsonb_sqlite(_type: Any, _compiler: Any, **_kw: Any) -> str:
 def _compile_pguuid_sqlite(type_: Any, compiler: Any, **kw: Any) -> str:
     return compiler.visit_uuid(Uuid(as_uuid=getattr(type_, "as_uuid", True)), **kw)
 
+
 @pytest.fixture
 def otp_inbox() -> dict[str, str]:
     """Dernier OTP envoyé par email (clé = destinataire)."""
@@ -53,6 +61,18 @@ def _mock_otp_email(monkeypatch: pytest.MonkeyPatch, otp_inbox: dict[str, str]) 
     monkeypatch.setattr("app.services.otp_service.send_otp_email", _fake_send)
 
 
+@pytest.fixture(autouse=True)
+def _rate_limit_isolation(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Isole les buckets mémoire et désactive les limiteurs HTTP /auth en test."""
+    from app.core.config import settings
+    from app.core.rate_limit import clear_all_rate_limits
+
+    monkeypatch.setattr(settings, "app_env", "test")
+    clear_all_rate_limits()
+    yield
+    clear_all_rate_limits()
+
+
 @pytest_asyncio.fixture
 async def db_session() -> AsyncIterator[AsyncSession]:
     engine = create_async_engine(
@@ -65,6 +85,10 @@ async def db_session() -> AsyncIterator[AsyncSession]:
     cols_to_clear = [
         User.__table__.c.auth_providers,
         PatientAidant.__table__.c.niveau_permission,
+        MaladieConfig.__table__.c.questions_onboarding,
+        MaladieConfig.__table__.c.constantes_prioritaires,
+        ProtocoleMedicamentSuggere.__table__.c.horaires_suggestion,
+        MedicamentHoraire.__table__.c.jours,
     ]
     previous_defaults = {c: c.server_default for c in cols_to_clear}
     for col in cols_to_clear:

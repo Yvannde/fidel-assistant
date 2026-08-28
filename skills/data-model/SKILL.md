@@ -144,38 +144,119 @@ Un user **sans** ligne `Patient` peut quand même être aidant.
 | date_naissance | date | idem |
 | sexe | enum | idem |
 | photo_url | string | nullable |
-| notifications_accordees | boolean | nullable / défaut false — renseigné à l’étape permissions |
-| batterie_exemptee | boolean | nullable / défaut false — Android |
+| notifications_accordees | boolean | |
+| batterie_exemptee | boolean | |
+| notifications_discretes | boolean | défaut false — ex. VIH |
+| created_at / updated_at | timestamp | |
+
+---
+
+## 7. `Maladie` — table de référence (catalogue)
+
+| Champ | Type | Contraintes / Notes |
+|---|---|---|
+| id | UUID | |
+| code | string | **unique**, slug stable (`tuberculose`, `diabete`, `hypertension`, `vih`, `autre`) — clé de recherche |
+| nom | string | libellé affiché |
+| description | text | nullable |
+| actif | boolean | permet de désactiver une maladie sans la supprimer |
 | created_at | timestamp | |
 | updated_at | timestamp | |
 
+Gérée côté backend, enrichissable sans nouvelle version de l'app mobile.  
+**Ne pas** y stocker les réponses patient ni les protocoles : tables dédiées ci-dessous.
+
 ---
 
-## 7. `Maladie` — table de référence
+## 7bis. `MaladieConfig` — configuration de suivi par maladie (1-1)
+
+| Champ | Type | Contraintes / Notes |
+|---|---|---|
+| maladie_id | UUID (FK → Maladie, PK) | |
+| questions_onboarding | json | schéma des champs supplémentaires étape C (`code`, `type`, `label`, `options`) |
+| constantes_prioritaires | json | ex. `["glycemie", "poids"]` — guide la home |
+| duree_traitement_jours_typique | integer | nullable — ex. 180 pour TB |
+| notifications_discretes_defaut | boolean | ex. VIH |
+| created_at / updated_at | timestamp | |
+
+---
+
+## 7ter. `ProtocoleTraitement` — protocoles catalogue (suggestions)
 
 | Champ | Type | Contraintes / Notes |
 |---|---|---|
 | id | UUID | |
-| nom | string | |
-| description | text | nullable |
-| actif | boolean | permet de désactiver une maladie sans la supprimer |
+| maladie_id | UUID (FK) | indexé |
+| code | string | unique par maladie (`tb_standard`, `db_metformine`, …) |
+| libelle | string | |
+| phase_cible | enum/string | nullable — `debut`, `en_cours`, `maintenance` |
+| duree_jours | integer | nullable |
+| ordre | integer | affichage |
+| actif | boolean | |
+| created_at / updated_at | timestamp | |
 
-Gérée côté backend, enrichissable sans nouvelle version de l'app mobile.
+Index recommandé : `(maladie_id, phase_cible, actif)`.
 
 ---
 
-## 8. `PatientTraitement`
+## 7quater. `ProtocoleMedicamentSuggere` — médicaments suggérés dans un protocole
 
 | Champ | Type | Contraintes / Notes |
 |---|---|---|
 | id | UUID | |
-| patient_id | UUID (FK → Patient) | |
-| maladie_id | UUID (FK → Maladie) | |
+| protocole_id | UUID (FK) | indexé |
+| nom, dosage, forme | string | |
+| prise_avec_repas | enum/string | nullable — `avant_repas`, `apres_repas`, `indifferent` |
+| horaires_suggestion | json | `[{heure, jours}]` — préremplissage wizard home |
+| ordre, actif | | |
+| created_at / updated_at | timestamp | |
+
+---
+
+## Architecture en 4 couches (rappel)
+
+```
+Catalogue (lecture)     maladies → maladie_configs → protocoles → protocole_medicaments_suggeres
+Contexte patient        patient_traitements (+ lien protocole_id optionnel)
+Attributs maladie       patient_traitement_attributs (EAV : code + valeur JSON)
+Exécution               medicaments → medicament_horaires → prises
+```
+
+---
+
+## 8. `PatientTraitement` — contexte pathologique du patient
+
+| Champ | Type | Contraintes / Notes |
+|---|---|---|
+| id | UUID | |
+| patient_id | UUID (FK → Patient) | indexé |
+| maladie_id | UUID (FK → Maladie) | indexé |
+| protocole_id | UUID (FK → ProtocoleTraitement) | nullable — si l'utilisateur a choisi un protocole suggéré |
 | phase | enum | `debut`, `en_cours`, `maintenance`, `inconnu` |
-| date_debut | date | nullable, optionnel |
-| created_at | timestamp | |
+| en_traitement | boolean | |
+| date_debut | date | **obligatoire** si `en_traitement=true` (règle API) |
+| date_fin_prevue | date | nullable |
+| maladie_libelle | string | nullable — si maladie = `autre` |
+| lieu_suivi | string | nullable — hôpital / CMS |
+| statut | enum | `actif`, `suspendu`, `termine` — indexé |
+| created_at / updated_at | timestamp | |
 
-Un patient peut avoir plusieurs traitements actifs simultanément (plusieurs maladies).
+Un patient peut avoir plusieurs traitements actifs simultanément (plusieurs maladies).  
+Les réponses spécifiques (type diabète, DOT, etc.) → `PatientTraitementAttribut`, pas ici.
+
+---
+
+## 8bis. `PatientTraitementAttribut` — réponses par maladie (EAV)
+
+| Champ | Type | Contraintes / Notes |
+|---|---|---|
+| id | UUID | |
+| patient_traitement_id | UUID (FK) | indexé |
+| code | string | indexé — ex. `type_diabete`, `dot_supervise` |
+| valeur | json | `{ "value": ... }` |
+| created_at / updated_at | timestamp | |
+
+Contrainte unique : `(patient_traitement_id, code)`.
 
 ---
 
@@ -188,9 +269,12 @@ Un patient peut avoir plusieurs traitements actifs simultanément (plusieurs mal
 | nom | string | |
 | dosage | string | |
 | forme | enum | comprimé, sirop, injection, etc. |
+| prise_avec_repas | enum/string | nullable |
+| instructions | text | nullable |
 | stock_restant | integer | nullable |
-| seuil_alerte_stock | integer | nullable, déclenche une alerte de renouvellement |
-| created_at | timestamp | |
+| seuil_alerte_stock | integer | nullable |
+| actif | boolean | |
+| created_at / updated_at | timestamp | |
 
 ---
 
@@ -202,7 +286,8 @@ Un patient peut avoir plusieurs traitements actifs simultanément (plusieurs mal
 | medicament_id | UUID (FK → Medicament) | |
 | heure | time | ex: `08:00` |
 | jours | string/json | jours de la semaine concernés, ou "tous les jours" |
-| actif | boolean | permet de suspendre un horaire sans le supprimer |
+| actif | boolean | |
+| created_at / updated_at | timestamp | |
 
 Un médicament peut avoir plusieurs horaires de prise par jour.
 

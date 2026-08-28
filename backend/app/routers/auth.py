@@ -12,6 +12,8 @@ from app.deps import (
     get_db,
     get_user_from_temp_or_access,
     get_user_from_temp_token,
+    rate_limit_auth_action,
+    rate_limit_auth_ip,
 )
 from app.models import User
 from app.schemas.auth import (
@@ -45,10 +47,28 @@ from app.schemas.auth import (
 )
 from app.services import auth_service
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(
+    prefix="/auth",
+    tags=["auth"],
+    dependencies=[Depends(rate_limit_auth_ip)],
+)
+
+_rl_register = Depends(rate_limit_auth_action("register"))
+_rl_resend = Depends(rate_limit_auth_action("resend_otp"))
+_rl_verify = Depends(rate_limit_auth_action("verify_otp"))
+_rl_set_password = Depends(rate_limit_auth_action("set_password"))
+_rl_login = Depends(rate_limit_auth_action("login"))
+_rl_google = Depends(rate_limit_auth_action("google"))
+_rl_refresh = Depends(rate_limit_auth_action("refresh"))
+_rl_forgot = Depends(rate_limit_auth_action("forgot_password"))
+_rl_reset = Depends(rate_limit_auth_action("reset_password"))
+_rl_change_pw = Depends(rate_limit_auth_action("change_password"))
+_rl_link_google = Depends(rate_limit_auth_action("link_google"))
+_rl_email_change = Depends(rate_limit_auth_action("email_change"))
+_rl_delete = Depends(rate_limit_auth_action("delete_account"))
 
 
-@router.post("/register", response_model=MessageOut)
+@router.post("/register", response_model=MessageOut, dependencies=[_rl_register])
 async def register(body: RegisterIn, db: Annotated[AsyncSession, Depends(get_db)]) -> MessageOut:
     message = await auth_service.register(
         db,
@@ -59,13 +79,13 @@ async def register(body: RegisterIn, db: Annotated[AsyncSession, Depends(get_db)
     return MessageOut(message=message)
 
 
-@router.post("/resend-otp", response_model=MessageOut)
+@router.post("/resend-otp", response_model=MessageOut, dependencies=[_rl_resend])
 async def resend_otp(body: ResendOtpIn, db: Annotated[AsyncSession, Depends(get_db)]) -> MessageOut:
     message = await auth_service.resend_otp(db, email=body.email, otp_type=body.type)
     return MessageOut(message=message)
 
 
-@router.post("/verify-otp", response_model=TempTokenOut)
+@router.post("/verify-otp", response_model=TempTokenOut, dependencies=[_rl_verify])
 async def verify_otp(
     body: VerifyOtpIn, db: Annotated[AsyncSession, Depends(get_db)]
 ) -> TempTokenOut:
@@ -73,7 +93,7 @@ async def verify_otp(
     return TempTokenOut(temp_token=token)
 
 
-@router.post("/set-password", response_model=MessageOut)
+@router.post("/set-password", response_model=MessageOut, dependencies=[_rl_set_password])
 async def set_password(
     body: SetPasswordIn,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -106,7 +126,7 @@ async def accept_consentement_sante(
     return MessageOut(message=message)
 
 
-@router.post("/login", response_model=TokenPairOut)
+@router.post("/login", response_model=TokenPairOut, dependencies=[_rl_login])
 async def login(body: LoginIn, db: Annotated[AsyncSession, Depends(get_db)]) -> TokenPairOut:
     data = await auth_service.login(
         db,
@@ -117,7 +137,7 @@ async def login(body: LoginIn, db: Annotated[AsyncSession, Depends(get_db)]) -> 
     return TokenPairOut(**data)
 
 
-@router.post("/google", response_model=GoogleAuthOut)
+@router.post("/google", response_model=GoogleAuthOut, dependencies=[_rl_google])
 async def google_login(
     body: GoogleAuthIn, db: Annotated[AsyncSession, Depends(get_db)]
 ) -> GoogleAuthOut:
@@ -131,7 +151,7 @@ async def google_login(
     return GoogleAuthOut(**data)
 
 
-@router.post("/refresh", response_model=AccessTokenOut)
+@router.post("/refresh", response_model=AccessTokenOut, dependencies=[_rl_refresh])
 async def refresh(body: RefreshIn, db: Annotated[AsyncSession, Depends(get_db)]) -> AccessTokenOut:
     data = await auth_service.refresh_access(db, refresh_token=body.refresh_token)
     return AccessTokenOut(**data)
@@ -147,7 +167,7 @@ async def logout(
     return MessageOut(message=message)
 
 
-@router.post("/forgot-password", response_model=MessageOut)
+@router.post("/forgot-password", response_model=MessageOut, dependencies=[_rl_forgot])
 async def forgot_password(
     body: ForgotPasswordIn, db: Annotated[AsyncSession, Depends(get_db)]
 ) -> MessageOut:
@@ -155,7 +175,7 @@ async def forgot_password(
     return MessageOut(message=message)
 
 
-@router.post("/reset-password", response_model=MessageOut)
+@router.post("/reset-password", response_model=MessageOut, dependencies=[_rl_reset])
 async def reset_password(
     body: ResetPasswordIn, db: Annotated[AsyncSession, Depends(get_db)]
 ) -> MessageOut:
@@ -194,7 +214,7 @@ async def update_me(
     return MeOut(**data)
 
 
-@router.post("/change-password", response_model=MessageOut)
+@router.post("/change-password", response_model=MessageOut, dependencies=[_rl_change_pw])
 async def change_password(
     body: ChangePasswordIn,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -209,7 +229,7 @@ async def change_password(
     return MessageOut(message=message)
 
 
-@router.post("/link-google", response_model=LinkGoogleOut)
+@router.post("/link-google", response_model=LinkGoogleOut, dependencies=[_rl_link_google])
 async def link_google(
     body: LinkGoogleIn,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -219,19 +239,25 @@ async def link_google(
     return LinkGoogleOut(**data)
 
 
-@router.post("/request-email-change", response_model=MessageOut)
+@router.post(
+    "/request-email-change",
+    response_model=MessageOut,
+    dependencies=[_rl_email_change],
+)
 async def request_email_change(
     body: RequestEmailChangeIn,
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(get_current_user)],
 ) -> MessageOut:
-    message = await auth_service.request_email_change(
-        db, user=user, nouvel_email=body.nouvel_email
-    )
+    message = await auth_service.request_email_change(db, user=user, nouvel_email=body.nouvel_email)
     return MessageOut(message=message)
 
 
-@router.post("/confirm-email-change", response_model=EmailChangeOut)
+@router.post(
+    "/confirm-email-change",
+    response_model=EmailChangeOut,
+    dependencies=[_rl_email_change],
+)
 async def confirm_email_change(
     body: ConfirmEmailChangeIn,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -277,7 +303,7 @@ async def revoke_session(
     return MessageOut(message=message)
 
 
-@router.delete("/me", response_model=MessageOut)
+@router.delete("/me", response_model=MessageOut, dependencies=[_rl_delete])
 async def delete_me(
     body: DeleteAccountIn,
     db: Annotated[AsyncSession, Depends(get_db)],

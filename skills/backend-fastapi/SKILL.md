@@ -93,4 +93,4 @@ Voir `auth-onboarding/SKILL.md` pour le flux complet. Côté implémentation Fas
 ## CORS et sécurité HTTP
 
 - CORS restreint aux origines connues (app mobile via son domaine d'API, pas de wildcard `*` en prod)
-- Rate limiting sur les routes sensibles (login, OTP, mot de passe oublié) pour limiter le brute-force — même basique au départ (ex: `slowapi`), c'est un prérequis, pas un "nice to have"
+- Rate limiting sur **toutes** les routes `/auth/*` (plafond IP global) + plafonds IP plus stricts sur les actions sensibles (login, OTP, Google, refresh, mots de passe, email-change, delete) via `app/core/rate_limit.py` (mémoire process, V1 mono-instance). Login : aussi limite par email (`LOGIN_RATE_LIMITED`). Config : `AUTH_IP_MAX_PER_MINUTE`, `AUTH_SENSITIVE_MAX_ATTEMPTS`, `AUTH_SENSITIVE_WINDOW_MINUTES`. En `APP_ENV=test`, les limiteurs HTTP sont désactivés.

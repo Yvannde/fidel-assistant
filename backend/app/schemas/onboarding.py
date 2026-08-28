@@ -33,14 +33,22 @@ class BesoinSuiviOut(BaseModel):
 
 class MaladieOut(BaseModel):
     id: UUID
+    code: str
     nom: str
     description: str | None = None
+    constantes_prioritaires: list[str] = []
+    questions_onboarding: list[dict[str, object]] = []
 
 
 class TraitementItemIn(BaseModel):
     maladie_id: UUID
     phase: str = Field(pattern="^(debut|en_cours|maintenance|inconnu)$")
     date_debut: date | None = None
+    date_fin_prevue: date | None = None
+    protocole_id: UUID | None = None
+    maladie_libelle: str | None = Field(default=None, max_length=255)
+    lieu_suivi: str | None = Field(default=None, max_length=255)
+    attributs: dict[str, object] | None = None
 
 
 class TraitementIn(BaseModel):

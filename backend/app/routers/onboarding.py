@@ -58,9 +58,8 @@ async def onboarding_besoin_suivi(
 
 @router.get("/maladies", response_model=list[MaladieOut])
 async def onboarding_maladies(db: Annotated[AsyncSession, Depends(get_db)]) -> list[MaladieOut]:
-    await onboarding_service.ensure_default_maladies(db)
     rows = await onboarding_service.list_maladies(db)
-    return [MaladieOut(id=m.id, nom=m.nom, description=m.description) for m in rows]
+    return [MaladieOut(**row) for row in rows]
 
 
 @router.post("/patient/traitement", response_model=OnboardingStepOut)
