@@ -4,12 +4,14 @@ from app.models.catalog import MaladieConfig, ProtocoleMedicamentSuggere, Protoc
 from app.models.medication import Medicament, MedicamentHoraire, Prise
 from app.models.notification import NotificationLog
 from app.models.patient import (
+    CheckIn,
     ContactUrgence,
     Maladie,
     Patient,
     PatientAidant,
     PatientTraitement,
     PatientTraitementAttribut,
+    SosAlerte,
     SyncCode,
 )
 from app.models.user import (
@@ -36,6 +38,8 @@ __all__ = [
     "PatientAidant",
     "SyncCode",
     "ContactUrgence",
+    "CheckIn",
+    "SosAlerte",
     "Medicament",
     "MedicamentHoraire",
     "Prise",

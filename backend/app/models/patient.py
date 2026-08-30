@@ -65,6 +65,12 @@ class Patient(Base):
     contacts_urgence: Mapped[list[ContactUrgence]] = relationship(
         back_populates="patient", cascade="all, delete-orphan"
     )
+    check_ins: Mapped[list[CheckIn]] = relationship(
+        back_populates="patient", cascade="all, delete-orphan"
+    )
+    sos_alertes: Mapped[list[SosAlerte]] = relationship(
+        back_populates="patient", cascade="all, delete-orphan"
+    )
 
 
 class Maladie(Base):
@@ -244,3 +250,49 @@ class ContactUrgence(Base):
     )
 
     patient: Mapped[Patient] = relationship(back_populates="contacts_urgence")
+
+
+class CheckIn(Base):
+    __tablename__ = "check_ins"
+    __table_args__ = (UniqueConstraint("patient_id", "date", name="uq_check_ins_patient_date"),)
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    patient_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("patients.user_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    statut: Mapped[str] = mapped_column(String(32), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    patient: Mapped[Patient] = relationship(back_populates="check_ins")
+
+
+class SosAlerte(Base):
+    __tablename__ = "sos_alertes"
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    patient_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("patients.user_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    statut: Mapped[str] = mapped_column(
+        String(32), nullable=False, server_default="en_attente", index=True
+    )
+    annulable_jusqu_a: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    envoye_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    annule_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    patient: Mapped[Patient] = relationship(back_populates="sos_alertes")

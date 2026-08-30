@@ -16,6 +16,7 @@ from app.routers import (
     patient_suivi,
     patients,
     prises,
+    sos,
     traitements,
 )
 
@@ -53,4 +54,5 @@ app.include_router(traitements.router, prefix=settings.api_v1_prefix)
 app.include_router(medicaments.router, prefix=settings.api_v1_prefix)
 app.include_router(horaires.router, prefix=settings.api_v1_prefix)
 app.include_router(prises.router, prefix=settings.api_v1_prefix)
+app.include_router(sos.router, prefix=settings.api_v1_prefix)
 app.include_router(aidants.router, prefix=settings.api_v1_prefix)

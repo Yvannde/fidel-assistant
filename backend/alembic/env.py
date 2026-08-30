@@ -9,6 +9,7 @@ from app.db.base import Base
 # Import modèles pour autogenerate Alembic
 from app.models import (  # noqa: F401
     CguAcceptance,
+    CheckIn,
     ConsentementSante,
     ContactUrgence,
     Maladie,
@@ -22,6 +23,7 @@ from app.models import (  # noqa: F401
     ProtocoleMedicamentSuggere,
     ProtocoleTraitement,
     Session,
+    SosAlerte,
     User,
 )
 

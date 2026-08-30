@@ -1,7 +1,8 @@
+from datetime import date
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.deps import get_current_user, get_db
@@ -11,9 +12,15 @@ from app.schemas.aidant import (
     AidantRelationOut,
     MessageOut,
 )
+from app.schemas.checkin_sos import CheckInIn, CheckInOut, SosTriggerOut
 from app.schemas.contact_urgence import ContactUrgenceIn, ContactUrgenceOut
 from app.schemas.onboarding import ActivatePatientOut, PatientOut, SyncCodeOut
-from app.services import aidant_service, contact_urgence_service, onboarding_service
+from app.services import (
+    aidant_service,
+    checkin_sos_service,
+    contact_urgence_service,
+    onboarding_service,
+)
 
 router = APIRouter(prefix="/patients", tags=["patients"])
 
@@ -116,3 +123,32 @@ async def delete_contact_urgence(
             db, user=user, contact_id=contact_id
         )
     )
+
+
+@router.post("/me/check-in", response_model=CheckInOut, status_code=201)
+async def create_check_in(
+    body: CheckInIn,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> CheckInOut:
+    return CheckInOut(
+        **await checkin_sos_service.create_check_in(db, user=user, statut=body.statut)
+    )
+
+
+@router.get("/me/check-in", response_model=list[CheckInOut])
+async def list_check_ins(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+    depuis: Annotated[date | None, Query()] = None,
+) -> list[CheckInOut]:
+    rows = await checkin_sos_service.list_check_ins(db, user=user, depuis=depuis)
+    return [CheckInOut(**row) for row in rows]
+
+
+@router.post("/me/sos", response_model=SosTriggerOut, status_code=201)
+async def trigger_sos(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> SosTriggerOut:
+    return SosTriggerOut(**await checkin_sos_service.trigger_sos(db, user=user))

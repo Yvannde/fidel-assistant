@@ -51,7 +51,8 @@ Neon permet de créer des branches de base de données (comme des branches Git) 
 - `patient_aidant` — patient_id (FK), aidant_id (FK), statut (`actif` / `revoque`), niveau_permission (structure à définir : ex. accès observance oui/non, accès constantes oui/non), created_at, revoked_at
 - `sync_codes` — patient_id (FK), code, expires_at, used_at
 - `contacts_urgence` — patient_id (FK), nom, telephone, relation
-- `check_ins` — patient_id (FK), date, statut (`ca_va` / `pas_top` / `sans_reponse`), created_at
+- `check_ins` — patient_id (FK), date, statut (`ca_va` / `pas_top` / `sans_reponse`), created_at — unique (patient_id, date)
+- `sos_alertes` — patient_id (FK), statut (`en_attente` / `envoye` / `annule`), annulable_jusqu_a, envoye_at, annule_at
 
 ### Moteur de notification centralisé (Volet 7)
 - `preferences_consentement` — user_id (FK), type_alerte (ex: `contact_medecin_tension`, `alerte_checkin_absence`), toujours_demander (bool), regle_auto (nullable, ex: "absence 48h")

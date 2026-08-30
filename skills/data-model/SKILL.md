@@ -371,11 +371,28 @@ Utilisé par le bouton SOS et l'escalade du Volet 1/3.
 |---|---|---|
 | id | UUID | |
 | patient_id | UUID (FK → Patient) | |
-| date | date | |
+| date | date | unique avec `patient_id` — un check-in par jour |
 | statut | enum | `ca_va`, `pas_top`, `sans_reponse` |
 | created_at | timestamp | |
 
 Un check-in par jour et par patient.
+
+---
+
+## 16bis. `SosAlerte`
+
+| Champ | Type | Contraintes / Notes |
+|---|---|---|
+| id | UUID | |
+| patient_id | UUID (FK → Patient) | |
+| statut | enum | `en_attente`, `envoye`, `annule` |
+| annulable_jusqu_a | timestamp | fenêtre d’annulation (30 s par défaut) |
+| envoye_at | timestamp | nullable — moment où l’alerte est considérée envoyée |
+| annule_at | timestamp | nullable |
+| created_at | timestamp | |
+| updated_at | timestamp | |
+
+Le geste SOS **est** le consentement (voir `engagement-principle`). Après `annulable_jusqu_a`, le moteur journalise `sos_declenche` dans `NotificationLog` (contacts d’urgence dans `declencheur` ; envoi SMS réel = plus tard).
 
 ---
 
