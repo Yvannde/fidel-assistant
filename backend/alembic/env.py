@@ -9,19 +9,26 @@ from app.db.base import Base
 # Import modèles pour autogenerate Alembic
 from app.models import (  # noqa: F401
     CguAcceptance,
+    CheckIn,
     ConsentementSante,
+    Constante,
+    ContactUrgence,
     Maladie,
     MaladieConfig,
     Medicament,
     MedicamentHoraire,
+    NotificationLog,
     OtpCode,
     Patient,
     PatientTraitement,
+    PreferenceConsentement,
     Prise,
     ProtocoleMedicamentSuggere,
     ProtocoleTraitement,
     Session,
+    SosAlerte,
     User,
+    VoixRappel,
 )
 
 config = context.config

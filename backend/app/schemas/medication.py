@@ -38,6 +38,7 @@ class MedicamentUpdateIn(BaseModel):
     prise_avec_repas: str | None = Field(default=None, max_length=32)
     instructions: str | None = None
     actif: bool | None = None
+    seuil_alerte_stock: int | None = Field(default=None, ge=0)
 
 
 class MedicamentStockIn(BaseModel):

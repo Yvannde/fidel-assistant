@@ -86,7 +86,7 @@ Pas de `POST /onboarding/role`. Voir `auth-onboarding/SKILL.md`.
 |---|---|---|---|---|
 | GET | `/patients/me/dashboard` | 🔒 | `{prochaine_action, medicaments_configures, notifications_accordees, traitements[], prises_aujourdhui[]}` — `prochaine_action` : `activer_notifications` \| `configurer_medicaments` \| `aucune` | `NOT_A_PATIENT` |
 | GET | `/patients/me` | 🔒 | objet `Patient` complet | `NOT_A_PATIENT` |
-| PATCH | `/patients/me` | 🔒 champs modifiables du `Patient` | objet `Patient` mis à jour | — |
+| PATCH | `/patients/me` | 🔒 `localisation?`, `nom_complet?`, `photo_url?`, `notifications_accordees?`, `batterie_exemptee?`, `notifications_discretes?` | objet `Patient` mis à jour | `NOT_A_PATIENT` |
 | POST | `/patients/me/sync-code` | 🔒 | `{code, qr_payload, expires_at}` | — |
 | GET | `/patients/me/aidants` | 🔒 | `[{aidant_id, nom, statut, niveau_permission}]` | — |
 | PATCH | `/patients/me/aidants/{aidant_id}/permissions` | 🔒 `niveau_permission` | objet mis à jour | `AIDANT_NOT_FOUND` |
@@ -94,8 +94,9 @@ Pas de `POST /onboarding/role`. Voir `auth-onboarding/SKILL.md`.
 | GET | `/patients/me/contacts-urgence` | 🔒 | `[ContactUrgence]` | — |
 | POST | `/patients/me/contacts-urgence` | 🔒 `nom, telephone, relation` | `ContactUrgence` créé | — |
 | DELETE | `/patients/me/contacts-urgence/{id}` | 🔒 | `{message}` | `CONTACT_NOT_FOUND` |
-| GET | `/patients/me/voix-rappel` | 🔒 | `VoixRappel` actuelle | — |
-| PUT | `/patients/me/voix-rappel` | 🔒 `type` (`systeme`\|`personnalisee`), fichier audio si personnalisée | `VoixRappel` | `FICHIER_AUDIO_INVALIDE` |
+| GET | `/patients/me/voix-rappel` | 🔒 | `VoixRappel` actuelle (défaut `systeme` si aucune) | `NOT_A_PATIENT` |
+| PUT | `/patients/me/voix-rappel` | 🔒 multipart : `type` (`systeme`\|`personnalisee`), `fichier` (obligatoire si `personnalisee`) — **mp3 / m4a / aac / ogg / opus**, max **2 Mo** | `VoixRappel` | `FICHIER_AUDIO_INVALIDE`, `FICHIER_AUDIO_TROP_LOURD`, `NOT_A_PATIENT` |
+| GET | `/patients/me/voix-rappel/fichier` | 🔒 | flux audio binaire | `VOIX_NOT_FOUND`, `NOT_A_PATIENT` |
 
 ---
 
@@ -152,9 +153,9 @@ Pas de `POST /onboarding/role`. Voir `auth-onboarding/SKILL.md`.
 | Méthode | Chemin | Entrée | Sortie | Erreurs possibles |
 |---|---|---|---|---|
 | GET | `/aidants/me/patients` | 🔒 | `[{patient_id, prenom, niveau_permission}]` | `NOT_AN_AIDANT` |
-| GET | `/aidants/me/patients/{patient_id}/observance` | 🔒 | résumé de prises (selon `niveau_permission`) | `PERMISSION_REFUSEE`, `PATIENT_NOT_FOUND` |
+| GET | `/aidants/me/patients/{patient_id}/observance` | 🔒 `depuis?`, `jusqu_a?` (défaut: 7 derniers jours) | `{patient_id, patient_prenom, depuis, jusqu_a, total, confirmees, manquees, en_attente, taux_observance}` — selon `niveau_permission.observance` | `PERMISSION_REFUSEE`, `PATIENT_NOT_FOUND` |
 | GET | `/aidants/me/patients/{patient_id}/constantes` | 🔒 | `[Constante]` (selon `niveau_permission`) | `PERMISSION_REFUSEE` |
-| POST | `/aidants/me/patients/{patient_id}/voix-rappel` | 🔒 fichier audio | `VoixRappel` créée pour ce patient | `PERMISSION_REFUSEE` |
+| POST | `/aidants/me/patients/{patient_id}/voix-rappel` | 🔒 multipart `fichier` — mêmes règles audio (mp3/m4a/aac/ogg/opus, ≤ 2 Mo) | `VoixRappel` créée/mise à jour pour ce patient | `PERMISSION_REFUSEE`, `FICHIER_AUDIO_INVALIDE`, `FICHIER_AUDIO_TROP_LOURD` |
 
 ---
 

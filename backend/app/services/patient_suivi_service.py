@@ -386,8 +386,16 @@ async def update_medicament(
     med = await _medicament_for_patient(
         db, patient_id=_require_patient(user).user_id, medicament_id=medicament_id
     )
-    for field in ("nom", "dosage", "forme", "prise_avec_repas", "instructions", "actif"):
-        if field in data and data[field] is not None:
+    for field in (
+        "nom",
+        "dosage",
+        "forme",
+        "prise_avec_repas",
+        "instructions",
+        "actif",
+        "seuil_alerte_stock",
+    ):
+        if field in data:
             setattr(med, field, data[field])
     await db.commit()
     med = await _medicament_for_patient(
@@ -399,13 +407,34 @@ async def update_medicament(
 async def update_stock(
     db: AsyncSession, *, user: User, medicament_id: UUID, stock_restant: int
 ) -> dict:
+    from app.services import notification_service
+
+    patient = _require_patient(user)
     med = await _medicament_for_patient(
-        db, patient_id=_require_patient(user).user_id, medicament_id=medicament_id
+        db, patient_id=patient.user_id, medicament_id=medicament_id
     )
+    ancien_stock = med.stock_restant
     med.stock_restant = stock_restant
-    alerte = (
-        med.seuil_alerte_stock is not None and stock_restant <= med.seuil_alerte_stock
-    )
+    seuil = med.seuil_alerte_stock
+    alerte = seuil is not None and stock_restant <= seuil
+    # Déclenche le moteur seulement au passage sous le seuil (évite spam)
+    etait_ok = ancien_stock is None or seuil is None or ancien_stock > seuil
+    if alerte and etait_ok:
+        await notification_service.trigger(
+            db,
+            type_alerte="stock_medicament_bas",
+            user_id=patient.user_id,
+            contexte={
+                "medicament_id": str(med.id),
+                "nom": med.nom,
+                "stock_restant": stock_restant,
+                "seuil_alerte_stock": seuil,
+            },
+            contenu=(
+                f"Il te reste {stock_restant} unité(s) de {med.nom}. "
+                "Ce n'est pas forcément grave — pense à te réapprovisionner."
+            ),
+        )
     await db.commit()
     return {"stock_restant": stock_restant, "alerte_declenchee": alerte}
 

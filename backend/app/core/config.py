@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     password_min_length: int = 8
     cgu_current_version: str = "v1.0"
     sync_code_expire_minutes: int = 10
+    sos_cancel_window_seconds: int = 30
+    media_root: str = "media"
+    voix_rappel_max_bytes: int = 2 * 1024 * 1024  # 2 Mo
     login_max_attempts: int = 8
     login_window_minutes: int = 15
     # Rate limits /auth — par IP

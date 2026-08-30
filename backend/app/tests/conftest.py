@@ -19,6 +19,9 @@ from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
 from app.models import (  # noqa: F401 — register metadata
+    CheckIn,
+    Constante,
+    ContactUrgence,
     Maladie,
     MaladieConfig,
     Medicament,
@@ -28,11 +31,14 @@ from app.models import (  # noqa: F401 — register metadata
     PatientAidant,
     PatientTraitement,
     PatientTraitementAttribut,
+    PreferenceConsentement,
     Prise,
     ProtocoleMedicamentSuggere,
     ProtocoleTraitement,
+    SosAlerte,
     SyncCode,
     User,
+    VoixRappel,
 )
 from app.models.user import CguAcceptance, ConsentementSante, OtpCode, Session  # noqa: F401
 

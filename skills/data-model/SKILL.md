@@ -371,11 +371,28 @@ Utilisé par le bouton SOS et l'escalade du Volet 1/3.
 |---|---|---|
 | id | UUID | |
 | patient_id | UUID (FK → Patient) | |
-| date | date | |
+| date | date | unique avec `patient_id` — un check-in par jour |
 | statut | enum | `ca_va`, `pas_top`, `sans_reponse` |
 | created_at | timestamp | |
 
 Un check-in par jour et par patient.
+
+---
+
+## 16bis. `SosAlerte`
+
+| Champ | Type | Contraintes / Notes |
+|---|---|---|
+| id | UUID | |
+| patient_id | UUID (FK → Patient) | |
+| statut | enum | `en_attente`, `envoye`, `annule` |
+| annulable_jusqu_a | timestamp | fenêtre d’annulation (30 s par défaut) |
+| envoye_at | timestamp | nullable — moment où l’alerte est considérée envoyée |
+| annule_at | timestamp | nullable |
+| created_at | timestamp | |
+| updated_at | timestamp | |
+
+Le geste SOS **est** le consentement (voir `engagement-principle`). Après `annulable_jusqu_a`, le moteur journalise `sos_declenche` dans `NotificationLog` (contacts d’urgence dans `declencheur` ; envoi SMS réel = plus tard).
 
 ---
 
@@ -384,11 +401,13 @@ Un check-in par jour et par patient.
 | Champ | Type | Contraintes / Notes |
 |---|---|---|
 | id | UUID | |
-| patient_id | UUID (FK → Patient) | |
+| patient_id | UUID (FK → Patient) | **unique** — une config voix active par patient |
 | type | enum | `systeme`, `personnalisee` |
-| fichier_audio_url | string | nullable si `systeme` |
-| enregistree_par | UUID (FK → User) | nullable, l'aidant qui a enregistré le message |
+| fichier_audio_url | string | nullable si `systeme` — URL API authentifiée vers le fichier |
+| enregistree_par | UUID (FK → User) | nullable, l'aidant (ou le patient) qui a enregistré le message |
 | created_at | timestamp | |
+
+**Upload (personnalisée)** : formats voix uniquement — **mp3**, **m4a/aac**, **ogg/opus**. Max **2 Mo**. Vérifier magic bytes (pas seulement l’extension / Content-Type). Rejeter le reste (`FICHIER_AUDIO_INVALIDE` / `FICHIER_AUDIO_TROP_LOURD`).
 
 ---
 
@@ -416,6 +435,11 @@ Un check-in par jour et par patient.
 | contenu | text | le message effectivement envoyé |
 | declencheur | json | donnée/événement à l'origine de la notification |
 | envoye_at | timestamp | |
+| proposition | boolean | true si une réponse oui/non/reporter est attendue |
+| reponse | enum | nullable : `oui`, `non`, `reporter` |
+| repondu_at | timestamp | nullable |
+| action_declenchee | boolean | true si une action tiers a été lancée (oui ou `regle_auto`) |
+| tiers_potentiel_id | UUID (FK → User) | nullable — aidant / tiers proposé |
 
 Aucune fonctionnalité de notification/alerte ne doit être considérée terminée si elle n'écrit pas dans `NotificationLog`.
 

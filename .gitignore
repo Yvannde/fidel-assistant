@@ -37,6 +37,7 @@ backend/coverage.xml
 backend/dist/
 backend/build/
 backend/*.egg
+backend/media/
 
 # --- Flutter / mobile ---
 mobile/.dart_tool/

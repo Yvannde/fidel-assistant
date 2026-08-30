@@ -389,6 +389,35 @@ async def get_patient_me(db: AsyncSession, *, user: User) -> dict:
     refreshed = await get_user_with_capabilities(db, user.id)
     assert refreshed is not None
     patient = _require_patient(refreshed)
+    return _serialize_patient(patient)
+
+
+async def update_patient_me(db: AsyncSession, *, user: User, data: dict) -> dict:
+    refreshed = await get_user_with_capabilities(db, user.id)
+    assert refreshed is not None
+    patient = _require_patient(refreshed)
+
+    for field in (
+        "nom_complet",
+        "localisation",
+        "photo_url",
+        "notifications_accordees",
+        "batterie_exemptee",
+        "notifications_discretes",
+    ):
+        if field not in data:
+            continue
+        value = data[field]
+        if field in ("nom_complet", "localisation") and isinstance(value, str):
+            value = value.strip()
+        setattr(patient, field, value)
+
+    await db.commit()
+    await db.refresh(patient)
+    return _serialize_patient(patient)
+
+
+def _serialize_patient(patient: Patient) -> dict:
     return {
         "user_id": patient.user_id,
         "nom_complet": patient.nom_complet,
@@ -398,6 +427,7 @@ async def get_patient_me(db: AsyncSession, *, user: User) -> dict:
         "photo_url": patient.photo_url,
         "notifications_accordees": patient.notifications_accordees,
         "batterie_exemptee": patient.batterie_exemptee,
+        "notifications_discretes": patient.notifications_discretes,
     }
 
 

@@ -44,18 +44,20 @@ Neon permet de créer des branches de base de données (comme des branches Git) 
 - **Exécution** : `medicaments` → `medicament_horaires` → `prises`
 
 ### Suivi (Volet 1 et 2)
-- `prises` — medicament_id (FK), heure_prevue, statut (`confirmee` / `manquee` / `en_attente`), confirmee_at, canal (`app` / `sms`)
-- `constantes` — patient_id (FK), type (`poids` / `tension` / `temperature` / `glycemie` / `humeur` / `sommeil`...), valeur, unite, mesure_at, source (`manuel` / `objet_connecte`)
+- `constantes` — patient_id (FK), type, valeur (JSONB), unite, mesure_at, source (`manuel` / `objet_connecte`)
+- `prises` — medicament_horaire_id (FK), heure_prevue, statut (`confirmee` / `manquee` / `en_attente`), confirmee_at, canal (`app` / `sms`)
 
 ### Réseau d'accompagnement (Volet 3)
 - `patient_aidant` — patient_id (FK), aidant_id (FK), statut (`actif` / `revoque`), niveau_permission (structure à définir : ex. accès observance oui/non, accès constantes oui/non), created_at, revoked_at
 - `sync_codes` — patient_id (FK), code, expires_at, used_at
 - `contacts_urgence` — patient_id (FK), nom, telephone, relation
-- `check_ins` — patient_id (FK), date, statut (`ca_va` / `pas_top` / `sans_reponse`), created_at
+- `check_ins` — patient_id (FK), date, statut (`ca_va` / `pas_top` / `sans_reponse`), created_at — unique (patient_id, date)
+- `sos_alertes` — patient_id (FK), statut (`en_attente` / `envoye` / `annule`), annulable_jusqu_a, envoye_at, annule_at
 
 ### Moteur de notification centralisé (Volet 7)
-- `preferences_consentement` — user_id (FK), type_alerte (ex: `contact_medecin_tension`, `alerte_checkin_absence`), toujours_demander (bool), regle_auto (nullable, ex: "absence 48h")
-- `notifications_log` — destinataire_id (FK), type, contenu, declencheur, envoye_at — journal d'audit complet, ne jamais l'omettre pour une fonctionnalité d'alerte
+- `preferences_consentement` — user_id (FK), type_alerte, toujours_demander, regle_auto (JSONB nullable)
+- `voix_rappels` — patient_id (FK unique), type (`systeme`\|`personnalisee`), fichier_audio_url, enregistree_par (FK User nullable)
+- `notifications_log` / `notification_logs` — destinataire_id, type, contenu, declencheur, envoye_at, proposition, reponse, repondu_at, action_declenchee, tiers_potentiel_id
 
 ## Migrations (Alembic)
 

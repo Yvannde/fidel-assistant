@@ -26,6 +26,7 @@ from app.db.base import Base
 if TYPE_CHECKING:
     from app.models.catalog import MaladieConfig, ProtocoleTraitement
     from app.models.medication import Medicament
+    from app.models.sante import Constante
     from app.models.user import User
 
 
@@ -62,6 +63,21 @@ class Patient(Base):
     traitements: Mapped[list[PatientTraitement]] = relationship(back_populates="patient")
     sync_codes: Mapped[list[SyncCode]] = relationship(back_populates="patient")
     aidants: Mapped[list[PatientAidant]] = relationship(back_populates="patient")
+    contacts_urgence: Mapped[list[ContactUrgence]] = relationship(
+        back_populates="patient", cascade="all, delete-orphan"
+    )
+    check_ins: Mapped[list[CheckIn]] = relationship(
+        back_populates="patient", cascade="all, delete-orphan"
+    )
+    sos_alertes: Mapped[list[SosAlerte]] = relationship(
+        back_populates="patient", cascade="all, delete-orphan"
+    )
+    constantes: Mapped[list[Constante]] = relationship(
+        "Constante", back_populates="patient", cascade="all, delete-orphan"
+    )
+    voix_rappel: Mapped[VoixRappel | None] = relationship(
+        back_populates="patient", uselist=False, cascade="all, delete-orphan"
+    )
 
 
 class Maladie(Base):
@@ -218,3 +234,98 @@ class SyncCode(Base):
     )
 
     patient: Mapped[Patient] = relationship(back_populates="sync_codes")
+
+
+class ContactUrgence(Base):
+    __tablename__ = "contacts_urgence"
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    patient_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("patients.user_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    nom: Mapped[str] = mapped_column(String(255), nullable=False)
+    telephone: Mapped[str] = mapped_column(String(32), nullable=False)
+    relation: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    patient: Mapped[Patient] = relationship(back_populates="contacts_urgence")
+
+
+class CheckIn(Base):
+    __tablename__ = "check_ins"
+    __table_args__ = (UniqueConstraint("patient_id", "date", name="uq_check_ins_patient_date"),)
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    patient_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("patients.user_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    statut: Mapped[str] = mapped_column(String(32), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    patient: Mapped[Patient] = relationship(back_populates="check_ins")
+
+
+class SosAlerte(Base):
+    __tablename__ = "sos_alertes"
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    patient_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("patients.user_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    statut: Mapped[str] = mapped_column(
+        String(32), nullable=False, server_default="en_attente", index=True
+    )
+    annulable_jusqu_a: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    envoye_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    annule_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    patient: Mapped[Patient] = relationship(back_populates="sos_alertes")
+
+
+class VoixRappel(Base):
+    __tablename__ = "voix_rappels"
+    __table_args__ = (UniqueConstraint("patient_id", name="uq_voix_rappels_patient"),)
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    patient_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("patients.user_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    type: Mapped[str] = mapped_column(String(32), nullable=False, server_default="systeme")
+    # Chemin relatif sous MEDIA_ROOT (ex: voix_rappel/<patient_id>/<uuid>.m4a)
+    fichier_audio_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    enregistree_par: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    patient: Mapped[Patient] = relationship(back_populates="voix_rappel")
