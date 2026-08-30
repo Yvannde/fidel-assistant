@@ -16,6 +16,13 @@ dependencies:
   dio: ^5.7.0
   flutter_secure_storage: ^9.2.4
   intl: any
+  # Auth / onboarding (écrans à venir)
+  google_sign_in: ^6.2.2
+  # Rappels locaux (câblage alarmes à venir)
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.10.0
+  # Navigation
+  go_router: ^14.6.2
 
 dev_dependencies:
   flutter_test:
