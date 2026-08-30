@@ -14,6 +14,7 @@ from app.models.patient import (
     SosAlerte,
     SyncCode,
 )
+from app.models.sante import Constante
 from app.models.user import (
     CguAcceptance,
     ConsentementSante,
@@ -40,6 +41,7 @@ __all__ = [
     "ContactUrgence",
     "CheckIn",
     "SosAlerte",
+    "Constante",
     "Medicament",
     "MedicamentHoraire",
     "Prise",

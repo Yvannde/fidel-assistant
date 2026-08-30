@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -13,11 +13,13 @@ from app.schemas.aidant import (
     MessageOut,
 )
 from app.schemas.checkin_sos import CheckInIn, CheckInOut, SosTriggerOut
+from app.schemas.constante import ConstanteCreateOut, ConstanteIn, ConstanteOut
 from app.schemas.contact_urgence import ContactUrgenceIn, ContactUrgenceOut
 from app.schemas.onboarding import ActivatePatientOut, PatientOut, SyncCodeOut
 from app.services import (
     aidant_service,
     checkin_sos_service,
+    constante_service,
     contact_urgence_service,
     onboarding_service,
 )
@@ -152,3 +154,36 @@ async def trigger_sos(
     user: Annotated[User, Depends(get_current_user)],
 ) -> SosTriggerOut:
     return SosTriggerOut(**await checkin_sos_service.trigger_sos(db, user=user))
+
+
+@router.get("/me/constantes", response_model=list[ConstanteOut])
+async def list_constantes(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+    type: Annotated[str | None, Query()] = None,
+    depuis: Annotated[datetime | None, Query()] = None,
+    jusqu_a: Annotated[datetime | None, Query()] = None,
+) -> list[ConstanteOut]:
+    rows = await constante_service.list_constantes(
+        db, user=user, type_=type, depuis=depuis, jusqu_a=jusqu_a
+    )
+    return [ConstanteOut(**row) for row in rows]
+
+
+@router.post("/me/constantes", response_model=ConstanteCreateOut, status_code=201)
+async def create_constante(
+    body: ConstanteIn,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> ConstanteCreateOut:
+    return ConstanteCreateOut(
+        **await constante_service.create_constante(
+            db,
+            user=user,
+            type_=body.type,
+            valeur=body.valeur,
+            unite=body.unite,
+            mesure_at=body.mesure_at,
+            source=body.source,
+        )
+    )

@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -8,8 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.deps import get_current_user, get_db
 from app.models import User
 from app.schemas.aidant import AidantPatientOut, ObservanceOut
+from app.schemas.constante import ConstanteOut
 from app.schemas.onboarding import AidantSyncIn, AidantSyncOut
-from app.services import aidant_service, onboarding_service
+from app.services import aidant_service, constante_service, onboarding_service
 
 router = APIRouter(prefix="/aidants", tags=["aidants"])
 
@@ -50,3 +51,23 @@ async def patient_observance(
             jusqu_a=jusqu_a,
         )
     )
+
+
+@router.get("/me/patients/{patient_id}/constantes", response_model=list[ConstanteOut])
+async def patient_constantes(
+    patient_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+    type: Annotated[str | None, Query()] = None,
+    depuis: Annotated[datetime | None, Query()] = None,
+    jusqu_a: Annotated[datetime | None, Query()] = None,
+) -> list[ConstanteOut]:
+    rows = await constante_service.list_aidant_constantes(
+        db,
+        user=user,
+        patient_id=patient_id,
+        type_=type,
+        depuis=depuis,
+        jusqu_a=jusqu_a,
+    )
+    return [ConstanteOut(**row) for row in rows]

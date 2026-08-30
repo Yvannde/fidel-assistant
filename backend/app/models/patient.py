@@ -26,6 +26,7 @@ from app.db.base import Base
 if TYPE_CHECKING:
     from app.models.catalog import MaladieConfig, ProtocoleTraitement
     from app.models.medication import Medicament
+    from app.models.sante import Constante
     from app.models.user import User
 
 
@@ -70,6 +71,9 @@ class Patient(Base):
     )
     sos_alertes: Mapped[list[SosAlerte]] = relationship(
         back_populates="patient", cascade="all, delete-orphan"
+    )
+    constantes: Mapped[list[Constante]] = relationship(
+        "Constante", back_populates="patient", cascade="all, delete-orphan"
     )
 
 

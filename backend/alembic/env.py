@@ -11,6 +11,7 @@ from app.models import (  # noqa: F401
     CguAcceptance,
     CheckIn,
     ConsentementSante,
+    Constante,
     ContactUrgence,
     Maladie,
     MaladieConfig,

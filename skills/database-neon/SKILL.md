@@ -44,8 +44,8 @@ Neon permet de créer des branches de base de données (comme des branches Git) 
 - **Exécution** : `medicaments` → `medicament_horaires` → `prises`
 
 ### Suivi (Volet 1 et 2)
-- `prises` — medicament_id (FK), heure_prevue, statut (`confirmee` / `manquee` / `en_attente`), confirmee_at, canal (`app` / `sms`)
-- `constantes` — patient_id (FK), type (`poids` / `tension` / `temperature` / `glycemie` / `humeur` / `sommeil`...), valeur, unite, mesure_at, source (`manuel` / `objet_connecte`)
+- `constantes` — patient_id (FK), type, valeur (JSONB), unite, mesure_at, source (`manuel` / `objet_connecte`)
+- `prises` — medicament_horaire_id (FK), heure_prevue, statut (`confirmee` / `manquee` / `en_attente`), confirmee_at, canal (`app` / `sms`)
 
 ### Réseau d'accompagnement (Volet 3)
 - `patient_aidant` — patient_id (FK), aidant_id (FK), statut (`actif` / `revoque`), niveau_permission (structure à définir : ex. accès observance oui/non, accès constantes oui/non), created_at, revoked_at

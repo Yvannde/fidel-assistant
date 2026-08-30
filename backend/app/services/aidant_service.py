@@ -149,16 +149,11 @@ async def get_patient_observance(
     depuis: date | None = None,
     jusqu_a: date | None = None,
 ) -> dict:
-    rel = await _active_relation_for_aidant(
-        db, aidant_id=user.id, patient_id=patient_id
+    rel = await assert_aidant_permission(
+        db, user=user, patient_id=patient_id, permission="observance"
     )
-    perms = _normalize_permissions(rel.niveau_permission)
-    if not perms.get("observance"):
-        raise AppException(
-            "PERMISSION_REFUSEE",
-            "Tu n'as pas l'autorisation de voir l'observance de cette personne.",
-            status_code=403,
-        )
+    # relation déjà validée ; on garde le patient pour le prénom
+    _ = rel
 
     patient = await db.get(Patient, patient_id)
     if patient is None:
@@ -212,6 +207,27 @@ async def get_patient_observance(
         "en_attente": en_attente,
         "taux_observance": taux,
     }
+
+
+async def assert_aidant_permission(
+    db: AsyncSession,
+    *,
+    user: User,
+    patient_id: UUID,
+    permission: str,
+) -> PatientAidant:
+    """Vérifie relation active + permission (`observance` / `constantes`)."""
+    rel = await _active_relation_for_aidant(
+        db, aidant_id=user.id, patient_id=patient_id
+    )
+    perms = _normalize_permissions(rel.niveau_permission)
+    if not perms.get(permission):
+        raise AppException(
+            "PERMISSION_REFUSEE",
+            f"Tu n'as pas l'autorisation « {permission} » pour cette personne.",
+            status_code=403,
+        )
+    return rel
 
 
 async def _active_relation_for_patient(
