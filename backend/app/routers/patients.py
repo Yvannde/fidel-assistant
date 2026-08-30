@@ -11,8 +11,9 @@ from app.schemas.aidant import (
     AidantRelationOut,
     MessageOut,
 )
+from app.schemas.contact_urgence import ContactUrgenceIn, ContactUrgenceOut
 from app.schemas.onboarding import ActivatePatientOut, PatientOut, SyncCodeOut
-from app.services import aidant_service, onboarding_service
+from app.services import aidant_service, contact_urgence_service, onboarding_service
 
 router = APIRouter(prefix="/patients", tags=["patients"])
 
@@ -75,4 +76,43 @@ async def revoke_aidant(
 ) -> MessageOut:
     return MessageOut(
         **await aidant_service.revoke_aidant(db, user=user, aidant_id=aidant_id)
+    )
+
+
+@router.get("/me/contacts-urgence", response_model=list[ContactUrgenceOut])
+async def list_contacts_urgence(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> list[ContactUrgenceOut]:
+    rows = await contact_urgence_service.list_contacts(db, user=user)
+    return [ContactUrgenceOut(**row) for row in rows]
+
+
+@router.post("/me/contacts-urgence", response_model=ContactUrgenceOut, status_code=201)
+async def create_contact_urgence(
+    body: ContactUrgenceIn,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> ContactUrgenceOut:
+    return ContactUrgenceOut(
+        **await contact_urgence_service.create_contact(
+            db,
+            user=user,
+            nom=body.nom,
+            telephone=body.telephone,
+            relation=body.relation,
+        )
+    )
+
+
+@router.delete("/me/contacts-urgence/{contact_id}", response_model=MessageOut)
+async def delete_contact_urgence(
+    contact_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> MessageOut:
+    return MessageOut(
+        **await contact_urgence_service.delete_contact(
+            db, user=user, contact_id=contact_id
+        )
     )

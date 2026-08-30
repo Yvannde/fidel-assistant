@@ -19,6 +19,7 @@ from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
 from app.models import (  # noqa: F401 — register metadata
+    ContactUrgence,
     Maladie,
     MaladieConfig,
     Medicament,
