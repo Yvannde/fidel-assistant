@@ -1,14 +1,16 @@
-"""Dépendances FastAPI communes (get_current_user, get_db, …)."""
+"""Dépendances FastAPI communes (get_current_user, get_db, rate-limits…)."""
 
-from collections.abc import AsyncGenerator
-from typing import Annotated
+from collections.abc import AsyncGenerator, Callable, Coroutine
+from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import Depends, Header
+from fastapi import Depends, Header, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.exceptions import AppException
+from app.core.rate_limit import check_rate_limit
 from app.core.security import decode_token
 from app.db.session import get_db as _get_db
 from app.models import User
@@ -22,6 +24,56 @@ bearer_scheme = HTTPBearer(auto_error=False)
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
     async for session in _get_db():
         yield session
+
+
+def client_ip(
+    request: Request,
+    x_forwarded_for: Annotated[str | None, Header()] = None,
+) -> str | None:
+    if x_forwarded_for:
+        return x_forwarded_for.split(",")[0].strip()
+    if request.client and request.client.host:
+        return request.client.host
+    return None
+
+
+def _rate_limit_ip_key(ip: str | None) -> str:
+    return ip or "unknown"
+
+
+async def rate_limit_auth_ip(ip: Annotated[str | None, Depends(client_ip)]) -> None:
+    """Limite globale par IP — appliquée à tout le router /auth."""
+    if settings.app_env == "test":
+        return
+    check_rate_limit(
+        f"auth:ip:{_rate_limit_ip_key(ip)}",
+        max_attempts=settings.auth_ip_max_per_minute,
+        window_seconds=60,
+        error_code="RATE_LIMITED",
+        message="Trop de requêtes d'authentification. Réessaie dans une minute.",
+    )
+
+
+def rate_limit_auth_action(
+    action: str,
+) -> Callable[..., Coroutine[Any, Any, None]]:
+    """Limite stricte par IP pour une action sensible."""
+
+    async def _dep(ip: Annotated[str | None, Depends(client_ip)]) -> None:
+        if settings.app_env == "test":
+            return
+        check_rate_limit(
+            f"auth:{action}:{_rate_limit_ip_key(ip)}",
+            max_attempts=settings.auth_sensitive_max_attempts,
+            window_seconds=settings.auth_sensitive_window_minutes * 60,
+            error_code="RATE_LIMITED",
+            message=(
+                "Trop de tentatives sur cette action. "
+                f"Réessaie dans environ {settings.auth_sensitive_window_minutes} minutes."
+            ),
+        )
+
+    return _dep
 
 
 async def get_current_user(
@@ -70,9 +122,3 @@ async def get_user_from_temp_or_access(
     if temp_token:
         return await get_user_from_temp_token(db, temp_token)
     return await get_current_user(db, credentials)
-
-
-def client_ip(x_forwarded_for: Annotated[str | None, Header()] = None) -> str | None:
-    if x_forwarded_for:
-        return x_forwarded_for.split(",")[0].strip()
-    return None

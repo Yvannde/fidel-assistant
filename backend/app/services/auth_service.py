@@ -7,6 +7,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
 from app.core.exceptions import AppException
+from app.core.rate_limit import check_rate_limit, clear_rate_limit
 from app.core.security import (
     create_access_token,
     create_opaque_refresh_token,
@@ -50,6 +51,8 @@ async def get_user_by_id(db: AsyncSession, user_id: UUID) -> User | None:
         .options(
             selectinload(User.cgu_acceptances),
             selectinload(User.consentement_sante),
+            selectinload(User.patient),
+            selectinload(User.aidant_relations),
         )
     )
     return result.scalar_one_or_none()
@@ -155,22 +158,34 @@ async def accept_consentement_sante(db: AsyncSession, *, user: User) -> str:
     if existing.scalar_one_or_none() is None:
         db.add(ConsentementSante(user_id=user.id))
         if user.onboarding_step is None:
-            user.onboarding_step = "choix_role"
+            user.onboarding_step = "infos"
         await db.commit()
     return "Consentement santé enregistré."
 
 
-async def _create_session(db: AsyncSession, user: User, device_info: str | None = None) -> str:
+async def _create_session(
+    db: AsyncSession, user: User, device_info: str | None = None
+) -> tuple[str, UUID]:
     raw = create_opaque_refresh_token()
-    db.add(
-        Session(
-            user_id=user.id,
-            refresh_token_hash=hash_token(raw),
-            device_info=device_info,
-        )
+    session = Session(
+        user_id=user.id,
+        refresh_token_hash=hash_token(raw),
+        device_info=device_info,
     )
+    db.add(session)
     await db.flush()
-    return raw
+    return raw, session.id
+
+
+def _token_extras(*, onboarding_step: str | None, user: User, session_id: UUID) -> dict:
+    from app.services.onboarding_service import capabilities
+
+    return {
+        "expires_in": settings.access_token_expire_minutes * 60,
+        "session_id": session_id,
+        "onboarding_step": onboarding_step,
+        **capabilities(user),
+    }
 
 
 async def login(
@@ -180,7 +195,21 @@ async def login(
     password: str,
     device_info: str | None = None,
 ) -> dict:
-    user = await get_user_by_email(db, email.lower())
+    email_norm = email.lower()
+    rate_key = f"login:{email_norm}"
+    check_rate_limit(
+        rate_key,
+        max_attempts=settings.login_max_attempts,
+        window_seconds=settings.login_window_minutes * 60,
+        error_code="LOGIN_RATE_LIMITED",
+        message=(
+            "Trop de tentatives de connexion. "
+            f"Attends environ {settings.login_window_minutes} minutes "
+            "ou réinitialise ton mot de passe."
+        ),
+    )
+
+    user = await get_user_by_email(db, email_norm)
     if user is None or not user.password_hash:
         raise AppException(
             "INVALID_CREDENTIALS",
@@ -190,7 +219,7 @@ async def login(
     if user.email_verified_at is None:
         raise AppException(
             "EMAIL_NOT_VERIFIED",
-            "Email non vérifié. Valide d'abord ton code OTP.",
+            "Ton email n'est pas encore vérifié. Entre le code reçu par email pour continuer.",
             status_code=403,
         )
     if not verify_password(password, user.password_hash):
@@ -200,13 +229,17 @@ async def login(
             status_code=401,
         )
 
-    refresh = await _create_session(db, user, device_info=device_info)
+    clear_rate_limit(rate_key)
+    user = await get_user_by_id(db, user.id)
+    assert user is not None
+    refresh, session_id = await _create_session(db, user, device_info=device_info)
     await db.commit()
     return {
         "access_token": create_access_token(str(user.id)),
         "refresh_token": refresh,
-        "role": user.role,
-        "onboarding_step": user.onboarding_step,
+        **_token_extras(
+            onboarding_step=user.onboarding_step, user=user, session_id=session_id
+        ),
     }
 
 
@@ -243,7 +276,7 @@ async def google_auth(
             email_verified_at=datetime.now(UTC),
             langue=langue,
             fuseau_horaire=fuseau_horaire,
-            onboarding_step="choix_role",
+            onboarding_step="infos",
         )
         db.add(user)
         await db.flush()
@@ -265,21 +298,22 @@ async def google_auth(
     needs_cgu = not any(c.version == settings.cgu_current_version for c in user.cgu_acceptances)
     needs_consent = user.consentement_sante is None
 
-    refresh = await _create_session(db, user, device_info=device_info)
+    refresh, session_id = await _create_session(db, user, device_info=device_info)
     await db.commit()
 
     return {
         "access_token": create_access_token(str(user.id)),
         "refresh_token": refresh,
-        "role": user.role,
-        "onboarding_step": user.onboarding_step,
         "is_new_user": is_new,
         "needs_cgu": needs_cgu,
         "needs_consentement_sante": needs_consent,
+        **_token_extras(
+            onboarding_step=user.onboarding_step, user=user, session_id=session_id
+        ),
     }
 
 
-async def refresh_access(db: AsyncSession, *, refresh_token: str) -> str:
+async def refresh_access(db: AsyncSession, *, refresh_token: str) -> dict:
     token_hash = hash_token(refresh_token)
     result = await db.execute(
         select(Session).where(
@@ -291,17 +325,20 @@ async def refresh_access(db: AsyncSession, *, refresh_token: str) -> str:
     if session is None:
         raise AppException(
             "REFRESH_TOKEN_INVALID_OR_EXPIRED",
-            "Session expirée. Reconnecte-toi.",
+            "Ta session a expiré. Reconnecte-toi pour continuer.",
             status_code=401,
         )
     user = await get_user_by_id(db, session.user_id)
     if user is None:
         raise AppException(
             "REFRESH_TOKEN_INVALID_OR_EXPIRED",
-            "Session expirée. Reconnecte-toi.",
+            "Ta session a expiré. Reconnecte-toi pour continuer.",
             status_code=401,
         )
-    return create_access_token(str(user.id))
+    return {
+        "access_token": create_access_token(str(user.id)),
+        "expires_in": settings.access_token_expire_minutes * 60,
+    }
 
 
 async def logout(db: AsyncSession, *, user_id: UUID, refresh_token: str) -> str:
@@ -341,6 +378,8 @@ async def reset_password(db: AsyncSession, *, email: str, code: str, nouveau_pas
 
 
 def build_me(user: User) -> dict:
+    from app.services.onboarding_service import capabilities
+
     needs_cgu = not any(
         c.version == settings.cgu_current_version for c in (user.cgu_acceptances or [])
     )
@@ -348,7 +387,10 @@ def build_me(user: User) -> dict:
         "id": user.id,
         "email": user.email,
         "phone": user.phone,
-        "role": user.role,
+        "nom_complet": user.nom_complet,
+        "date_naissance": user.date_naissance,
+        "sexe": user.sexe,
+        "localisation": user.localisation,
         "onboarding_step": user.onboarding_step,
         "langue": user.langue,
         "fuseau_horaire": user.fuseau_horaire,
@@ -358,6 +400,7 @@ def build_me(user: User) -> dict:
         "needs_cgu": needs_cgu,
         "needs_consentement_sante": user.consentement_sante is None,
         "pending_email": user.pending_email,
+        **capabilities(user),
     }
 
 
@@ -489,13 +532,25 @@ async def confirm_email_change(
     return {"message": "Email mis à jour.", "email": user.email}
 
 
-async def list_sessions(db: AsyncSession, *, user_id: UUID) -> list[Session]:
+async def list_sessions(
+    db: AsyncSession, *, user_id: UUID, current_session_id: UUID | None = None
+) -> list[dict]:
     result = await db.execute(
         select(Session)
         .where(Session.user_id == user_id, Session.revoked_at.is_(None))
         .order_by(Session.created_at.desc())
     )
-    return list(result.scalars().all())
+    rows = list(result.scalars().all())
+    return [
+        {
+            "id": s.id,
+            "device_info": s.device_info,
+            "created_at": s.created_at,
+            "revoked_at": s.revoked_at,
+            "is_current": current_session_id is not None and s.id == current_session_id,
+        }
+        for s in rows
+    ]
 
 
 async def logout_all(db: AsyncSession, *, user_id: UUID) -> str:

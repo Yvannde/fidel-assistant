@@ -10,7 +10,7 @@ Plateforme mobile **gratuite et open source** d’accompagnement des patients da
 | Étape | Statut |
 |---|---|
 | Auth API (email OTP, Google IdP, sessions, Resend) | **Fait** — sur `main`, tests verts |
-| Onboarding rôles (patient / aidant) | Remplacé : **capacités cumulables** — à implémenter |
+| Onboarding capacités (infos → suivi? → home ; sync aidant) | **Backend fait** (branche `feat/onboarding`) |
 | App Flutter auth + sync | Scaffold — à brancher |
 | Rappels médicaments offline-first | À faire |
 | Constantes / réseau aidant / SOS / notifications | À faire |

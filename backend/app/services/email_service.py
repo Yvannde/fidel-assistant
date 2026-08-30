@@ -8,25 +8,42 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 _PURPOSE_LABELS = {
-    "inscription": "vérification d'inscription",
-    "reset_password": "réinitialisation du mot de passe",
-    "change_email": "changement d'email",
+    "inscription": "vérifier ton adresse email",
+    "reset_password": "réinitialiser ton mot de passe",
+    "change_email": "confirmer ton nouvel email",
 }
 
 
 def _otp_html(*, code: str, purpose: str, minutes: int) -> str:
     label = _PURPOSE_LABELS.get(purpose, purpose)
+    app = settings.app_name
+    # HTML email : lignes longues volontaires (styles inline)
     return f"""\
 <!DOCTYPE html>
-<html>
-  <body style="font-family: sans-serif; line-height: 1.5; color: #111;">
-    <p>Bonjour,</p>
-    <p>Voici ton code pour <strong>{label}</strong> sur {settings.app_name} :</p>
-    <p style="font-size: 28px; letter-spacing: 6px; font-weight: bold;">{code}</p>
-    <p>Ce code expire dans {minutes} minutes.
-       Si tu n'as pas fait cette demande, ignore cet email.</p>
-    <p>— L'équipe {settings.app_name}</p>
-  </body>
+<html lang="fr">
+<head><meta charset="utf-8" /></head>
+<body style="margin:0;padding:0;background:#f3f4f6;">
+<table width="100%" cellspacing="0" cellpadding="0" style="padding:32px 12px;">
+<tr><td align="center">
+<table width="100%" style="max-width:480px;background:#fff;border-radius:12px;padding:28px 24px;
+font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+<tr><td>
+<p style="margin:0 0 8px;font-size:13px;color:#6b7280;">{app}</p>
+<h1 style="margin:0 0 16px;font-size:22px;color:#111827;">Ton code de vérification</h1>
+<p style="margin:0 0 20px;font-size:16px;color:#374151;">
+Utilise ce code pour <strong>{label}</strong>.
+</p>
+<p style="margin:0 0 24px;text-align:center;font-size:32px;letter-spacing:10px;font-weight:700;">
+{code}
+</p>
+<p style="margin:0;font-size:14px;color:#6b7280;">
+Valable <strong>{minutes} minutes</strong>.
+Si tu n'as pas fait cette demande, ignore cet email.
+</p>
+<p style="margin:24px 0 0;font-size:13px;color:#9ca3af;">— L'équipe {app}</p>
+</td></tr></table>
+</td></tr></table>
+</body>
 </html>
 """
 
@@ -34,8 +51,10 @@ def _otp_html(*, code: str, purpose: str, minutes: int) -> str:
 def _otp_text(*, code: str, purpose: str, minutes: int) -> str:
     label = _PURPOSE_LABELS.get(purpose, purpose)
     return (
-        f"Ton code {settings.app_name} ({label}) : {code}\n"
-        f"Expire dans {minutes} minutes.\n"
+        f"{settings.app_name}\n\n"
+        f"Ton code pour {label} : {code}\n"
+        f"Valable {minutes} minutes.\n"
+        f"Si tu n'es pas à l'origine de cette demande, ignore ce message.\n"
     )
 
 
@@ -55,8 +74,7 @@ def _send_via_resend(*, to_email: str, subject: str, text: str, html: str) -> st
 
 async def send_otp_email(*, to_email: str, code: str, purpose: str) -> None:
     """Envoie l'OTP via Resend. Sans clé API : log en console (dev only)."""
-    label = _PURPOSE_LABELS.get(purpose, purpose)
-    subject = f"[{settings.app_name}] Code {label}"
+    subject = f"{settings.app_name} — ton code ({settings.otp_expire_minutes} min)"
     text = _otp_text(code=code, purpose=purpose, minutes=settings.otp_expire_minutes)
     html = _otp_html(code=code, purpose=purpose, minutes=settings.otp_expire_minutes)
 

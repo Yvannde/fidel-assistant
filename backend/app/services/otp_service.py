@@ -35,7 +35,7 @@ async def issue_otp(
     if await _count_recent_otps(db, user.id, otp_type) >= settings.otp_resend_max_per_hour:
         raise AppException(
             "RESEND_LIMIT_REACHED",
-            "Trop de renvois. Réessaie plus tard.",
+            "Tu as demandé trop de codes récemment. Attends un peu avant de réessayer.",
             status_code=429,
         )
 
@@ -77,7 +77,11 @@ async def verify_user_otp(
     )
     otp = result.scalar_one_or_none()
     if otp is None:
-        raise AppException("OTP_INVALID", "Code invalide.", status_code=400)
+        raise AppException(
+            "OTP_INVALID",
+            "Ce code ne correspond pas. Vérifie les 6 chiffres ou demande un nouveau code.",
+            status_code=400,
+        )
 
     expires_at = otp.expires_at
     if expires_at.tzinfo is None:
@@ -85,21 +89,32 @@ async def verify_user_otp(
     if expires_at < datetime.now(UTC):
         raise AppException(
             "OTP_EXPIRED",
-            "Le code a expiré, demande-en un nouveau.",
+            "Ce code a expiré. Demande un nouveau code par email.",
             status_code=400,
         )
 
     if otp.tentatives >= settings.otp_max_attempts:
         raise AppException(
             "OTP_MAX_ATTEMPTS",
-            "Trop de tentatives. Demande un nouveau code.",
+            "Trop d'essais incorrects. Demande un nouveau code pour continuer.",
             status_code=400,
         )
 
     if not verify_otp(code, otp.code_hash):
         otp.tentatives += 1
         await db.flush()
-        raise AppException("OTP_INVALID", "Code invalide.", status_code=400)
+        restantes = settings.otp_max_attempts - otp.tentatives
+        if restantes <= 0:
+            raise AppException(
+                "OTP_MAX_ATTEMPTS",
+                "Trop d'essais incorrects. Demande un nouveau code pour continuer.",
+                status_code=400,
+            )
+        raise AppException(
+            "OTP_INVALID",
+            f"Code incorrect. Il te reste {restantes} essai(s).",
+            status_code=400,
+        )
 
     otp.used_at = datetime.now(UTC)
     await db.flush()

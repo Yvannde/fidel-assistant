@@ -17,28 +17,30 @@ Toutes les routes sont préfixées `/api/v1`. Toutes les routes marquées 🔒 n
 
 | Méthode | Chemin | Entrée | Sortie | Erreurs possibles |
 |---|---|---|---|---|
-| POST | `/auth/register` | `email`, `langue` | `{message}` — envoie l'OTP | `EMAIL_ALREADY_VERIFIED` |
-| POST | `/auth/resend-otp` | `email`, `type` (`inscription`\|`reset_password`) | `{message}` | `RESEND_LIMIT_REACHED` |
-| POST | `/auth/verify-otp` | `email`, `code` | `{temp_token}` — jeton temporaire pour finaliser l'inscription | `OTP_INVALID`, `OTP_EXPIRED`, `OTP_MAX_ATTEMPTS` |
-| POST | `/auth/set-password` | `temp_token`, `password` | `{message}` | `TEMP_TOKEN_INVALID`, `PASSWORD_TOO_WEAK` |
-| POST | `/auth/accept-cgu` | `temp_token` ou 🔒, `version` | `{message}` | `CGU_VERSION_OUTDATED` |
-| POST | `/auth/accept-consentement-sante` | `temp_token` ou 🔒 | `{message}` | — |
-| POST | `/auth/login` | `email`, `password` | `{access_token, refresh_token, onboarding_step, has_patient_profile, is_aidant}` | `INVALID_CREDENTIALS`, `EMAIL_NOT_VERIFIED` |
-| POST | `/auth/google` | `id_token`, `langue`, `fuseau_horaire?` | `{access_token, refresh_token, onboarding_step, has_patient_profile, is_aidant, is_new_user, needs_cgu, needs_consentement_sante}` | `GOOGLE_TOKEN_INVALID`, `GOOGLE_EMAIL_NOT_VERIFIED`, `GOOGLE_AUD_MISMATCH` |
-| POST | `/auth/refresh` | `refresh_token` | `{access_token}` | `REFRESH_TOKEN_INVALID_OR_EXPIRED` |
-| POST | `/auth/logout` | 🔒 `refresh_token` | `{message}` | — |
-| POST | `/auth/forgot-password` | `email` | `{message}` — envoie OTP type `reset_password` | — |
-| POST | `/auth/reset-password` | `email`, `code`, `nouveau_password` | `{message}` | `OTP_INVALID`, `OTP_EXPIRED` |
-| GET | `/auth/me` | 🔒 | `{id, email, phone, nom_complet, date_naissance, sexe, localisation, onboarding_step, has_patient_profile, is_aidant, langue, fuseau_horaire, auth_providers, email_verified_at, has_password, needs_cgu, needs_consentement_sante}` | — |
-| PATCH | `/auth/me` | 🔒 `langue?`, `fuseau_horaire?`, `phone?` | objet `/auth/me` mis à jour | — |
-| POST | `/auth/change-password` | 🔒 `current_password?`, `nouveau_password` | `{message}` — `current_password` requis si un mot de passe existe déjà (compte email) ; optionnel si Google-only | `INVALID_CREDENTIALS`, `PASSWORD_TOO_WEAK` |
-| POST | `/auth/link-google` | 🔒 `id_token` | `{message, auth_providers}` | `GOOGLE_TOKEN_INVALID`, `GOOGLE_AUD_MISMATCH`, `GOOGLE_ALREADY_LINKED` |
-| POST | `/auth/request-email-change` | 🔒 `nouvel_email` | `{message}` — OTP envoyé au **nouvel** email | `EMAIL_ALREADY_VERIFIED` |
-| POST | `/auth/confirm-email-change` | 🔒 `nouvel_email`, `code` | `{message, email}` | `OTP_INVALID`, `OTP_EXPIRED` |
-| GET | `/auth/sessions` | 🔒 | `[{id, device_info, created_at, revoked_at}]` — sessions non révoquées | — |
-| POST | `/auth/logout-all` | 🔒 | `{message}` — révoque toutes les sessions | — |
-| DELETE | `/auth/sessions/{session_id}` | 🔒 | `{message}` | `SESSION_NOT_FOUND` |
-| DELETE | `/auth/me` | 🔒 `password?` | `{message}` — soft delete (`deleted_at`) ; `password` requis si le compte en a un | `INVALID_CREDENTIALS` |
+Toutes les routes `/auth/*` : plafond IP global (`RATE_LIMITED`, HTTP 429). Actions sensibles (register, OTP, login, Google, refresh, forgot/reset/change password, link-google, email-change, delete) : plafond IP supplémentaire (`RATE_LIMITED`). Login : aussi `LOGIN_RATE_LIMITED` par email (service).
+
+| POST | `/auth/register` | `email`, `langue` | `{message}` — envoie l'OTP | `EMAIL_ALREADY_VERIFIED`, `RATE_LIMITED` |
+| POST | `/auth/resend-otp` | `email`, `type` (`inscription`\|`reset_password`) | `{message}` | `RESEND_LIMIT_REACHED`, `RATE_LIMITED` |
+| POST | `/auth/verify-otp` | `email`, `code` | `{temp_token}` — jeton temporaire pour finaliser l'inscription | `OTP_INVALID`, `OTP_EXPIRED`, `OTP_MAX_ATTEMPTS`, `RATE_LIMITED` |
+| POST | `/auth/set-password` | `temp_token`, `password` | `{message}` | `TEMP_TOKEN_INVALID`, `PASSWORD_TOO_WEAK`, `RATE_LIMITED` |
+| POST | `/auth/accept-cgu` | `temp_token` ou 🔒, `version` | `{message}` | `CGU_VERSION_OUTDATED`, `RATE_LIMITED` |
+| POST | `/auth/accept-consentement-sante` | `temp_token` ou 🔒 | `{message}` | `RATE_LIMITED` |
+| POST | `/auth/login` | `email`, `password` | `{access_token, refresh_token, expires_in, session_id, onboarding_step, has_patient_profile, is_aidant}` | `INVALID_CREDENTIALS`, `EMAIL_NOT_VERIFIED`, `LOGIN_RATE_LIMITED`, `RATE_LIMITED` |
+| POST | `/auth/google` | `id_token`, `langue`, `fuseau_horaire?` | `{access_token, refresh_token, expires_in, session_id, onboarding_step, has_patient_profile, is_aidant, is_new_user, needs_cgu, needs_consentement_sante}` | `GOOGLE_TOKEN_INVALID`, `GOOGLE_EMAIL_NOT_VERIFIED`, `GOOGLE_AUD_MISMATCH`, `RATE_LIMITED` |
+| POST | `/auth/refresh` | `refresh_token` | `{access_token, expires_in}` | `REFRESH_TOKEN_INVALID_OR_EXPIRED`, `RATE_LIMITED` |
+| POST | `/auth/logout` | 🔒 `refresh_token` | `{message}` | `RATE_LIMITED` |
+| POST | `/auth/forgot-password` | `email` | `{message}` — envoie OTP type `reset_password` | `RATE_LIMITED` |
+| POST | `/auth/reset-password` | `email`, `code`, `nouveau_password` | `{message}` | `OTP_INVALID`, `OTP_EXPIRED`, `RATE_LIMITED` |
+| GET | `/auth/me` | 🔒 | `{id, email, phone, nom_complet, date_naissance, sexe, localisation, onboarding_step, has_patient_profile, is_aidant, langue, fuseau_horaire, auth_providers, email_verified_at, has_password, needs_cgu, needs_consentement_sante}` | `RATE_LIMITED` |
+| PATCH | `/auth/me` | 🔒 `langue?`, `fuseau_horaire?`, `phone?` | objet `/auth/me` mis à jour | `RATE_LIMITED` |
+| POST | `/auth/change-password` | 🔒 `current_password?`, `nouveau_password` | `{message}` — `current_password` requis si un mot de passe existe déjà (compte email) ; optionnel si Google-only | `INVALID_CREDENTIALS`, `PASSWORD_TOO_WEAK`, `RATE_LIMITED` |
+| POST | `/auth/link-google` | 🔒 `id_token` | `{message, auth_providers}` | `GOOGLE_TOKEN_INVALID`, `GOOGLE_AUD_MISMATCH`, `GOOGLE_ALREADY_LINKED`, `RATE_LIMITED` |
+| POST | `/auth/request-email-change` | 🔒 `nouvel_email` | `{message}` — OTP envoyé au **nouvel** email | `EMAIL_ALREADY_VERIFIED`, `RATE_LIMITED` |
+| POST | `/auth/confirm-email-change` | 🔒 `nouvel_email`, `code` | `{message, email}` | `OTP_INVALID`, `OTP_EXPIRED`, `RATE_LIMITED` |
+| GET | `/auth/sessions` | 🔒 `current_session_id?` | `[{id, device_info, created_at, revoked_at, is_current}]` | `RATE_LIMITED` |
+| POST | `/auth/logout-all` | 🔒 | `{message}` — révoque toutes les sessions | `RATE_LIMITED` |
+| DELETE | `/auth/sessions/{session_id}` | 🔒 | `{message}` | `SESSION_NOT_FOUND`, `RATE_LIMITED` |
+| DELETE | `/auth/me` | 🔒 `password?` | `{message}` — soft delete (`deleted_at`) ; `password` requis si le compte en a un | `INVALID_CREDENTIALS`, `RATE_LIMITED` |
 
 > Le `temp_token` (courte durée, ex: 15 min) sert uniquement à enchaîner OTP → mot de passe → CGU → consentement santé sans exposer un access_token complet avant que le compte soit finalisé.
 
@@ -57,8 +59,8 @@ Pas de `POST /onboarding/role`. Voir `auth-onboarding/SKILL.md`.
 | GET | `/onboarding/status` | 🔒 | `{onboarding_step, has_patient_profile, is_aidant}` | — |
 | POST | `/onboarding/infos` | 🔒 `nom_complet, date_naissance, sexe, localisation, phone?` | `{onboarding_step}` | — |
 | POST | `/onboarding/besoin-suivi` | 🔒 `actif: bool` | `{onboarding_step, has_patient_profile}` — si `actif=true`, crée le profil `Patient` | — |
-| GET | `/onboarding/maladies` | — | `[{id, nom, description}]` | — |
-| POST | `/onboarding/patient/traitement` | 🔒 `en_traitement: bool, traitements?: [{maladie_id, phase, date_debut?}]` | `{onboarding_step}` | `NOT_A_PATIENT` |
+| GET | `/onboarding/maladies` | — | `[{id, code, nom, description, constantes_prioritaires, questions_onboarding}]` | — |
+| POST | `/onboarding/patient/traitement` | 🔒 `en_traitement: bool, traitements?: [{maladie_id, phase, date_debut?, date_fin_prevue?, protocole_id?, maladie_libelle?, lieu_suivi?, attributs?}]` | `{onboarding_step}` | `NOT_A_PATIENT` |
 | POST | `/onboarding/patient/permissions` | 🔒 `notifications_accordees: bool, batterie_exemptee: bool` | `{onboarding_step}` | `NOT_A_PATIENT` |
 | POST | `/onboarding/complete` | 🔒 | `{onboarding_step: "termine"}` | `ONBOARDING_INCOMPLETE` |
 
@@ -72,7 +74,7 @@ Pas de `POST /onboarding/role`. Voir `auth-onboarding/SKILL.md`.
 | Méthode | Chemin | Entrée | Sortie | Erreurs possibles |
 |---|---|---|---|---|
 | POST | `/patients/me/activate` | 🔒 | `{has_patient_profile: true, onboarding_hint: "patient_traitement"}` — crée `Patient` si absent (copie infos depuis `User`) | `PATIENT_ALREADY_ACTIVE` |
-| POST | `/aidants/me/sync` | 🔒 `code` | `{patient_id, patient_prenom, is_aidant: true}` — crée `PatientAidant` | `SYNC_CODE_INVALID`, `SYNC_CODE_EXPIRED`, `SYNC_SELF_NOT_ALLOWED` |
+| POST | `/aidants/me/sync` | 🔒 `code` | `{patient_id, patient_prenom, is_aidant, message}` — crée `PatientAidant` + journal `NotificationLog` (transparence patient) | `SYNC_CODE_INVALID`, `SYNC_CODE_EXPIRED`, `SYNC_SELF_NOT_ALLOWED` |
 
 > Anciennes routes `POST /onboarding/role`, `/onboarding/patient/infos`, `/onboarding/aidant/infos`, `/onboarding/aidant/sync` : **retirées** du contrat (remplacées ci-dessus).
 
@@ -82,6 +84,7 @@ Pas de `POST /onboarding/role`. Voir `auth-onboarding/SKILL.md`.
 
 | Méthode | Chemin | Entrée | Sortie | Erreurs possibles |
 |---|---|---|---|---|
+| GET | `/patients/me/dashboard` | 🔒 | `{prochaine_action, medicaments_configures, notifications_accordees, traitements[], prises_aujourdhui[]}` — `prochaine_action` : `activer_notifications` \| `configurer_medicaments` \| `aucune` | `NOT_A_PATIENT` |
 | GET | `/patients/me` | 🔒 | objet `Patient` complet | `NOT_A_PATIENT` |
 | PATCH | `/patients/me` | 🔒 champs modifiables du `Patient` | objet `Patient` mis à jour | — |
 | POST | `/patients/me/sync-code` | 🔒 | `{code, qr_payload, expires_at}` | — |
