@@ -152,7 +152,7 @@ Pas de `POST /onboarding/role`. Voir `auth-onboarding/SKILL.md`.
 | Méthode | Chemin | Entrée | Sortie | Erreurs possibles |
 |---|---|---|---|---|
 | GET | `/aidants/me/patients` | 🔒 | `[{patient_id, prenom, niveau_permission}]` | `NOT_AN_AIDANT` |
-| GET | `/aidants/me/patients/{patient_id}/observance` | 🔒 | résumé de prises (selon `niveau_permission`) | `PERMISSION_REFUSEE`, `PATIENT_NOT_FOUND` |
+| GET | `/aidants/me/patients/{patient_id}/observance` | 🔒 `depuis?`, `jusqu_a?` (défaut: 7 derniers jours) | `{patient_id, patient_prenom, depuis, jusqu_a, total, confirmees, manquees, en_attente, taux_observance}` — selon `niveau_permission.observance` | `PERMISSION_REFUSEE`, `PATIENT_NOT_FOUND` |
 | GET | `/aidants/me/patients/{patient_id}/constantes` | 🔒 | `[Constante]` (selon `niveau_permission`) | `PERMISSION_REFUSEE` |
 | POST | `/aidants/me/patients/{patient_id}/voix-rappel` | 🔒 fichier audio | `VoixRappel` créée pour ce patient | `PERMISSION_REFUSEE` |
 
