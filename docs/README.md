@@ -17,9 +17,9 @@
 | # | Étape | Statut |
 |---|---|---|
 | 1a | Auth API (OTP, Google IdP, sessions, Resend) | **Fait** |
-| 1b | Onboarding capacités (infos → suivi? → home ; sync aidant / activer patient depuis home) | À faire (contrats à jour) |
+| 1b | Onboarding capacités + API dashboard / médicaments / prises | **Fait** (backend `main`) |
 | 1c | Auth + onboarding Flutter | À faire |
-| 2 | Rappels médicaments offline-first | À faire |
+| 2 | Rappels médicaments offline-first (alarmes locales + sync) | API sync faite ; app à faire |
 | 3 | Constantes de santé | À faire |
 | 4 | Réseau aidant + check-in + SOS | À faire |
 | 5 | Moteur de notification / consentement | À faire |

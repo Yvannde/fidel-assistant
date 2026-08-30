@@ -19,8 +19,22 @@ Un compte n’est **pas** « patient **ou** aidant ».
 
 Les deux sont **cumulables** sur le même compte. Détail : `skills/auth-onboarding/SKILL.md`.
 
-Onboarding initial : infos communes → besoin de suivi ? → (si oui) traitement + permissions device → home.  
+Onboarding initial : infos communes → besoin de suivi ? → (si oui) **step C léger** (maladie, phase, date début, attributs optionnels — **pas** de médicaments/horaires) + permissions device → home.  
+Médicaments + horaires : wizard **après** la home, via `GET /patients/me/dashboard` (`prochaine_action: configurer_medicaments`).  
 Permissions notifs/batterie : seulement si branche suivi perso (option A).
+
+## Avancement V1 (backend sur `main`)
+
+| Bloc | Statut | Notes |
+|---|---|---|
+| Auth (OTP, Google IdP, JWT, sessions, Resend, rate limits `/auth`) | **Fait** | Tests verts |
+| Onboarding capacités + sync aidant + activer suivi depuis home | **Fait** | Step C léger ; pas de rôle exclusif |
+| Catalogue maladies / protocoles (seed) + schéma 4 couches | **Fait** | Migration `b4e8c1a29f3d` appliquée sur Neon |
+| API dashboard, traitements, médicaments, horaires, prises + `POST /prises/sync-offline` | **Fait** | Prises pré-générées à la création d’horaire |
+| App Flutter (auth, onboarding, alarmes locales) | **À faire** | Prochain chantier |
+| Constantes / check-in / SOS / moteur `NotificationEngine` | **À faire** | Contrats existent, pas encore implémentés |
+
+**Rappels médicaments** : 100 % **notification locale** sur le téléphone (offline, même avion). FastAPI ne sonne pas et ne poll pas les doses. Pas de Celery/Redis en V1. FCM (plus tard) uniquement pour l’aidant, et seulement via `engagement-principle` (`regle_auto` opt-in — jamais d’alerte tiers automatique).
 
 ## Index des skills
 
@@ -55,7 +69,7 @@ Aucun contact automatique d’un tiers (aidant, médecin, urgence) sans consente
 
 ## Offline-first (rappel)
 
-- Critique (rappels, confirmations de prise) : **côté app** + sync (`/prises/sync-offline` plus tard).
+- Critique (rappels, confirmations de prise) : **côté app** + sync (`POST /prises/sync-offline` — **déjà** côté API).
 - Auth (inscription, OTP, login, refresh) : **online**. Session locale via JWT sécurisés après login.
 
 ## Instructions pour l’agent
