@@ -230,6 +230,15 @@ async def assert_aidant_permission(
     return rel
 
 
+async def require_aidant_of_patient(
+    db: AsyncSession, *, aidant_id: UUID, patient_id: UUID
+) -> PatientAidant:
+    """Relation active aidant↔patient ou PERMISSION_REFUSEE / NOT_AN_AIDANT."""
+    return await _active_relation_for_aidant(
+        db, aidant_id=aidant_id, patient_id=patient_id
+    )
+
+
 async def _active_relation_for_patient(
     db: AsyncSession, *, patient_id: UUID, aidant_id: UUID
 ) -> PatientAidant:

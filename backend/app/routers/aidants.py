@@ -2,15 +2,17 @@ from datetime import date, datetime
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, File, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.audio_validation import read_upload_limited
 from app.deps import get_current_user, get_db
 from app.models import User
 from app.schemas.aidant import AidantPatientOut, ObservanceOut
 from app.schemas.constante import ConstanteOut
 from app.schemas.onboarding import AidantSyncIn, AidantSyncOut
-from app.services import aidant_service, constante_service, onboarding_service
+from app.schemas.voix_rappel import VoixRappelOut
+from app.services import aidant_service, constante_service, onboarding_service, voix_rappel_service
 
 router = APIRouter(prefix="/aidants", tags=["aidants"])
 
@@ -71,3 +73,27 @@ async def patient_constantes(
         jusqu_a=jusqu_a,
     )
     return [ConstanteOut(**row) for row in rows]
+
+
+@router.post(
+    "/me/patients/{patient_id}/voix-rappel",
+    response_model=VoixRappelOut,
+    status_code=201,
+)
+async def upload_patient_voix_rappel(
+    patient_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+    fichier: Annotated[UploadFile, File()],
+) -> VoixRappelOut:
+    data = await read_upload_limited(fichier)
+    return VoixRappelOut(
+        **await voix_rappel_service.upsert_aidant_voix(
+            db,
+            user=user,
+            patient_id=patient_id,
+            filename=fichier.filename,
+            content_type=fichier.content_type,
+            data=data,
+        )
+    )

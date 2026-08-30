@@ -401,11 +401,13 @@ Le geste SOS **est** le consentement (voir `engagement-principle`). Après `annu
 | Champ | Type | Contraintes / Notes |
 |---|---|---|
 | id | UUID | |
-| patient_id | UUID (FK → Patient) | |
+| patient_id | UUID (FK → Patient) | **unique** — une config voix active par patient |
 | type | enum | `systeme`, `personnalisee` |
-| fichier_audio_url | string | nullable si `systeme` |
-| enregistree_par | UUID (FK → User) | nullable, l'aidant qui a enregistré le message |
+| fichier_audio_url | string | nullable si `systeme` — URL API authentifiée vers le fichier |
+| enregistree_par | UUID (FK → User) | nullable, l'aidant (ou le patient) qui a enregistré le message |
 | created_at | timestamp | |
+
+**Upload (personnalisée)** : formats voix uniquement — **mp3**, **m4a/aac**, **ogg/opus**. Max **2 Mo**. Vérifier magic bytes (pas seulement l’extension / Content-Type). Rejeter le reste (`FICHIER_AUDIO_INVALIDE` / `FICHIER_AUDIO_TROP_LOURD`).
 
 ---
 

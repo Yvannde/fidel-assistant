@@ -38,6 +38,7 @@ from app.models import (  # noqa: F401 — register metadata
     SosAlerte,
     SyncCode,
     User,
+    VoixRappel,
 )
 from app.models.user import CguAcceptance, ConsentementSante, OtpCode, Session  # noqa: F401
 

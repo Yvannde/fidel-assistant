@@ -28,6 +28,7 @@ from app.models import (  # noqa: F401
     Session,
     SosAlerte,
     User,
+    VoixRappel,
 )
 
 config = context.config

@@ -75,6 +75,9 @@ class Patient(Base):
     constantes: Mapped[list[Constante]] = relationship(
         "Constante", back_populates="patient", cascade="all, delete-orphan"
     )
+    voix_rappel: Mapped[VoixRappel | None] = relationship(
+        back_populates="patient", uselist=False, cascade="all, delete-orphan"
+    )
 
 
 class Maladie(Base):
@@ -300,3 +303,29 @@ class SosAlerte(Base):
     )
 
     patient: Mapped[Patient] = relationship(back_populates="sos_alertes")
+
+
+class VoixRappel(Base):
+    __tablename__ = "voix_rappels"
+    __table_args__ = (UniqueConstraint("patient_id", name="uq_voix_rappels_patient"),)
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    patient_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("patients.user_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    type: Mapped[str] = mapped_column(String(32), nullable=False, server_default="systeme")
+    # Chemin relatif sous MEDIA_ROOT (ex: voix_rappel/<patient_id>/<uuid>.m4a)
+    fichier_audio_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    enregistree_par: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    patient: Mapped[Patient] = relationship(back_populates="voix_rappel")

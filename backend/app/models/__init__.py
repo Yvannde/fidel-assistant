@@ -13,6 +13,7 @@ from app.models.patient import (
     PatientTraitementAttribut,
     SosAlerte,
     SyncCode,
+    VoixRappel,
 )
 from app.models.sante import Constante
 from app.models.user import (
@@ -42,6 +43,7 @@ __all__ = [
     "CheckIn",
     "SosAlerte",
     "Constante",
+    "VoixRappel",
     "Medicament",
     "MedicamentHoraire",
     "Prise",

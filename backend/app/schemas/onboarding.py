@@ -92,3 +92,13 @@ class PatientOut(BaseModel):
     photo_url: str | None
     notifications_accordees: bool
     batterie_exemptee: bool
+    notifications_discretes: bool = False
+
+
+class PatientUpdateIn(BaseModel):
+    nom_complet: str | None = Field(default=None, min_length=2, max_length=255)
+    localisation: str | None = Field(default=None, min_length=2, max_length=255)
+    photo_url: str | None = Field(default=None, max_length=512)
+    notifications_accordees: bool | None = None
+    batterie_exemptee: bool | None = None
+    notifications_discretes: bool | None = None

@@ -2,9 +2,11 @@ from datetime import date, datetime
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.audio_validation import read_upload_limited
 from app.deps import get_current_user, get_db
 from app.models import User
 from app.schemas.aidant import (
@@ -15,13 +17,20 @@ from app.schemas.aidant import (
 from app.schemas.checkin_sos import CheckInIn, CheckInOut, SosTriggerOut
 from app.schemas.constante import ConstanteCreateOut, ConstanteIn, ConstanteOut
 from app.schemas.contact_urgence import ContactUrgenceIn, ContactUrgenceOut
-from app.schemas.onboarding import ActivatePatientOut, PatientOut, SyncCodeOut
+from app.schemas.onboarding import (
+    ActivatePatientOut,
+    PatientOut,
+    PatientUpdateIn,
+    SyncCodeOut,
+)
+from app.schemas.voix_rappel import VoixRappelOut
 from app.services import (
     aidant_service,
     checkin_sos_service,
     constante_service,
     contact_urgence_service,
     onboarding_service,
+    voix_rappel_service,
 )
 
 router = APIRouter(prefix="/patients", tags=["patients"])
@@ -41,6 +50,19 @@ async def get_patient_me(
     user: Annotated[User, Depends(get_current_user)],
 ) -> PatientOut:
     return PatientOut(**await onboarding_service.get_patient_me(db, user=user))
+
+
+@router.patch("/me", response_model=PatientOut)
+async def update_patient_me(
+    body: PatientUpdateIn,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> PatientOut:
+    return PatientOut(
+        **await onboarding_service.update_patient_me(
+            db, user=user, data=body.model_dump(exclude_unset=True)
+        )
+    )
 
 
 @router.post("/me/sync-code", response_model=SyncCodeOut)
@@ -186,4 +208,52 @@ async def create_constante(
             mesure_at=body.mesure_at,
             source=body.source,
         )
+    )
+
+
+@router.get("/me/voix-rappel", response_model=VoixRappelOut)
+async def get_voix_rappel(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> VoixRappelOut:
+    return VoixRappelOut(**await voix_rappel_service.get_voix(db, user=user))
+
+
+@router.put("/me/voix-rappel", response_model=VoixRappelOut)
+async def put_voix_rappel(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+    type: Annotated[str, Form()],
+    fichier: Annotated[UploadFile | None, File()] = None,
+) -> VoixRappelOut:
+    data: bytes | None = None
+    filename: str | None = None
+    content_type: str | None = None
+    if fichier is not None:
+        data = await read_upload_limited(fichier)
+        filename = fichier.filename
+        content_type = fichier.content_type
+    return VoixRappelOut(
+        **await voix_rappel_service.upsert_patient_voix(
+            db,
+            user=user,
+            type_=type,
+            filename=filename,
+            content_type=content_type,
+            data=data,
+        )
+    )
+
+
+@router.get("/me/voix-rappel/fichier")
+async def download_voix_rappel(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> FileResponse:
+    path, media_type = await voix_rappel_service.resolve_audio_file(db, user=user)
+    return FileResponse(
+        path,
+        media_type=media_type,
+        filename=path.name,
+        content_disposition_type="inline",
     )

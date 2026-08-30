@@ -302,4 +302,12 @@ def _default_contenu(type_alerte: str, contexte: dict) -> str:
         return "On observe un changement sur ta constante. Ce n'est pas forcément grave."
     if type_alerte == "constante_amelioration":
         return "Bonne nouvelle : ta constante s'améliore. Continue comme ça !"
+    if type_alerte == "stock_medicament_bas":
+        nom = contexte.get("nom") or "ton médicament"
+        stock = contexte.get("stock_restant")
+        return (
+            f"Le stock de {nom} est bas"
+            + (f" ({stock} restant)" if stock is not None else "")
+            + ". Pense à te réapprovisionner."
+        )
     return f"Notification {type_alerte}."

@@ -56,6 +56,7 @@ Neon permet de créer des branches de base de données (comme des branches Git) 
 
 ### Moteur de notification centralisé (Volet 7)
 - `preferences_consentement` — user_id (FK), type_alerte, toujours_demander, regle_auto (JSONB nullable)
+- `voix_rappels` — patient_id (FK unique), type (`systeme`\|`personnalisee`), fichier_audio_url, enregistree_par (FK User nullable)
 - `notifications_log` / `notification_logs` — destinataire_id, type, contenu, declencheur, envoye_at, proposition, reponse, repondu_at, action_declenchee, tiers_potentiel_id
 
 ## Migrations (Alembic)
