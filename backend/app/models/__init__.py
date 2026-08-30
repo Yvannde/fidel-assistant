@@ -2,7 +2,7 @@
 
 from app.models.catalog import MaladieConfig, ProtocoleMedicamentSuggere, ProtocoleTraitement
 from app.models.medication import Medicament, MedicamentHoraire, Prise
-from app.models.notification import NotificationLog
+from app.models.notification import NotificationLog, PreferenceConsentement
 from app.models.patient import (
     CheckIn,
     ContactUrgence,
@@ -46,4 +46,5 @@ __all__ = [
     "MedicamentHoraire",
     "Prise",
     "NotificationLog",
+    "PreferenceConsentement",
 ]

@@ -31,6 +31,7 @@ from app.models import (  # noqa: F401 — register metadata
     PatientAidant,
     PatientTraitement,
     PatientTraitementAttribut,
+    PreferenceConsentement,
     Prise,
     ProtocoleMedicamentSuggere,
     ProtocoleTraitement,

@@ -433,6 +433,11 @@ Le geste SOS **est** le consentement (voir `engagement-principle`). Après `annu
 | contenu | text | le message effectivement envoyé |
 | declencheur | json | donnée/événement à l'origine de la notification |
 | envoye_at | timestamp | |
+| proposition | boolean | true si une réponse oui/non/reporter est attendue |
+| reponse | enum | nullable : `oui`, `non`, `reporter` |
+| repondu_at | timestamp | nullable |
+| action_declenchee | boolean | true si une action tiers a été lancée (oui ou `regle_auto`) |
+| tiers_potentiel_id | UUID (FK → User) | nullable — aidant / tiers proposé |
 
 Aucune fonctionnalité de notification/alerte ne doit être considérée terminée si elle n'écrit pas dans `NotificationLog`.
 

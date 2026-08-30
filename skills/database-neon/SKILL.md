@@ -55,8 +55,8 @@ Neon permet de créer des branches de base de données (comme des branches Git) 
 - `sos_alertes` — patient_id (FK), statut (`en_attente` / `envoye` / `annule`), annulable_jusqu_a, envoye_at, annule_at
 
 ### Moteur de notification centralisé (Volet 7)
-- `preferences_consentement` — user_id (FK), type_alerte (ex: `contact_medecin_tension`, `alerte_checkin_absence`), toujours_demander (bool), regle_auto (nullable, ex: "absence 48h")
-- `notifications_log` — destinataire_id (FK), type, contenu, declencheur, envoye_at — journal d'audit complet, ne jamais l'omettre pour une fonctionnalité d'alerte
+- `preferences_consentement` — user_id (FK), type_alerte, toujours_demander, regle_auto (JSONB nullable)
+- `notifications_log` / `notification_logs` — destinataire_id, type, contenu, declencheur, envoye_at, proposition, reponse, repondu_at, action_declenchee, tiers_potentiel_id
 
 ## Migrations (Alembic)
 

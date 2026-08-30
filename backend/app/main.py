@@ -12,6 +12,7 @@ from app.routers import (
     health,
     horaires,
     medicaments,
+    notifications,
     onboarding,
     patient_suivi,
     patients,
@@ -56,3 +57,4 @@ app.include_router(horaires.router, prefix=settings.api_v1_prefix)
 app.include_router(prises.router, prefix=settings.api_v1_prefix)
 app.include_router(sos.router, prefix=settings.api_v1_prefix)
 app.include_router(aidants.router, prefix=settings.api_v1_prefix)
+app.include_router(notifications.router, prefix=settings.api_v1_prefix)
