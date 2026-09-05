@@ -439,6 +439,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Go to home'**
   String get successAccountCta;
+
+  /// No description provided for @forgotTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot password?'**
+  String get forgotTitle;
+
+  /// No description provided for @forgotSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email and we’ll send a reset code'**
+  String get forgotSubtitle;
+
+  /// No description provided for @forgotContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Send code'**
+  String get forgotContinue;
+
+  /// No description provided for @forgotOtpSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset code sent'**
+  String get forgotOtpSent;
+
+  /// No description provided for @forgotResetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get forgotResetTitle;
+
+  /// No description provided for @forgotResetSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a new secure password'**
+  String get forgotResetSubtitle;
+
+  /// No description provided for @forgotResetCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Update password'**
+  String get forgotResetCta;
+
+  /// No description provided for @forgotResetSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Password updated. You can sign in now.'**
+  String get forgotResetSuccess;
+
+  /// No description provided for @googleFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Google sign-in failed'**
+  String get googleFailed;
+
+  /// No description provided for @googleCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Google sign-in cancelled'**
+  String get googleCancelled;
+
+  /// No description provided for @googleNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Sign-In is not configured on this build'**
+  String get googleNotConfigured;
 }
 
 class _AppLocalizationsDelegate

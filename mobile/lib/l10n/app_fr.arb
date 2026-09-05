@@ -56,5 +56,16 @@
   "successEmailCta": "Continuer",
   "successAccountTitle": "C'est réussi !",
   "successAccountSubtitle": "Ton compte est créé et prêt. Bienvenue sur Fidel Assistant.",
-  "successAccountCta": "Accéder à l'accueil"
+  "successAccountCta": "Accéder à l'accueil",
+  "forgotTitle": "Mot de passe oublié ?",
+  "forgotSubtitle": "Entre ton email, on t’envoie un code de réinitialisation",
+  "forgotContinue": "Envoyer le code",
+  "forgotOtpSent": "Code de réinitialisation envoyé",
+  "forgotResetTitle": "Nouveau mot de passe",
+  "forgotResetSubtitle": "Choisis un nouveau mot de passe sécurisé",
+  "forgotResetCta": "Mettre à jour",
+  "forgotResetSuccess": "Mot de passe mis à jour. Tu peux te connecter.",
+  "googleFailed": "Échec de la connexion Google",
+  "googleCancelled": "Connexion Google annulée",
+  "googleNotConfigured": "Google Sign-In n’est pas configuré sur ce build"
 }

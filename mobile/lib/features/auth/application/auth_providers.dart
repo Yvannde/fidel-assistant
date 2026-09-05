@@ -4,6 +4,7 @@ import '../../../core/network/providers.dart';
 import '../data/auth_repository.dart';
 import '../domain/auth_session.dart';
 
+export 'forgot_password_controller.dart';
 export 'registration_controller.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
@@ -33,6 +34,27 @@ class AuthSessionController extends StateNotifier<AuthSession?> {
         );
     state = session;
     return session;
+  }
+
+  Future<AuthSession> loginWithGoogle({
+    required String langue,
+    String? fuseauHoraire,
+  }) async {
+    final session = await _ref.read(authRepositoryProvider).loginWithGoogle(
+          langue: langue,
+          fuseauHoraire: fuseauHoraire,
+        );
+    state = session;
+    return session;
+  }
+
+  void markLegalAccepted() {
+    final current = state;
+    if (current == null) return;
+    state = current.copyWith(
+      needsCgu: false,
+      needsConsentementSante: false,
+    );
   }
 
   Future<void> logout() async {

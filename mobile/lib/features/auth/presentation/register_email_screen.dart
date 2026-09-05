@@ -5,9 +5,12 @@ import 'package:go_router/go_router.dart';
 import '../../../core/locale/locale_controller.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/app_toast.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/auth_providers.dart';
+import 'auth_navigation.dart';
 import 'widgets/auth_shell.dart';
+import 'widgets/google_sign_in_button.dart';
 
 class RegisterEmailScreen extends ConsumerStatefulWidget {
   const RegisterEmailScreen({super.key});
@@ -27,6 +30,43 @@ class _RegisterEmailScreenState extends ConsumerState<RegisterEmailScreen> {
   void dispose() {
     _emailCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _google() async {
+    final l10n = AppLocalizations.of(context);
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final langue =
+          ref.read(localeControllerProvider)?.languageCode ?? 'fr';
+      final session = await ref.read(authSessionProvider.notifier).loginWithGoogle(
+            langue: langue,
+            fuseauHoraire: 'Africa/Douala',
+          );
+      if (!mounted) return;
+      navigateAfterAuth(context, session);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      if (e.code == 'GOOGLE_CANCELLED') {
+        AppToast.info(context, l10n.googleCancelled);
+      } else if (e.code == 'GOOGLE_NOT_CONFIGURED') {
+        AppToast.info(context, l10n.googleNotConfigured);
+      } else {
+        setState(() => _error = e.message);
+        AppToast.error(
+          context,
+          e.message.isNotEmpty ? e.message : l10n.googleFailed,
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _error = l10n.googleFailed);
+      AppToast.error(context, l10n.googleFailed);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   Future<void> _submit() async {
@@ -75,6 +115,14 @@ class _RegisterEmailScreenState extends ConsumerState<RegisterEmailScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
           children: [
+            GoogleSignInButton(
+              label: l10n.continueWithGoogle,
+              busy: _busy,
+              onPressed: _busy ? null : _google,
+            ),
+            const SizedBox(height: 22),
+            _OrDivider(label: l10n.orLoginWith),
+            const SizedBox(height: 22),
             TextFormField(
               controller: _emailCtrl,
               enabled: !_busy,
@@ -138,6 +186,31 @@ class _RegisterEmailScreenState extends ConsumerState<RegisterEmailScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _OrDivider extends StatelessWidget {
+  const _OrDivider({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Expanded(child: Divider()),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+          ),
+        ),
+        const Expanded(child: Divider()),
+      ],
     );
   }
 }

@@ -188,4 +188,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get successAccountCta => 'Go to home';
+
+  @override
+  String get forgotTitle => 'Forgot password?';
+
+  @override
+  String get forgotSubtitle => 'Enter your email and we’ll send a reset code';
+
+  @override
+  String get forgotContinue => 'Send code';
+
+  @override
+  String get forgotOtpSent => 'Reset code sent';
+
+  @override
+  String get forgotResetTitle => 'New password';
+
+  @override
+  String get forgotResetSubtitle => 'Choose a new secure password';
+
+  @override
+  String get forgotResetCta => 'Update password';
+
+  @override
+  String get forgotResetSuccess => 'Password updated. You can sign in now.';
+
+  @override
+  String get googleFailed => 'Google sign-in failed';
+
+  @override
+  String get googleCancelled => 'Google sign-in cancelled';
+
+  @override
+  String get googleNotConfigured =>
+      'Google Sign-In is not configured on this build';
 }

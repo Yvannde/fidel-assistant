@@ -71,5 +71,16 @@
   "successEmailCta": "Continue",
   "successAccountTitle": "Successful!",
   "successAccountSubtitle": "Your account is created and ready. Welcome to Fidel Assistant.",
-  "successAccountCta": "Go to home"
+  "successAccountCta": "Go to home",
+  "forgotTitle": "Forgot password?",
+  "forgotSubtitle": "Enter your email and we’ll send a reset code",
+  "forgotContinue": "Send code",
+  "forgotOtpSent": "Reset code sent",
+  "forgotResetTitle": "New password",
+  "forgotResetSubtitle": "Choose a new secure password",
+  "forgotResetCta": "Update password",
+  "forgotResetSuccess": "Password updated. You can sign in now.",
+  "googleFailed": "Google sign-in failed",
+  "googleCancelled": "Google sign-in cancelled",
+  "googleNotConfigured": "Google Sign-In is not configured on this build"
 }

@@ -190,4 +190,40 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get successAccountCta => 'Accéder à l\'accueil';
+
+  @override
+  String get forgotTitle => 'Mot de passe oublié ?';
+
+  @override
+  String get forgotSubtitle =>
+      'Entre ton email, on t’envoie un code de réinitialisation';
+
+  @override
+  String get forgotContinue => 'Envoyer le code';
+
+  @override
+  String get forgotOtpSent => 'Code de réinitialisation envoyé';
+
+  @override
+  String get forgotResetTitle => 'Nouveau mot de passe';
+
+  @override
+  String get forgotResetSubtitle => 'Choisis un nouveau mot de passe sécurisé';
+
+  @override
+  String get forgotResetCta => 'Mettre à jour';
+
+  @override
+  String get forgotResetSuccess =>
+      'Mot de passe mis à jour. Tu peux te connecter.';
+
+  @override
+  String get googleFailed => 'Échec de la connexion Google';
+
+  @override
+  String get googleCancelled => 'Connexion Google annulée';
+
+  @override
+  String get googleNotConfigured =>
+      'Google Sign-In n’est pas configuré sur ce build';
 }
