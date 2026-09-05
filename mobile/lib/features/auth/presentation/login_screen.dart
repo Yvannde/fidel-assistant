@@ -70,7 +70,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     setState(() => _busy = true);
     try {
-      await ref.read(authSessionProvider.notifier).login(
+      final session = await ref.read(authSessionProvider.notifier).login(
             email: _emailCtrl.text,
             password: _passwordCtrl.text,
           );
@@ -82,7 +82,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         await prefs.remove(_savedEmailKey);
       }
       if (!mounted) return;
-      widget.onLoggedIn();
+      navigateAfterAuth(context, session);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _error = e.message.isNotEmpty ? e.message : l10n.loginFailed);

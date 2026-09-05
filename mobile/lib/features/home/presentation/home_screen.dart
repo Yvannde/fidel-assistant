@@ -6,14 +6,48 @@ import '../../../core/config/app_config.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/application/auth_providers.dart';
+import '../../onboarding/application/onboarding_controller.dart';
 import '../application/health_provider.dart';
 
 /// Accueil temporaire — valide Flutter ↔ API + session.
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _ensureOnboardingDone());
+  }
+
+  Future<void> _ensureOnboardingDone() async {
+    final session = ref.read(authSessionProvider);
+    if (session != null && session.onboardingStep == 'termine') return;
+    if (session != null && session.onboardingStep != 'termine') {
+      if (mounted) context.go('/onboarding');
+      return;
+    }
+    try {
+      await ref
+          .read(onboardingControllerProvider.notifier)
+          .syncFromSessionOrServer();
+      if (!mounted) return;
+      final step = ref.read(onboardingControllerProvider).step;
+      if (step != 'termine') {
+        context.go('/onboarding');
+      }
+    } catch (_) {
+      // Sans session mémoire et API KO : on tente le gate (reprise).
+      if (mounted) context.go('/onboarding');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final health = ref.watch(apiHealthProvider);
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
@@ -43,7 +77,7 @@ class HomeScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Socle auth prêt. Prochaine étape : inscription & onboarding.',
+                l10n.onboardingDoneToast,
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

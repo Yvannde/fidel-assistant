@@ -51,7 +51,7 @@ class _GoogleLegalScreenState extends ConsumerState<GoogleLegalScreen> {
       ref.read(authSessionProvider.notifier).markLegalAccepted();
       if (!mounted) return;
       if (session.isNewUser || session.onboardingStep != 'termine') {
-        context.go('/register/account-success');
+        context.go('/onboarding');
       } else {
         context.go('/home');
       }

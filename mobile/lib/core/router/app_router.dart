@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/application/auth_providers.dart';
+import '../../features/auth/presentation/auth_navigation.dart';
 import '../../features/auth/presentation/forgot_password_email_screen.dart';
 import '../../features/auth/presentation/forgot_password_otp_screen.dart';
 import '../../features/auth/presentation/forgot_password_reset_screen.dart';
@@ -14,6 +16,11 @@ import '../../features/auth/presentation/register_legal_screen.dart';
 import '../../features/auth/presentation/register_otp_screen.dart';
 import '../../features/auth/presentation/register_password_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
+import '../../features/onboarding/presentation/onboarding_besoin_suivi_screen.dart';
+import '../../features/onboarding/presentation/onboarding_gate_screen.dart';
+import '../../features/onboarding/presentation/onboarding_infos_screen.dart';
+import '../../features/onboarding/presentation/onboarding_permissions_screen.dart';
+import '../../features/onboarding/presentation/onboarding_traitement_screen.dart';
 import '../locale/locale_controller.dart';
 import '../network/providers.dart';
 
@@ -48,15 +55,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return '/login';
       }
 
-      if (loc == '/home' || loc == '/auth/google-legal') {
+      final needsSession = loc == '/home' ||
+          loc == '/auth/google-legal' ||
+          loc.startsWith('/onboarding');
+      if (needsSession) {
         final hasSession = await ref.read(tokenStorageProvider).hasSession();
         if (!hasSession) return '/login';
+      }
+
+      // Session en mémoire : ne laisser /home que si onboarding terminé.
+      final session = ref.read(authSessionProvider);
+      if (loc == '/home' &&
+          session != null &&
+          session.onboardingStep != 'termine') {
+        return '/onboarding';
       }
 
       if (loc == '/' || loc.isEmpty) {
         if (!hasLocale) return '/language';
         final hasSession = await ref.read(tokenStorageProvider).hasSession();
-        return hasSession ? '/home' : '/login';
+        // Gate sync le step serveur (évite d’ouvrir home avant onboarding).
+        return hasSession ? '/onboarding' : '/login';
       }
 
       return null;
@@ -80,7 +99,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => _softPage(
           state: state,
           child: LoginScreen(
-            onLoggedIn: () => context.go('/home'),
+            onLoggedIn: () {
+              final session = ref.read(authSessionProvider);
+              if (session != null) {
+                navigateAfterAuth(context, session);
+              } else {
+                context.go('/onboarding');
+              }
+            },
             onSignUp: () => context.push('/register'),
             onForgotPassword: () => context.push('/forgot-password'),
           ),
@@ -147,6 +173,41 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => _successPage(
           state: state,
           child: const RegisterAccountSuccessScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/onboarding',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const OnboardingGateScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/onboarding/infos',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const OnboardingInfosScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/onboarding/besoin-suivi',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const OnboardingBesoinSuiviScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/onboarding/traitement',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const OnboardingTraitementScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/onboarding/permissions',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const OnboardingPermissionsScreen(),
         ),
       ),
       GoRoute(

@@ -92,6 +92,12 @@ En production, `AppConfig.apiBaseUrl` pointe vers `https://educampro.edu.cm`.
 - Header auth bleu + `head.png` : chrome brand volontaire (OK en clair et sombre)
 - Override clair/sombre prévu pour un futur écran Réglages (`ThemeController.setThemeMode`)
 
+## Onboarding UI
+
+- Feature `features/onboarding/` — reprise via `onboarding_step` serveur
+- Shell premium + barre de progression + Lottie locaux (`assets/lottie/`) avec fallback icône
+- Pas d’écran « patient / aidant » : infos → besoin suivi → (traitement + permissions si oui) → complete
+
 ## Tests
 
 - Tests unitaires sur les providers/state (Riverpod se prête bien aux tests sans UI)

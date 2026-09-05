@@ -44,15 +44,18 @@ class AuthSession {
   AuthSession copyWith({
     bool? needsCgu,
     bool? needsConsentementSante,
+    String? onboardingStep,
+    bool? hasPatientProfile,
+    bool? isAidant,
   }) {
     return AuthSession(
       accessToken: accessToken,
       refreshToken: refreshToken,
       expiresIn: expiresIn,
       sessionId: sessionId,
-      onboardingStep: onboardingStep,
-      hasPatientProfile: hasPatientProfile,
-      isAidant: isAidant,
+      onboardingStep: onboardingStep ?? this.onboardingStep,
+      hasPatientProfile: hasPatientProfile ?? this.hasPatientProfile,
+      isAidant: isAidant ?? this.isAidant,
       isNewUser: isNewUser,
       needsCgu: needsCgu ?? this.needsCgu,
       needsConsentementSante:

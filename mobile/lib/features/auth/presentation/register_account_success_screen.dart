@@ -14,7 +14,7 @@ class RegisterAccountSuccessScreen extends StatelessWidget {
       title: l10n.successAccountTitle,
       subtitle: l10n.successAccountSubtitle,
       ctaLabel: l10n.successAccountCta,
-      onContinue: () => context.go('/home'),
+      onContinue: () => context.go('/onboarding'),
     );
   }
 }

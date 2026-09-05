@@ -22,6 +22,8 @@ dependencies:
   timezone: ^0.10.0
   go_router: ^14.6.2
   flutter_svg: ^2.3.0
+  lottie: ^3.5.1
+  permission_handler: ^13.0.2
 
 dev_dependencies:
   flutter_test:
@@ -34,6 +36,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/lottie/
 
   fonts:
     - family: Satoshi

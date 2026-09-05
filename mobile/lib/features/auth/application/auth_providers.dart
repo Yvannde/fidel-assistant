@@ -57,6 +57,18 @@ class AuthSessionController extends StateNotifier<AuthSession?> {
     );
   }
 
+  void updateOnboarding({
+    required String step,
+    bool? hasPatientProfile,
+  }) {
+    final current = state;
+    if (current == null) return;
+    state = current.copyWith(
+      onboardingStep: step,
+      hasPatientProfile: hasPatientProfile,
+    );
+  }
+
   Future<void> logout() async {
     await _ref.read(authRepositoryProvider).logout();
     state = null;

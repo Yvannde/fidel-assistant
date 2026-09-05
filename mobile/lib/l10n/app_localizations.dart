@@ -437,7 +437,7 @@ abstract class AppLocalizations {
   /// No description provided for @successAccountCta.
   ///
   /// In en, this message translates to:
-  /// **'Go to home'**
+  /// **'Continue setup'**
   String get successAccountCta;
 
   /// No description provided for @forgotTitle.
@@ -505,6 +505,258 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Google Sign-In is not configured on this build'**
   String get googleNotConfigured;
+
+  /// No description provided for @onboardingContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get onboardingContinue;
+
+  /// No description provided for @onboardingInfosTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us about you'**
+  String get onboardingInfosTitle;
+
+  /// No description provided for @onboardingInfosSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This helps us personalize your accompaniment. You can change it later.'**
+  String get onboardingInfosSubtitle;
+
+  /// No description provided for @onboardingNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Full name'**
+  String get onboardingNameLabel;
+
+  /// No description provided for @onboardingBirthHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Date of birth'**
+  String get onboardingBirthHint;
+
+  /// No description provided for @onboardingBirthRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your date of birth'**
+  String get onboardingBirthRequired;
+
+  /// No description provided for @onboardingSexLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sex'**
+  String get onboardingSexLabel;
+
+  /// No description provided for @onboardingSexF.
+  ///
+  /// In en, this message translates to:
+  /// **'F'**
+  String get onboardingSexF;
+
+  /// No description provided for @onboardingSexM.
+  ///
+  /// In en, this message translates to:
+  /// **'M'**
+  String get onboardingSexM;
+
+  /// No description provided for @onboardingSexOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get onboardingSexOther;
+
+  /// No description provided for @onboardingLocationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get onboardingLocationLabel;
+
+  /// No description provided for @onboardingLocationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'City / neighborhood'**
+  String get onboardingLocationHint;
+
+  /// No description provided for @onboardingPhoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone (optional)'**
+  String get onboardingPhoneLabel;
+
+  /// No description provided for @onboardingPhoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'+237…'**
+  String get onboardingPhoneHint;
+
+  /// No description provided for @onboardingBesoinTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want personal follow-up?'**
+  String get onboardingBesoinTitle;
+
+  /// No description provided for @onboardingBesoinSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You can also support someone later from home. Both are possible.'**
+  String get onboardingBesoinSubtitle;
+
+  /// No description provided for @onboardingBesoinYesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, follow-up for me'**
+  String get onboardingBesoinYesTitle;
+
+  /// No description provided for @onboardingBesoinYesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders, vitals, and personal accompaniment'**
+  String get onboardingBesoinYesSubtitle;
+
+  /// No description provided for @onboardingBesoinNoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Not for now'**
+  String get onboardingBesoinNoTitle;
+
+  /// No description provided for @onboardingBesoinNoSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'I mostly want to support someone later'**
+  String get onboardingBesoinNoSubtitle;
+
+  /// No description provided for @onboardingChoiceRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an option to continue'**
+  String get onboardingChoiceRequired;
+
+  /// No description provided for @onboardingTraitementTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you in treatment?'**
+  String get onboardingTraitementTitle;
+
+  /// No description provided for @onboardingTraitementSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'If yes, select the conditions you follow. You can complete details later.'**
+  String get onboardingTraitementSubtitle;
+
+  /// No description provided for @onboardingTraitementYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get onboardingTraitementYes;
+
+  /// No description provided for @onboardingTraitementNo.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get onboardingTraitementNo;
+
+  /// No description provided for @onboardingTraitementNoHint.
+  ///
+  /// In en, this message translates to:
+  /// **'No problem — you can activate follow-up later.'**
+  String get onboardingTraitementNoHint;
+
+  /// No description provided for @onboardingMaladiesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Conditions'**
+  String get onboardingMaladiesLabel;
+
+  /// No description provided for @onboardingMaladieRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Select at least one condition'**
+  String get onboardingMaladieRequired;
+
+  /// No description provided for @onboardingPhaseLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Treatment phase'**
+  String get onboardingPhaseLabel;
+
+  /// No description provided for @onboardingPhaseDebut.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting'**
+  String get onboardingPhaseDebut;
+
+  /// No description provided for @onboardingPhaseEnCours.
+  ///
+  /// In en, this message translates to:
+  /// **'Ongoing'**
+  String get onboardingPhaseEnCours;
+
+  /// No description provided for @onboardingPhaseMaintenance.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance'**
+  String get onboardingPhaseMaintenance;
+
+  /// No description provided for @onboardingPhaseInconnu.
+  ///
+  /// In en, this message translates to:
+  /// **'Not sure'**
+  String get onboardingPhaseInconnu;
+
+  /// No description provided for @onboardingPermsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable reliable reminders'**
+  String get onboardingPermsTitle;
+
+  /// No description provided for @onboardingPermsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We explain why before the system prompt. You can also continue without.'**
+  String get onboardingPermsSubtitle;
+
+  /// No description provided for @onboardingPermsNotifTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get onboardingPermsNotifTitle;
+
+  /// No description provided for @onboardingPermsNotifBody.
+  ///
+  /// In en, this message translates to:
+  /// **'So we can remind you to take your medication on time, even when the app is closed.'**
+  String get onboardingPermsNotifBody;
+
+  /// No description provided for @onboardingPermsBatteryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Battery (Android)'**
+  String get onboardingPermsBatteryTitle;
+
+  /// No description provided for @onboardingPermsBatteryBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Without an exemption, some phones kill reminders in the background.'**
+  String get onboardingPermsBatteryBody;
+
+  /// No description provided for @onboardingPermsAllow.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow'**
+  String get onboardingPermsAllow;
+
+  /// No description provided for @onboardingPermsLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get onboardingPermsLater;
+
+  /// No description provided for @onboardingDoneToast.
+  ///
+  /// In en, this message translates to:
+  /// **'You’re all set — welcome to Fidel'**
+  String get onboardingDoneToast;
 }
 
 class _AppLocalizationsDelegate

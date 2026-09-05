@@ -189,7 +189,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Ton compte est créé et prêt. Bienvenue sur Fidel Assistant.';
 
   @override
-  String get successAccountCta => 'Accéder à l\'accueil';
+  String get successAccountCta => 'Continuer la configuration';
 
   @override
   String get forgotTitle => 'Mot de passe oublié ?';
@@ -226,4 +226,139 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get googleNotConfigured =>
       'Google Sign-In n’est pas configuré sur ce build';
+
+  @override
+  String get onboardingContinue => 'Continuer';
+
+  @override
+  String get onboardingInfosTitle => 'Parle-nous de toi';
+
+  @override
+  String get onboardingInfosSubtitle =>
+      'Ces infos nous aident à personnaliser ton accompagnement. Tu pourras les modifier plus tard.';
+
+  @override
+  String get onboardingNameLabel => 'Nom complet';
+
+  @override
+  String get onboardingBirthHint => 'Date de naissance';
+
+  @override
+  String get onboardingBirthRequired => 'Indique ta date de naissance';
+
+  @override
+  String get onboardingSexLabel => 'Sexe';
+
+  @override
+  String get onboardingSexF => 'F';
+
+  @override
+  String get onboardingSexM => 'M';
+
+  @override
+  String get onboardingSexOther => 'Autre';
+
+  @override
+  String get onboardingLocationLabel => 'Localisation';
+
+  @override
+  String get onboardingLocationHint => 'Ville / quartier';
+
+  @override
+  String get onboardingPhoneLabel => 'Téléphone (optionnel)';
+
+  @override
+  String get onboardingPhoneHint => '+237…';
+
+  @override
+  String get onboardingBesoinTitle => 'Tu veux un suivi pour toi ?';
+
+  @override
+  String get onboardingBesoinSubtitle =>
+      'Tu pourras aussi accompagner un proche plus tard depuis l’accueil. Les deux sont possibles.';
+
+  @override
+  String get onboardingBesoinYesTitle => 'Oui, un suivi pour moi';
+
+  @override
+  String get onboardingBesoinYesSubtitle =>
+      'Rappels, constantes et accompagnement personnel';
+
+  @override
+  String get onboardingBesoinNoTitle => 'Pas pour l’instant';
+
+  @override
+  String get onboardingBesoinNoSubtitle =>
+      'Je veux surtout accompagner quelqu’un plus tard';
+
+  @override
+  String get onboardingChoiceRequired => 'Choisis une option pour continuer';
+
+  @override
+  String get onboardingTraitementTitle => 'Es-tu en traitement ?';
+
+  @override
+  String get onboardingTraitementSubtitle =>
+      'Si oui, sélectionne les maladies suivies. Tu pourras compléter ensuite.';
+
+  @override
+  String get onboardingTraitementYes => 'Oui';
+
+  @override
+  String get onboardingTraitementNo => 'Non';
+
+  @override
+  String get onboardingTraitementNoHint =>
+      'Pas de souci — tu pourras activer un suivi plus tard.';
+
+  @override
+  String get onboardingMaladiesLabel => 'Maladies suivies';
+
+  @override
+  String get onboardingMaladieRequired => 'Sélectionne au moins une maladie';
+
+  @override
+  String get onboardingPhaseLabel => 'Phase du traitement';
+
+  @override
+  String get onboardingPhaseDebut => 'Début';
+
+  @override
+  String get onboardingPhaseEnCours => 'En cours';
+
+  @override
+  String get onboardingPhaseMaintenance => 'Maintenance';
+
+  @override
+  String get onboardingPhaseInconnu => 'Je ne sais pas';
+
+  @override
+  String get onboardingPermsTitle => 'Active les rappels fiables';
+
+  @override
+  String get onboardingPermsSubtitle =>
+      'On t’explique pourquoi avant la demande système. Tu peux aussi continuer sans.';
+
+  @override
+  String get onboardingPermsNotifTitle => 'Notifications';
+
+  @override
+  String get onboardingPermsNotifBody =>
+      'Pour te rappeler de prendre tes médicaments au bon moment, même si l’app est fermée.';
+
+  @override
+  String get onboardingPermsBatteryTitle => 'Batterie (Android)';
+
+  @override
+  String get onboardingPermsBatteryBody =>
+      'Sans exemption, certains téléphones coupent les rappels en arrière-plan.';
+
+  @override
+  String get onboardingPermsAllow => 'Autoriser';
+
+  @override
+  String get onboardingPermsLater => 'Plus tard';
+
+  @override
+  String get onboardingDoneToast => 'C’est bon — bienvenue sur Fidel';
 }

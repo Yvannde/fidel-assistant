@@ -187,7 +187,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your account is created and ready. Welcome to Fidel Assistant.';
 
   @override
-  String get successAccountCta => 'Go to home';
+  String get successAccountCta => 'Continue setup';
 
   @override
   String get forgotTitle => 'Forgot password?';
@@ -222,4 +222,139 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get googleNotConfigured =>
       'Google Sign-In is not configured on this build';
+
+  @override
+  String get onboardingContinue => 'Continue';
+
+  @override
+  String get onboardingInfosTitle => 'Tell us about you';
+
+  @override
+  String get onboardingInfosSubtitle =>
+      'This helps us personalize your accompaniment. You can change it later.';
+
+  @override
+  String get onboardingNameLabel => 'Full name';
+
+  @override
+  String get onboardingBirthHint => 'Date of birth';
+
+  @override
+  String get onboardingBirthRequired => 'Please enter your date of birth';
+
+  @override
+  String get onboardingSexLabel => 'Sex';
+
+  @override
+  String get onboardingSexF => 'F';
+
+  @override
+  String get onboardingSexM => 'M';
+
+  @override
+  String get onboardingSexOther => 'Other';
+
+  @override
+  String get onboardingLocationLabel => 'Location';
+
+  @override
+  String get onboardingLocationHint => 'City / neighborhood';
+
+  @override
+  String get onboardingPhoneLabel => 'Phone (optional)';
+
+  @override
+  String get onboardingPhoneHint => '+237…';
+
+  @override
+  String get onboardingBesoinTitle => 'Do you want personal follow-up?';
+
+  @override
+  String get onboardingBesoinSubtitle =>
+      'You can also support someone later from home. Both are possible.';
+
+  @override
+  String get onboardingBesoinYesTitle => 'Yes, follow-up for me';
+
+  @override
+  String get onboardingBesoinYesSubtitle =>
+      'Reminders, vitals, and personal accompaniment';
+
+  @override
+  String get onboardingBesoinNoTitle => 'Not for now';
+
+  @override
+  String get onboardingBesoinNoSubtitle =>
+      'I mostly want to support someone later';
+
+  @override
+  String get onboardingChoiceRequired => 'Choose an option to continue';
+
+  @override
+  String get onboardingTraitementTitle => 'Are you in treatment?';
+
+  @override
+  String get onboardingTraitementSubtitle =>
+      'If yes, select the conditions you follow. You can complete details later.';
+
+  @override
+  String get onboardingTraitementYes => 'Yes';
+
+  @override
+  String get onboardingTraitementNo => 'No';
+
+  @override
+  String get onboardingTraitementNoHint =>
+      'No problem — you can activate follow-up later.';
+
+  @override
+  String get onboardingMaladiesLabel => 'Conditions';
+
+  @override
+  String get onboardingMaladieRequired => 'Select at least one condition';
+
+  @override
+  String get onboardingPhaseLabel => 'Treatment phase';
+
+  @override
+  String get onboardingPhaseDebut => 'Starting';
+
+  @override
+  String get onboardingPhaseEnCours => 'Ongoing';
+
+  @override
+  String get onboardingPhaseMaintenance => 'Maintenance';
+
+  @override
+  String get onboardingPhaseInconnu => 'Not sure';
+
+  @override
+  String get onboardingPermsTitle => 'Enable reliable reminders';
+
+  @override
+  String get onboardingPermsSubtitle =>
+      'We explain why before the system prompt. You can also continue without.';
+
+  @override
+  String get onboardingPermsNotifTitle => 'Notifications';
+
+  @override
+  String get onboardingPermsNotifBody =>
+      'So we can remind you to take your medication on time, even when the app is closed.';
+
+  @override
+  String get onboardingPermsBatteryTitle => 'Battery (Android)';
+
+  @override
+  String get onboardingPermsBatteryBody =>
+      'Without an exemption, some phones kill reminders in the background.';
+
+  @override
+  String get onboardingPermsAllow => 'Allow';
+
+  @override
+  String get onboardingPermsLater => 'Later';
+
+  @override
+  String get onboardingDoneToast => 'You’re all set — welcome to Fidel';
 }

@@ -6,7 +6,8 @@ plugins {
 
 android {
     namespace = "cm.fidel.fidel_assistant"
-    compileSdk = flutter.compileSdkVersion
+    // permission_handler_android exige API 37+.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
