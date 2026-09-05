@@ -41,9 +41,12 @@ flutter run \
 - `core/config` — `AppConfig` + dart-defines
 - `core/storage` — JWT dans `flutter_secure_storage`
 - `core/network` — Dio + refresh Bearer automatique
+- `core/theme` — palette bleu (`#2563EB`) + police **Satoshi**
+- `l10n` — EN / FR (`gen-l10n`), choix de langue au premier lancement
+- Auth UI — login (design header `assets/images/head.png`) + `POST /auth/login`
 - Features dossiers : auth, onboarding, medicaments, constantes, reseau, home
 - Permissions Android : Internet, notifs, alarmes exactes, boot
 
 ## Prochaine étape
 
-Écrans **auth + onboarding** branchés sur `/api/v1/auth` et `/api/v1/onboarding`.
+Inscription (email → OTP → mot de passe → CGU) + Google Sign-In + onboarding.

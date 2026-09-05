@@ -1,21 +1,27 @@
 ﻿import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:fidel_assistant/core/locale/locale_controller.dart';
 import 'package:fidel_assistant/main.dart';
-import 'package:fidel_assistant/features/home/application/health_provider.dart';
 
 void main() {
-  testWidgets('Affiche le nom de l app et la zone config', (tester) async {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  testWidgets('Language screen is the entry when no locale saved', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          apiHealthProvider.overrideWith((ref) async => 'ok — test'),
+          sharedPreferencesProvider.overrideWithValue(prefs),
         ],
         child: const FidelApp(),
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Fidel Assistant'), findsWidgets);
-    expect(find.text('Configuration mobile'), findsOneWidget);
-    expect(find.textContaining('Backend joignable'), findsOneWidget);
+
+    expect(find.textContaining('langue'), findsWidgets);
   });
 }

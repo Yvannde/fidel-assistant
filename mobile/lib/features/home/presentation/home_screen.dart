@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../auth/application/auth_providers.dart';
 import '../application/health_provider.dart';
 
-/// Écran d'accueil temporaire — valide la config Flutter ↔ API.
+/// Accueil temporaire — valide Flutter ↔ API + session.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -13,9 +17,21 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final health = ref.watch(apiHealthProvider);
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text(AppConfig.appName)),
+      appBar: AppBar(
+        title: Text(l10n.homeTitle),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              await ref.read(authSessionProvider.notifier).logout();
+              if (context.mounted) context.go('/login');
+            },
+            child: Text(l10n.logout),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -23,14 +39,15 @@ class HomeScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Configuration mobile',
+                AppConfig.appName,
                 style: theme.textTheme.headlineSmall,
               ),
               const SizedBox(height: 8),
               Text(
-                'Socle prêt (Dio, tokens sécurisés, Riverpod). '
-                'Prochaine étape : écrans auth / onboarding.',
-                style: theme.textTheme.bodyLarge,
+                'Socle auth prêt. Prochaine étape : inscription & onboarding.',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
               const SizedBox(height: 24),
               Text('API', style: theme.textTheme.titleMedium),
@@ -56,9 +73,7 @@ class HomeScreen extends ConsumerWidget {
                 error: (err, _) => _StatusCard(
                   ok: false,
                   title: 'Backend injoignable',
-                  detail: err is ApiException
-                      ? err.message
-                      : err.toString(),
+                  detail: err is ApiException ? err.message : err.toString(),
                 ),
               ),
               const Spacer(),
