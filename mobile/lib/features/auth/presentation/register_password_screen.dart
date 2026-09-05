@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/auth_providers.dart';
 import 'widgets/auth_shell.dart';
@@ -98,7 +97,7 @@ class _RegisterPasswordScreenState
                     _obscure
                         ? Icons.visibility_outlined
                         : Icons.visibility_off_outlined,
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -127,7 +126,7 @@ class _RegisterPasswordScreenState
                     _obscureConfirm
                         ? Icons.visibility_outlined
                         : Icons.visibility_off_outlined,
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -142,7 +141,7 @@ class _RegisterPasswordScreenState
               Text(
                 _error!,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: AppColors.error,
+                  color: Theme.of(context).colorScheme.error,
                 ),
               ),
             ],

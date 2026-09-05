@@ -89,7 +89,9 @@ async def resend_otp(body: ResendOtpIn, db: Annotated[AsyncSession, Depends(get_
 async def verify_otp(
     body: VerifyOtpIn, db: Annotated[AsyncSession, Depends(get_db)]
 ) -> TempTokenOut:
-    token = await auth_service.verify_otp(db, email=body.email, code=body.code)
+    token = await auth_service.verify_otp(
+        db, email=body.email, code=body.code, otp_type=body.type
+    )
     return TempTokenOut(temp_token=token)
 
 
@@ -181,9 +183,10 @@ async def reset_password(
 ) -> MessageOut:
     message = await auth_service.reset_password(
         db,
+        nouveau_password=body.nouveau_password,
         email=body.email,
         code=body.code,
-        nouveau_password=body.nouveau_password,
+        temp_token=body.temp_token,
     )
     return MessageOut(message=message)
 

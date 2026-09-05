@@ -16,7 +16,6 @@ import '../../features/auth/presentation/register_password_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../locale/locale_controller.dart';
 import '../network/providers.dart';
-import '../theme/app_colors.dart';
 
 /// Notifie go_router sans recréer l'instance (évite le flash noir).
 class _RouterRefresh extends ChangeNotifier {
@@ -159,7 +158,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: Center(
         child: Text(state.error?.toString() ?? 'Not found'),
       ),

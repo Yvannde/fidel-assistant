@@ -84,6 +84,14 @@ En production, `AppConfig.apiBaseUrl` pointe vers `https://educampro.edu.cm`.
 - Respecter les tailles de police système (pas de tailles fixes qui ignorent les réglages d'accessibilité du téléphone)
 - Contrastes suffisants (WCAG AA minimum) même pour les thèmes personnalisés
 
+## Thème (Material 3)
+
+- **Défaut** : `ThemeMode.system` (suit Android / iOS) via `ThemeController` (`fa_theme_mode` dans SharedPreferences)
+- **Light + dark** : `AppTheme.light` / `AppTheme.dark` — primary brand `#2563EB`, Satoshi, surfaces dark slate (pas noir pur)
+- Dans les écrans : préférer `Theme.of(context).colorScheme` / `ThemeTokens.of(context)` — **ne pas** hardcoder `AppColors.surface` / `textPrimary` light-only
+- Header auth bleu + `head.png` : chrome brand volontaire (OK en clair et sombre)
+- Override clair/sombre prévu pour un futur écran Réglages (`ThemeController.setThemeMode`)
+
 ## Tests
 
 - Tests unitaires sur les providers/state (Riverpod se prête bien aux tests sans UI)

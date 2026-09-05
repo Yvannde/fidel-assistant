@@ -1,16 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Brouillon mot de passe oublié — email + code OTP.
+/// Brouillon mot de passe oublié — email + temp_token après OTP validé.
 class ForgotPasswordDraft {
-  const ForgotPasswordDraft({this.email, this.code});
+  const ForgotPasswordDraft({this.email, this.tempToken});
 
   final String? email;
-  final String? code;
+  final String? tempToken;
 
-  ForgotPasswordDraft copyWith({String? email, String? code}) {
+  ForgotPasswordDraft copyWith({String? email, String? tempToken}) {
     return ForgotPasswordDraft(
       email: email ?? this.email,
-      code: code ?? this.code,
+      tempToken: tempToken ?? this.tempToken,
     );
   }
 }
@@ -22,8 +22,8 @@ class ForgotPasswordController extends StateNotifier<ForgotPasswordDraft> {
     state = state.copyWith(email: email.trim().toLowerCase());
   }
 
-  void setCode(String code) {
-    state = state.copyWith(code: code.trim());
+  void setTempToken(String token) {
+    state = state.copyWith(tempToken: token);
   }
 
   void reset() {

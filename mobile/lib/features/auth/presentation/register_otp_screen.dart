@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/ui/app_toast.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/auth_providers.dart';
@@ -112,7 +111,7 @@ class _RegisterOtpScreenState extends ConsumerState<RegisterOtpScreen> {
           Text(
             l10n.otpLabel,
             style: theme.textTheme.titleSmall?.copyWith(
-              color: AppColors.textSecondary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -139,7 +138,7 @@ class _RegisterOtpScreenState extends ConsumerState<RegisterOtpScreen> {
               _error!,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: AppColors.error,
+                color: Theme.of(context).colorScheme.error,
               ),
             ),
           ],

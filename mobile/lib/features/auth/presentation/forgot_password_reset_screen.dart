@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/ui/app_toast.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/auth_providers.dart';
@@ -38,9 +37,8 @@ class _ForgotPasswordResetScreenState
   Future<void> _submit() async {
     final l10n = AppLocalizations.of(context);
     final draft = ref.read(forgotPasswordDraftProvider);
-    final email = draft.email;
-    final code = draft.code;
-    if (email == null || code == null) {
+    final tempToken = draft.tempToken;
+    if (tempToken == null || tempToken.isEmpty) {
       context.go('/forgot-password');
       return;
     }
@@ -51,8 +49,7 @@ class _ForgotPasswordResetScreenState
     setState(() => _busy = true);
     try {
       await ref.read(authRepositoryProvider).resetPassword(
-            email: email,
-            code: code,
+            tempToken: tempToken,
             nouveauPassword: _passwordCtrl.text,
           );
       ref.read(forgotPasswordDraftProvider.notifier).reset();
@@ -102,7 +99,7 @@ class _ForgotPasswordResetScreenState
                     _obscure
                         ? Icons.visibility_outlined
                         : Icons.visibility_off_outlined,
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -131,7 +128,7 @@ class _ForgotPasswordResetScreenState
                     _obscureConfirm
                         ? Icons.visibility_outlined
                         : Icons.visibility_off_outlined,
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -146,7 +143,7 @@ class _ForgotPasswordResetScreenState
               Text(
                 _error!,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: AppColors.error,
+                  color: Theme.of(context).colorScheme.error,
                 ),
               ),
             ],

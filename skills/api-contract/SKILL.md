@@ -21,7 +21,7 @@ Toutes les routes `/auth/*` : plafond IP global (`RATE_LIMITED`, HTTP 429). Acti
 
 | POST | `/auth/register` | `email`, `langue` | `{message}` — envoie l'OTP | `EMAIL_ALREADY_VERIFIED`, `RATE_LIMITED` |
 | POST | `/auth/resend-otp` | `email`, `type` (`inscription`\|`reset_password`) | `{message}` | `RESEND_LIMIT_REACHED`, `RATE_LIMITED` |
-| POST | `/auth/verify-otp` | `email`, `code` | `{temp_token}` — jeton temporaire pour finaliser l'inscription | `OTP_INVALID`, `OTP_EXPIRED`, `OTP_MAX_ATTEMPTS`, `RATE_LIMITED` |
+| POST | `/auth/verify-otp` | `email`, `code`, `type?` (`inscription`\|`reset_password`, défaut `inscription`) | `{temp_token}` — inscription : vérifie email ; reset : jeton pour `reset-password` | `OTP_INVALID`, `OTP_EXPIRED`, `OTP_MAX_ATTEMPTS`, `RATE_LIMITED` |
 | POST | `/auth/set-password` | `temp_token`, `password` | `{message}` | `TEMP_TOKEN_INVALID`, `PASSWORD_TOO_WEAK`, `RATE_LIMITED` |
 | POST | `/auth/accept-cgu` | `temp_token` ou 🔒, `version` | `{message}` | `CGU_VERSION_OUTDATED`, `RATE_LIMITED` |
 | POST | `/auth/accept-consentement-sante` | `temp_token` ou 🔒 | `{message}` | `RATE_LIMITED` |
@@ -30,7 +30,7 @@ Toutes les routes `/auth/*` : plafond IP global (`RATE_LIMITED`, HTTP 429). Acti
 | POST | `/auth/refresh` | `refresh_token` | `{access_token, expires_in}` | `REFRESH_TOKEN_INVALID_OR_EXPIRED`, `RATE_LIMITED` |
 | POST | `/auth/logout` | 🔒 `refresh_token` | `{message}` | `RATE_LIMITED` |
 | POST | `/auth/forgot-password` | `email` | `{message}` — envoie OTP type `reset_password` | `RATE_LIMITED` |
-| POST | `/auth/reset-password` | `email`, `code`, `nouveau_password` | `{message}` | `OTP_INVALID`, `OTP_EXPIRED`, `RATE_LIMITED` |
+| POST | `/auth/reset-password` | `nouveau_password` + (`temp_token` **ou** `email`+`code`) | `{message}` | `OTP_INVALID`, `OTP_EXPIRED`, `TEMP_TOKEN_INVALID`, `RATE_LIMITED` |
 | GET | `/auth/me` | 🔒 | `{id, email, phone, nom_complet, date_naissance, sexe, localisation, onboarding_step, has_patient_profile, is_aidant, langue, fuseau_horaire, auth_providers, email_verified_at, has_password, needs_cgu, needs_consentement_sante}` | `RATE_LIMITED` |
 | PATCH | `/auth/me` | 🔒 `langue?`, `fuseau_horaire?`, `phone?` | objet `/auth/me` mis à jour | `RATE_LIMITED` |
 | POST | `/auth/change-password` | 🔒 `current_password?`, `nouveau_password` | `{message}` — `current_password` requis si un mot de passe existe déjà (compte email) ; optionnel si Google-only | `INVALID_CREDENTIALS`, `PASSWORD_TOO_WEAK`, `RATE_LIMITED` |

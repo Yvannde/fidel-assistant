@@ -4,7 +4,7 @@ import '../theme/app_colors.dart';
 
 enum AppToastType { success, error, info }
 
-/// Toast flottant épure — coins arrondis, couleur selon le type.
+/// Toast flottant épure — coins arrondis, couleur selon le type + luminosité.
 abstract final class AppToast {
   static void show(
     BuildContext context, {
@@ -72,20 +72,21 @@ class _ToastBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
     final (bg, fg, icon) = switch (type) {
       AppToastType.success => (
-          AppColors.toastSuccessBg,
-          AppColors.toastSuccessFg,
+          dark ? AppColors.toastSuccessBgDark : AppColors.toastSuccessBg,
+          dark ? AppColors.toastSuccessFgDark : AppColors.toastSuccessFg,
           Icons.check_circle_rounded,
         ),
       AppToastType.error => (
-          AppColors.toastErrorBg,
-          AppColors.toastErrorFg,
+          dark ? AppColors.toastErrorBgDark : AppColors.toastErrorBg,
+          dark ? AppColors.toastErrorFgDark : AppColors.toastErrorFg,
           Icons.error_rounded,
         ),
       AppToastType.info => (
-          AppColors.toastInfoBg,
-          AppColors.toastInfoFg,
+          dark ? AppColors.toastInfoBgDark : AppColors.toastInfoBg,
+          dark ? AppColors.toastInfoFgDark : AppColors.toastInfoFg,
           Icons.info_rounded,
         ),
     };

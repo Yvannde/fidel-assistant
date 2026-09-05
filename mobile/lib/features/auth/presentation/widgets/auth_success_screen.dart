@@ -69,11 +69,15 @@ class _AuthSuccessScreenState extends State<AuthSuccessScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final tokens = ThemeTokens.of(context);
+    final overlay = tokens.isDark
+        ? SystemUiOverlayStyle.light
+        : SystemUiOverlayStyle.dark;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.dark,
+      value: overlay,
       child: Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: tokens.surface,
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(28, 24, 28, 28),
@@ -99,7 +103,7 @@ class _AuthSuccessScreenState extends State<AuthSuccessScreen>
                           textAlign: TextAlign.center,
                           style: theme.textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
+                            color: tokens.textPrimary,
                             height: 1.2,
                           ),
                         ),
@@ -108,7 +112,7 @@ class _AuthSuccessScreenState extends State<AuthSuccessScreen>
                           widget.subtitle,
                           textAlign: TextAlign.center,
                           style: theme.textTheme.bodyLarge?.copyWith(
-                            color: AppColors.textSecondary,
+                            color: tokens.textSecondary,
                             height: 1.45,
                           ),
                         ),

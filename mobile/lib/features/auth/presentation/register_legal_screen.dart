@@ -114,7 +114,7 @@ class _RegisterLegalScreenState extends ConsumerState<RegisterLegalScreen> {
             Text(
               _error!,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: AppColors.error,
+                color: Theme.of(context).colorScheme.error,
               ),
             ),
           ],
@@ -152,7 +152,7 @@ class _LegalTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.background,
+      color: ThemeTokens.of(context).elevated,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onChanged == null ? null : () => onChanged!(!value),

@@ -104,7 +104,7 @@ class _GoogleLegalScreenState extends ConsumerState<GoogleLegalScreen> {
             Text(
               _error!,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: AppColors.error,
+                color: Theme.of(context).colorScheme.error,
               ),
             ),
           ],
@@ -142,7 +142,7 @@ class _Tile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.background,
+      color: ThemeTokens.of(context).elevated,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onChanged == null ? null : () => onChanged!(!value),

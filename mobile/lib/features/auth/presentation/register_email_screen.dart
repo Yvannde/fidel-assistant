@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/locale/locale_controller.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/ui/app_toast.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/auth_providers.dart';
@@ -148,7 +147,7 @@ class _RegisterEmailScreenState extends ConsumerState<RegisterEmailScreen> {
               Text(
                 _error!,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: AppColors.error,
+                  color: Theme.of(context).colorScheme.error,
                 ),
               ),
             ],
@@ -174,7 +173,7 @@ class _RegisterEmailScreenState extends ConsumerState<RegisterEmailScreen> {
                 Text(
                   l10n.haveAccount,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
                 TextButton(
@@ -205,7 +204,7 @@ class _OrDivider extends StatelessWidget {
           child: Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
           ),
         ),

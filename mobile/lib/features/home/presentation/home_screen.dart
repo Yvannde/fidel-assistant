@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/config/app_config.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/application/auth_providers.dart';
 import '../application/health_provider.dart';
@@ -46,7 +45,7 @@ class HomeScreen extends ConsumerWidget {
               Text(
                 'Socle auth prêt. Prochaine étape : inscription & onboarding.',
                 style: theme.textTheme.bodyLarge?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 24),

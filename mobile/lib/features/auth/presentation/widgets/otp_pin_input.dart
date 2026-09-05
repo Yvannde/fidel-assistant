@@ -133,6 +133,9 @@ class OtpPinInputState extends State<OtpPinInput> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = ThemeTokens.of(context);
+    final scheme = Theme.of(context).colorScheme;
+
     return Semantics(
       label: 'Code OTP',
       child: Row(
@@ -140,12 +143,12 @@ class OtpPinInputState extends State<OtpPinInput> {
           final focused = _focusNodes[i].hasFocus;
           final filled = _controllers[i].text.isNotEmpty;
           final borderColor = widget.hasError
-              ? AppColors.error
+              ? scheme.error
               : focused
                   ? AppColors.borderFocus
                   : filled
                       ? AppColors.primary.withValues(alpha: 0.35)
-                      : AppColors.border;
+                      : tokens.border;
 
           return Expanded(
             child: Padding(
@@ -158,7 +161,9 @@ class OtpPinInputState extends State<OtpPinInput> {
                 curve: Curves.easeOut,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: tokens.isDark
+                      ? AppColors.surfaceElevatedDark
+                      : tokens.surface,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: borderColor,

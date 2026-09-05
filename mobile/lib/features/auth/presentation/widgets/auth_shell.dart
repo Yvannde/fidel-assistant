@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_colors.dart';
 
-/// Layout auth : fond bleu [head.png] + feuille blanche arrondie.
+/// Layout auth : fond bleu [head.png] + feuille surface arrondie (light/dark).
 class AuthShell extends StatelessWidget {
   const AuthShell({
     super.key,
@@ -27,11 +27,12 @@ class AuthShell extends StatelessWidget {
     final size = MediaQuery.sizeOf(context);
     final headerH = size.height * headerHeightFactor;
     final topPad = MediaQuery.paddingOf(context).top;
+    final sheet = ThemeTokens.of(context).surface;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: sheet,
         body: Stack(
           children: [
             Positioned(
@@ -110,7 +111,7 @@ class AuthShell extends StatelessWidget {
                   ),
                   Expanded(
                     child: Material(
-                      color: AppColors.surface,
+                      color: sheet,
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(28),
                       ),

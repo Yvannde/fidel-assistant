@@ -135,6 +135,7 @@ class AuthRepository {
   Future<String> verifyOtp({
     required String email,
     required String code,
+    String type = 'inscription',
   }) async {
     try {
       final res = await _api.post<Map<String, dynamic>>(
@@ -142,6 +143,7 @@ class AuthRepository {
         data: {
           'email': email.trim().toLowerCase(),
           'code': code.trim(),
+          'type': type,
         },
         skipAuth: true,
       );
@@ -186,17 +188,21 @@ class AuthRepository {
   }
 
   Future<void> resetPassword({
-    required String email,
-    required String code,
+    String? email,
+    String? code,
+    String? tempToken,
     required String nouveauPassword,
   }) async {
     try {
       await _api.post<Map<String, dynamic>>(
         '/auth/reset-password',
         data: {
-          'email': email.trim().toLowerCase(),
-          'code': code.trim(),
           'nouveau_password': nouveauPassword,
+          if (tempToken != null && tempToken.isNotEmpty)
+            'temp_token': tempToken,
+          if (email != null && email.isNotEmpty)
+            'email': email.trim().toLowerCase(),
+          if (code != null && code.isNotEmpty) 'code': code.trim(),
         },
         skipAuth: true,
       );
