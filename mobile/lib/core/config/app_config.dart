@@ -31,4 +31,12 @@ class AppConfig {
   static const String googleClientIdWeb = String.fromEnvironment(
     'GOOGLE_CLIENT_ID_WEB',
   );
+
+  /// Doit matcher `settings.cgu_current_version` côté FastAPI.
+  static const String cguCurrentVersion = String.fromEnvironment(
+    'CGU_VERSION',
+    defaultValue: 'v1.0',
+  );
+
+  static const int passwordMinLength = 8;
 }

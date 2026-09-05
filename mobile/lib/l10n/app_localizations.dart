@@ -182,6 +182,12 @@ abstract class AppLocalizations {
   /// **'••••••••'**
   String get passwordHint;
 
+  /// No description provided for @confirmPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm password'**
+  String get confirmPasswordLabel;
+
   /// No description provided for @rememberMe.
   ///
   /// In en, this message translates to:
@@ -212,6 +218,12 @@ abstract class AppLocalizations {
   /// **'Sign Up'**
   String get signUp;
 
+  /// No description provided for @haveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account?'**
+  String get haveAccount;
+
   /// No description provided for @loginFailed.
   ///
   /// In en, this message translates to:
@@ -230,6 +242,18 @@ abstract class AppLocalizations {
   /// **'Enter a valid email'**
   String get invalidEmail;
 
+  /// No description provided for @passwordTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'At least {min} characters'**
+  String passwordTooShort(int min);
+
+  /// No description provided for @passwordMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get passwordMismatch;
+
   /// No description provided for @comingSoon.
   ///
   /// In en, this message translates to:
@@ -247,6 +271,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Log out'**
   String get logout;
+
+  /// No description provided for @registerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your account'**
+  String get registerTitle;
+
+  /// No description provided for @registerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email to get started'**
+  String get registerSubtitle;
+
+  /// No description provided for @registerContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get registerContinue;
+
+  /// No description provided for @otpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your email'**
+  String get otpTitle;
+
+  /// No description provided for @otpSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We sent a 6-digit code to {email}'**
+  String otpSubtitle(String email);
+
+  /// No description provided for @otpLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification code'**
+  String get otpLabel;
+
+  /// No description provided for @otpHint.
+  ///
+  /// In en, this message translates to:
+  /// **'123456'**
+  String get otpHint;
+
+  /// No description provided for @otpInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit code'**
+  String get otpInvalid;
+
+  /// No description provided for @otpVerify.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get otpVerify;
+
+  /// No description provided for @otpResend.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend code'**
+  String get otpResend;
+
+  /// No description provided for @otpResent.
+  ///
+  /// In en, this message translates to:
+  /// **'A new code was sent'**
+  String get otpResent;
+
+  /// No description provided for @passwordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a password'**
+  String get passwordTitle;
+
+  /// No description provided for @passwordSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 8 characters'**
+  String get passwordSubtitle;
+
+  /// No description provided for @passwordContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get passwordContinue;
+
+  /// No description provided for @legalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Almost done'**
+  String get legalTitle;
+
+  /// No description provided for @legalSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review and accept to finish signup'**
+  String get legalSubtitle;
+
+  /// No description provided for @legalCgu.
+  ///
+  /// In en, this message translates to:
+  /// **'I accept the Terms of Use (version {version})'**
+  String legalCgu(String version);
+
+  /// No description provided for @legalConsent.
+  ///
+  /// In en, this message translates to:
+  /// **'I consent to the processing of my health data for accompaniment (not medical diagnosis)'**
+  String get legalConsent;
+
+  /// No description provided for @legalRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please accept both to continue'**
+  String get legalRequired;
+
+  /// No description provided for @legalFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account'**
+  String get legalFinish;
+
+  /// No description provided for @emailAlreadyVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'This email is already registered. Try signing in.'**
+  String get emailAlreadyVerified;
+
+  /// No description provided for @genericError.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get genericError;
+
+  /// No description provided for @successEmailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Email verified!'**
+  String get successEmailTitle;
+
+  /// No description provided for @successEmailSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your email is confirmed. Next, choose a secure password.'**
+  String get successEmailSubtitle;
+
+  /// No description provided for @successEmailCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get successEmailCta;
+
+  /// No description provided for @successAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Successful!'**
+  String get successAccountTitle;
+
+  /// No description provided for @successAccountSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account is created and ready. Welcome to Fidel Assistant.'**
+  String get successAccountSubtitle;
+
+  /// No description provided for @successAccountCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to home'**
+  String get successAccountCta;
 }
 
 class _AppLocalizationsDelegate

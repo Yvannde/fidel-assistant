@@ -125,6 +125,12 @@ class AppTheme {
         thickness: 1,
         space: 1,
       ),
+      snackBarTheme: const SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        contentTextStyle: TextStyle(color: AppColors.textPrimary),
+      ),
     );
   }
 

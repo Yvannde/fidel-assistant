@@ -4,6 +4,8 @@ import '../../../core/network/providers.dart';
 import '../data/auth_repository.dart';
 import '../domain/auth_session.dart';
 
+export 'registration_controller.dart';
+
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository(
     apiClient: ref.watch(apiClientProvider),

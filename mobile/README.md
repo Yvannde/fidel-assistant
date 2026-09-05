@@ -49,4 +49,4 @@ flutter run \
 
 ## Prochaine étape
 
-Inscription (email → OTP → mot de passe → CGU) + Google Sign-In + onboarding.
+Onboarding initial (`infos` → besoin suivi → …) + mot de passe oublié + Google Sign-In.

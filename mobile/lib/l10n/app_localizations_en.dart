@@ -51,6 +51,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get passwordHint => '••••••••';
 
   @override
+  String get confirmPasswordLabel => 'Confirm password';
+
+  @override
   String get rememberMe => 'Remember me';
 
   @override
@@ -66,6 +69,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signUp => 'Sign Up';
 
   @override
+  String get haveAccount => 'Already have an account?';
+
+  @override
   String get loginFailed => 'Unable to sign in. Check your credentials.';
 
   @override
@@ -75,6 +81,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invalidEmail => 'Enter a valid email';
 
   @override
+  String passwordTooShort(int min) {
+    return 'At least $min characters';
+  }
+
+  @override
+  String get passwordMismatch => 'Passwords do not match';
+
+  @override
   String get comingSoon => 'Coming soon';
 
   @override
@@ -82,4 +96,96 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get logout => 'Log out';
+
+  @override
+  String get registerTitle => 'Create your account';
+
+  @override
+  String get registerSubtitle => 'Enter your email to get started';
+
+  @override
+  String get registerContinue => 'Continue';
+
+  @override
+  String get otpTitle => 'Check your email';
+
+  @override
+  String otpSubtitle(String email) {
+    return 'We sent a 6-digit code to $email';
+  }
+
+  @override
+  String get otpLabel => 'Verification code';
+
+  @override
+  String get otpHint => '123456';
+
+  @override
+  String get otpInvalid => 'Enter the 6-digit code';
+
+  @override
+  String get otpVerify => 'Verify';
+
+  @override
+  String get otpResend => 'Resend code';
+
+  @override
+  String get otpResent => 'A new code was sent';
+
+  @override
+  String get passwordTitle => 'Choose a password';
+
+  @override
+  String get passwordSubtitle => 'At least 8 characters';
+
+  @override
+  String get passwordContinue => 'Continue';
+
+  @override
+  String get legalTitle => 'Almost done';
+
+  @override
+  String get legalSubtitle => 'Review and accept to finish signup';
+
+  @override
+  String legalCgu(String version) {
+    return 'I accept the Terms of Use (version $version)';
+  }
+
+  @override
+  String get legalConsent =>
+      'I consent to the processing of my health data for accompaniment (not medical diagnosis)';
+
+  @override
+  String get legalRequired => 'Please accept both to continue';
+
+  @override
+  String get legalFinish => 'Create account';
+
+  @override
+  String get emailAlreadyVerified =>
+      'This email is already registered. Try signing in.';
+
+  @override
+  String get genericError => 'Something went wrong. Please try again.';
+
+  @override
+  String get successEmailTitle => 'Email verified!';
+
+  @override
+  String get successEmailSubtitle =>
+      'Your email is confirmed. Next, choose a secure password.';
+
+  @override
+  String get successEmailCta => 'Continue';
+
+  @override
+  String get successAccountTitle => 'Successful!';
+
+  @override
+  String get successAccountSubtitle =>
+      'Your account is created and ready. Welcome to Fidel Assistant.';
+
+  @override
+  String get successAccountCta => 'Go to home';
 }

@@ -14,15 +14,62 @@
   "emailHint": "name@email.com",
   "passwordLabel": "Password",
   "passwordHint": "••••••••",
+  "confirmPasswordLabel": "Confirm password",
   "rememberMe": "Remember me",
   "forgotPassword": "Forgot Password ?",
   "logIn": "Log In",
   "noAccount": "Don't have an account?",
   "signUp": "Sign Up",
+  "haveAccount": "Already have an account?",
   "loginFailed": "Unable to sign in. Check your credentials.",
   "fieldRequired": "This field is required",
   "invalidEmail": "Enter a valid email",
+  "passwordTooShort": "At least {min} characters",
+  "@passwordTooShort": {
+    "placeholders": {
+      "min": { "type": "int" }
+    }
+  },
+  "passwordMismatch": "Passwords do not match",
   "comingSoon": "Coming soon",
   "homeTitle": "Home",
-  "logout": "Log out"
+  "logout": "Log out",
+  "registerTitle": "Create your account",
+  "registerSubtitle": "Enter your email to get started",
+  "registerContinue": "Continue",
+  "otpTitle": "Check your email",
+  "otpSubtitle": "We sent a 6-digit code to {email}",
+  "@otpSubtitle": {
+    "placeholders": {
+      "email": { "type": "String" }
+    }
+  },
+  "otpLabel": "Verification code",
+  "otpHint": "123456",
+  "otpInvalid": "Enter the 6-digit code",
+  "otpVerify": "Verify",
+  "otpResend": "Resend code",
+  "otpResent": "A new code was sent",
+  "passwordTitle": "Choose a password",
+  "passwordSubtitle": "At least 8 characters",
+  "passwordContinue": "Continue",
+  "legalTitle": "Almost done",
+  "legalSubtitle": "Review and accept to finish signup",
+  "legalCgu": "I accept the Terms of Use (version {version})",
+  "@legalCgu": {
+    "placeholders": {
+      "version": { "type": "String" }
+    }
+  },
+  "legalConsent": "I consent to the processing of my health data for accompaniment (not medical diagnosis)",
+  "legalRequired": "Please accept both to continue",
+  "legalFinish": "Create account",
+  "emailAlreadyVerified": "This email is already registered. Try signing in.",
+  "genericError": "Something went wrong. Please try again.",
+  "successEmailTitle": "Email verified!",
+  "successEmailSubtitle": "Your email is confirmed. Next, choose a secure password.",
+  "successEmailCta": "Continue",
+  "successAccountTitle": "Successful!",
+  "successAccountSubtitle": "Your account is created and ready. Welcome to Fidel Assistant.",
+  "successAccountCta": "Go to home"
 }

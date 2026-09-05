@@ -13,12 +13,14 @@ class AuthShell extends StatelessWidget {
     required this.subtitle,
     required this.child,
     this.headerHeightFactor = 0.34,
+    this.onBack,
   });
 
   final String title;
   final String subtitle;
   final Widget child;
   final double headerHeightFactor;
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -53,10 +55,25 @@ class AuthShell extends StatelessWidget {
               bottom: false,
               child: Column(
                 children: [
+                  if (onBack != null)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: IconButton(
+                        onPressed: onBack,
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          color: AppColors.textOnPrimary,
+                          size: 20,
+                        ),
+                      ),
+                    ),
                   SizedBox(
-                    height: math.max(headerH - topPad - 16, 140),
+                    height: math.max(
+                      headerH - topPad - (onBack != null ? 48 : 16),
+                      120,
+                    ),
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(28, 8, 28, 8),
+                      padding: const EdgeInsets.fromLTRB(28, 0, 28, 8),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [

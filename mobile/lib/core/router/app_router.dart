@@ -4,11 +4,17 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/language_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
+import '../../features/auth/presentation/register_account_success_screen.dart';
+import '../../features/auth/presentation/register_email_screen.dart';
+import '../../features/auth/presentation/register_legal_screen.dart';
+import '../../features/auth/presentation/register_otp_screen.dart';
+import '../../features/auth/presentation/register_password_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../l10n/app_localizations.dart';
 import '../locale/locale_controller.dart';
 import '../network/providers.dart';
 import '../theme/app_colors.dart';
+import '../ui/app_toast.dart';
 
 /// Notifie go_router sans recréer l'instance (évite le flash noir).
 class _RouterRefresh extends ChangeNotifier {
@@ -57,42 +63,69 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/language',
-        pageBuilder: (context, state) => _fadePage(
+        pageBuilder: (context, state) => _softPage(
           state: state,
           child: LanguageScreen(
             onContinue: (chosen) async {
               await ref
                   .read(localeControllerProvider.notifier)
                   .setLocale(chosen);
-              // redirect (hasLocale + /language → /login) gère la navigation
             },
           ),
         ),
       ),
       GoRoute(
         path: '/login',
-        pageBuilder: (context, state) => _fadePage(
+        pageBuilder: (context, state) => _softPage(
           state: state,
           child: LoginScreen(
             onLoggedIn: () => context.go('/home'),
-            onSignUp: () {
-              final l10n = AppLocalizations.of(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(l10n.comingSoon)),
-              );
-            },
+            onSignUp: () => context.push('/register'),
             onForgotPassword: () {
               final l10n = AppLocalizations.of(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(l10n.comingSoon)),
-              );
+              AppToast.info(context, l10n.comingSoon);
             },
           ),
         ),
       ),
       GoRoute(
+        path: '/register',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const RegisterEmailScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/register/otp',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const RegisterOtpScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/register/password',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const RegisterPasswordScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/register/legal',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const RegisterLegalScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/register/account-success',
+        pageBuilder: (context, state) => _successPage(
+          state: state,
+          child: const RegisterAccountSuccessScreen(),
+        ),
+      ),
+      GoRoute(
         path: '/home',
-        pageBuilder: (context, state) => _fadePage(
+        pageBuilder: (context, state) => _softPage(
           state: state,
           child: const HomeScreen(),
         ),
@@ -107,19 +140,60 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   );
 });
 
-CustomTransitionPage<void> _fadePage({
+/// Transition douce (fade + léger slide) — moins brutale qu'un cut.
+CustomTransitionPage<void> _softPage({
   required GoRouterState state,
   required Widget child,
 }) {
   return CustomTransitionPage<void>(
     key: state.pageKey,
     child: child,
-    transitionDuration: const Duration(milliseconds: 280),
-    reverseTransitionDuration: const Duration(milliseconds: 220),
+    transitionDuration: const Duration(milliseconds: 420),
+    reverseTransitionDuration: const Duration(milliseconds: 320),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
       return FadeTransition(
-        opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
-        child: child,
+        opacity: curved,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.035),
+            end: Offset.zero,
+          ).animate(curved),
+          child: child,
+        ),
+      );
+    },
+  );
+}
+
+/// Entrée succès encore plus lente / premium.
+CustomTransitionPage<void> _successPage({
+  required GoRouterState state,
+  required Widget child,
+}) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 560),
+    reverseTransitionDuration: const Duration(milliseconds: 360),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+      );
+      return FadeTransition(
+        opacity: curved,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.06),
+            end: Offset.zero,
+          ).animate(curved),
+          child: child,
+        ),
       );
     },
   );
