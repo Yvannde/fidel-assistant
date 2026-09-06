@@ -1,10 +1,33 @@
 # Application Flutter — Fidel Assistant
 
-Voir le [README racine](../README.md).
-
 Structure conforme à `skills/mobile-flutter/SKILL.md` (feature-first, offline-first).
 
+## Prérequis
+
+- Flutter SDK 3.5+
+- Backend local : `make backend-run` (port 8000)
+
+## Démarrage
+
+Depuis `mobile/` :
+
 ```bash
-flutter pub get
-flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000
+flutter run
 ```
+
+L’URL API et Google Sign-In se lisent dans `assets/config/app.json` (IP LAN du PC + Client IDs). Pas besoin de `--dart-define` au quotidien.
+
+## Socle en place
+
+- `core/config` — `AppConfig` + dart-defines
+- `core/storage` — JWT dans `flutter_secure_storage`
+- `core/network` — Dio + refresh Bearer automatique
+- `core/theme` — palette bleu (`#2563EB`) + police **Satoshi**
+- `l10n` — EN / FR (`gen-l10n`), choix de langue au premier lancement
+- Auth UI — login (design header `assets/images/head.png`) + `POST /auth/login`
+- Features dossiers : auth, onboarding, medicaments, constantes, reseau, home
+- Permissions Android : Internet, notifs, alarmes exactes, boot
+
+## Prochaine étape
+
+Onboarding initial (`infos` → besoin suivi → …) + mot de passe oublié + Google Sign-In.

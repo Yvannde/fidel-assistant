@@ -85,11 +85,10 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 ```bash
 cd mobile
-flutter pub get
-flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000
+flutter run
 ```
 
-L’URL API se configure via `API_BASE_URL` (`mobile/lib/core/config/app_config.dart`). Sur émulateur Android, `10.0.2.2` pointe vers le `localhost` de la machine hôte.
+L’URL API (téléphone physique) et Google Sign-In sont dans `mobile/assets/config/app.json`.
 
 ## Documentation
 

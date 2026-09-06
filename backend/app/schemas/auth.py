@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, model_validator
 
 
 class MessageOut(BaseModel):
@@ -22,6 +22,10 @@ class ResendOtpIn(BaseModel):
 class VerifyOtpIn(BaseModel):
     email: EmailStr
     code: str = Field(min_length=6, max_length=6, examples=["123456"])
+    type: str = Field(
+        default="inscription",
+        pattern="^(inscription|reset_password)$",
+    )
 
 
 class TempTokenOut(BaseModel):
@@ -89,9 +93,22 @@ class ForgotPasswordIn(BaseModel):
 
 
 class ResetPasswordIn(BaseModel):
-    email: EmailStr
-    code: str = Field(min_length=6, max_length=6)
     nouveau_password: str = Field(min_length=8)
+    email: EmailStr | None = None
+    code: str | None = None
+    temp_token: str | None = None
+
+    @model_validator(mode="after")
+    def require_token_or_code(self) -> "ResetPasswordIn":
+        has_token = bool(self.temp_token and self.temp_token.strip())
+        has_code = bool(self.email and self.code)
+        if has_token == has_code:
+            raise ValueError(
+                "Fournir soit temp_token, soit email+code (exclusifs)."
+            )
+        if has_code and self.code is not None and len(self.code) != 6:
+            raise ValueError("Le code OTP doit contenir 6 chiffres.")
+        return self
 
 
 class MeOut(BaseModel):

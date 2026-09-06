@@ -12,6 +12,7 @@ from app.core.security import (
     create_access_token,
     create_opaque_refresh_token,
     create_temp_token,
+    decode_token,
     hash_password,
     hash_token,
     verify_password,
@@ -114,10 +115,19 @@ async def resend_otp(db: AsyncSession, *, email: str, otp_type: str) -> str:
     return "Si un compte existe, un nouveau code a été envoyé."
 
 
-async def verify_otp(db: AsyncSession, *, email: str, code: str) -> str:
+async def verify_otp(
+    db: AsyncSession, *, email: str, code: str, otp_type: str = "inscription"
+) -> str:
     user = await get_user_by_email(db, email.lower())
     if user is None:
         raise AppException("OTP_INVALID", "Code invalide.", status_code=400)
+
+    if otp_type == "reset_password":
+        await otp_service.verify_user_otp(
+            db, user=user, otp_type="reset_password", code=code
+        )
+        await db.commit()
+        return create_temp_token(user.id)
 
     await otp_service.verify_user_otp(db, user=user, otp_type="inscription", code=code)
     user.email_verified_at = datetime.now(UTC)
@@ -365,12 +375,47 @@ async def forgot_password(db: AsyncSession, *, email: str) -> str:
     return "Si un compte existe, un code a été envoyé."
 
 
-async def reset_password(db: AsyncSession, *, email: str, code: str, nouveau_password: str) -> str:
+async def reset_password(
+    db: AsyncSession,
+    *,
+    nouveau_password: str,
+    email: str | None = None,
+    code: str | None = None,
+    temp_token: str | None = None,
+) -> str:
     _validate_password(nouveau_password)
-    user = await get_user_by_email(db, email.lower())
-    if user is None:
-        raise AppException("OTP_INVALID", "Code invalide.", status_code=400)
-    await otp_service.verify_user_otp(db, user=user, otp_type="reset_password", code=code)
+
+    if temp_token:
+        try:
+            payload = decode_token(temp_token)
+        except ValueError as exc:
+            raise AppException(
+                "TEMP_TOKEN_INVALID",
+                "Jeton temporaire invalide ou expiré.",
+                status_code=401,
+            ) from exc
+        if payload.get("type") != "temp":
+            raise AppException(
+                "TEMP_TOKEN_INVALID",
+                "Jeton temporaire invalide.",
+                status_code=401,
+            )
+        user = await get_user_by_id(db, UUID(payload["sub"]))
+        if user is None:
+            raise AppException(
+                "TEMP_TOKEN_INVALID",
+                "Jeton temporaire invalide.",
+                status_code=401,
+            )
+    else:
+        assert email is not None and code is not None
+        user = await get_user_by_email(db, email.lower())
+        if user is None:
+            raise AppException("OTP_INVALID", "Code invalide.", status_code=400)
+        await otp_service.verify_user_otp(
+            db, user=user, otp_type="reset_password", code=code
+        )
+
     user.password_hash = hash_password(nouveau_password)
     user.auth_providers = _providers_add(user.auth_providers, "email")
     await db.commit()

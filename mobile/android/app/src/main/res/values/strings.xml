@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Client OAuth Web — requis par google_sign_in Android pour l’id_token. -->
+    <string name="default_web_client_id">685728073410-aegnsrl10a6etloqdolqcq5s7p24hrll.apps.googleusercontent.com</string>
+</resources>

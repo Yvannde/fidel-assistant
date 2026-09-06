@@ -98,4 +98,12 @@ async def send_otp_email(*, to_email: str, code: str, purpose: str) -> None:
         logger.info("OTP %s envoyé à %s via Resend (id=%s)", purpose, to_email, email_id)
     except Exception:
         logger.exception("Échec envoi OTP Resend vers %s", to_email)
+        if settings.app_env == "development" or settings.debug:
+            logger.warning(
+                "Fallback dev — OTP %s pour %s : %s",
+                purpose,
+                to_email,
+                code,
+            )
+            return
         raise
