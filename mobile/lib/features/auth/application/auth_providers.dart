@@ -14,13 +14,16 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   );
 });
 
+/// Session relue depuis le Keystore + `/auth/me` dans [main] avant `runApp`.
+final restoredAuthSessionProvider = Provider<AuthSession?>((ref) => null);
+
 final authSessionProvider =
     StateNotifierProvider<AuthSessionController, AuthSession?>((ref) {
-  return AuthSessionController(ref);
+  return AuthSessionController(ref, ref.read(restoredAuthSessionProvider));
 });
 
 class AuthSessionController extends StateNotifier<AuthSession?> {
-  AuthSessionController(this._ref) : super(null);
+  AuthSessionController(this._ref, [AuthSession? restored]) : super(restored);
 
   final Ref _ref;
 

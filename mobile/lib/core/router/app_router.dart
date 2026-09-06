@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/application/auth_providers.dart';
+import '../../features/auth/domain/auth_session.dart';
 import '../../features/auth/presentation/auth_navigation.dart';
 import '../../features/auth/presentation/forgot_password_email_screen.dart';
 import '../../features/auth/presentation/forgot_password_otp_screen.dart';
@@ -32,27 +33,36 @@ class _RouterRefresh extends ChangeNotifier {
 final _routerRefreshProvider = Provider<_RouterRefresh>((ref) {
   final refresh = _RouterRefresh();
   ref.listen<Locale?>(localeControllerProvider, (_, __) => refresh.ping());
+  ref.listen<AuthSession?>(authSessionProvider, (_, __) => refresh.ping());
   ref.onDispose(refresh.dispose);
   return refresh;
 });
+
+String _bootLocation({required bool hasLocale, AuthSession? session}) {
+  if (!hasLocale) return '/language';
+  if (session != null) return routeAfterAuth(session);
+  return '/login';
+}
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final refresh = ref.watch(_routerRefreshProvider);
 
   return GoRouter(
-    initialLocation: ref.read(localeControllerProvider) == null
-        ? '/language'
-        : '/login',
+    initialLocation: _bootLocation(
+      hasLocale: ref.read(localeControllerProvider) != null,
+      session: ref.read(authSessionProvider),
+    ),
     refreshListenable: refresh,
     redirect: (context, state) async {
       final loc = state.matchedLocation;
       final hasLocale = ref.read(localeControllerProvider) != null;
+      final session = ref.read(authSessionProvider);
 
       if (!hasLocale && loc != '/language') {
         return '/language';
       }
       if (hasLocale && loc == '/language') {
-        return '/login';
+        return session != null ? routeAfterAuth(session) : '/login';
       }
 
       final needsSession = loc == '/home' ||
@@ -63,8 +73,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         if (!hasSession) return '/login';
       }
 
-      // Session en mémoire : ne laisser /home que si onboarding terminé.
-      final session = ref.read(authSessionProvider);
+      if (loc == '/login' && session != null) {
+        return routeAfterAuth(session);
+      }
+
       if (loc == '/home' &&
           session != null &&
           session.onboardingStep != 'termine') {
@@ -73,8 +85,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       if (loc == '/' || loc.isEmpty) {
         if (!hasLocale) return '/language';
+        if (session != null) return routeAfterAuth(session);
         final hasSession = await ref.read(tokenStorageProvider).hasSession();
-        // Gate sync le step serveur (évite d’ouvrir home avant onboarding).
         return hasSession ? '/onboarding' : '/login';
       }
 

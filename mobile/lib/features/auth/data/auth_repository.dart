@@ -250,6 +250,50 @@ class AuthRepository {
     }
   }
 
+  /// Reprend une session persistée (hot restart / relance de l’app).
+  Future<AuthSession?> restoreSession() async {
+    final access = await _tokens.readAccessToken();
+    final refresh = await _tokens.readRefreshToken();
+    if ((access == null || access.isEmpty) &&
+        (refresh == null || refresh.isEmpty)) {
+      return null;
+    }
+
+    final sessionId = await _tokens.readSessionId() ?? '';
+    try {
+      final res = await _api.get<Map<String, dynamic>>('/auth/me');
+      final me = res.data ?? {};
+      return AuthSession(
+        accessToken: access ?? '',
+        refreshToken: refresh ?? '',
+        expiresIn: 0,
+        sessionId: sessionId,
+        onboardingStep: me['onboarding_step'] as String? ?? 'infos',
+        hasPatientProfile: me['has_patient_profile'] as bool? ?? false,
+        isAidant: me['is_aidant'] as bool? ?? false,
+        needsCgu: me['needs_cgu'] as bool? ?? false,
+        needsConsentementSante:
+            me['needs_consentement_sante'] as bool? ?? false,
+      );
+    } on DioException catch (e) {
+      if (!await _tokens.hasSession()) return null;
+      final status = e.response?.statusCode ?? 0;
+      if (e.response == null || status >= 500) {
+        return AuthSession(
+          accessToken: access ?? '',
+          refreshToken: refresh ?? '',
+          expiresIn: 0,
+          sessionId: sessionId,
+          onboardingStep: 'infos',
+          hasPatientProfile: false,
+          isAidant: false,
+        );
+      }
+      await _tokens.clear();
+      return null;
+    }
+  }
+
   Future<void> logout() async {
     final refresh = await _tokens.readRefreshToken();
     try {

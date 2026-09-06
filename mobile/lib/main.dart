@@ -4,21 +4,33 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/config/app_config.dart';
 import 'core/locale/locale_controller.dart';
+import 'core/network/api_client.dart';
+import 'core/network/providers.dart';
 import 'core/router/app_router.dart';
+import 'core/storage/token_storage.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
+import 'features/auth/application/auth_providers.dart';
+import 'features/auth/data/auth_repository.dart';
 import 'l10n/app_localizations.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppConfig.load();
   final prefs = await SharedPreferences.getInstance();
+  final tokens = TokenStorage();
+  final restored = await AuthRepository(
+    apiClient: ApiClient(tokenStorage: tokens),
+    tokenStorage: tokens,
+  ).restoreSession();
 
   runApp(
     ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
+        tokenStorageProvider.overrideWithValue(tokens),
+        restoredAuthSessionProvider.overrideWithValue(restored),
       ],
       child: const FidelApp(),
     ),
