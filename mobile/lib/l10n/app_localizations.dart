@@ -829,6 +829,348 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You’re all set — welcome to Fidel'**
   String get onboardingDoneToast;
+
+  /// No description provided for @navHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get navHome;
+
+  /// No description provided for @navCare.
+  ///
+  /// In en, this message translates to:
+  /// **'Care'**
+  String get navCare;
+
+  /// No description provided for @navPeople.
+  ///
+  /// In en, this message translates to:
+  /// **'People'**
+  String get navPeople;
+
+  /// No description provided for @navYou.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get navYou;
+
+  /// No description provided for @homeHelloMorning.
+  ///
+  /// In en, this message translates to:
+  /// **'Good morning {name} 👋'**
+  String homeHelloMorning(String name);
+
+  /// No description provided for @homeHelloAfternoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Good afternoon {name} 👋'**
+  String homeHelloAfternoon(String name);
+
+  /// No description provided for @homeHelloEvening.
+  ///
+  /// In en, this message translates to:
+  /// **'Good evening {name} 👋'**
+  String homeHelloEvening(String name);
+
+  /// No description provided for @homeHelloMorningAnon.
+  ///
+  /// In en, this message translates to:
+  /// **'Good morning 👋'**
+  String get homeHelloMorningAnon;
+
+  /// No description provided for @homeHelloAfternoonAnon.
+  ///
+  /// In en, this message translates to:
+  /// **'Good afternoon 👋'**
+  String get homeHelloAfternoonAnon;
+
+  /// No description provided for @homeHelloEveningAnon.
+  ///
+  /// In en, this message translates to:
+  /// **'Good evening 👋'**
+  String get homeHelloEveningAnon;
+
+  /// No description provided for @homeTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'Fidel watches your doses — never judges.'**
+  String get homeTagline;
+
+  /// No description provided for @homeTodayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get homeTodayTitle;
+
+  /// No description provided for @homeNextDoseLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Next dose'**
+  String get homeNextDoseLabel;
+
+  /// No description provided for @homeAllClearTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You’re up to date'**
+  String get homeAllClearTitle;
+
+  /// No description provided for @homeAllClearBody.
+  ///
+  /// In en, this message translates to:
+  /// **'No pending doses right now. Rest a little.'**
+  String get homeAllClearBody;
+
+  /// No description provided for @homeStatPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Due'**
+  String get homeStatPending;
+
+  /// No description provided for @homeStatTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'Taken'**
+  String get homeStatTaken;
+
+  /// No description provided for @homeStatLate.
+  ///
+  /// In en, this message translates to:
+  /// **'Late'**
+  String get homeStatLate;
+
+  /// No description provided for @homeNoDoses.
+  ///
+  /// In en, this message translates to:
+  /// **'No schedule yet today. Add a medication to start.'**
+  String get homeNoDoses;
+
+  /// No description provided for @homeTakeCta.
+  ///
+  /// In en, this message translates to:
+  /// **'I took it'**
+  String get homeTakeCta;
+
+  /// No description provided for @homeTakenBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Taken'**
+  String get homeTakenBadge;
+
+  /// No description provided for @homeTakenToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Noted — well done.'**
+  String get homeTakenToast;
+
+  /// No description provided for @homeActivateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start my follow-up'**
+  String get homeActivateTitle;
+
+  /// No description provided for @homeActivateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders, treatments and doses for you, on this account.'**
+  String get homeActivateBody;
+
+  /// No description provided for @homeAccompanyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Support someone'**
+  String get homeAccompanyTitle;
+
+  /// No description provided for @homeAccompanyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a relative’s code to follow them, with their consent.'**
+  String get homeAccompanyBody;
+
+  /// No description provided for @homeShareCodeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite a caregiver'**
+  String get homeShareCodeTitle;
+
+  /// No description provided for @homeShareCodeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This code expires quickly. Share it only with someone you choose.'**
+  String get homeShareCodeBody;
+
+  /// No description provided for @homeActionNotifTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow reminders'**
+  String get homeActionNotifTitle;
+
+  /// No description provided for @homeActionNotifBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Without this, the phone may kill alarms overnight.'**
+  String get homeActionNotifBody;
+
+  /// No description provided for @homeActionMedsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up your medicines'**
+  String get homeActionMedsTitle;
+
+  /// No description provided for @homeActionMedsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Name, dose and times — that’s what makes reminders ring.'**
+  String get homeActionMedsBody;
+
+  /// No description provided for @homeActionMedsFor.
+  ///
+  /// In en, this message translates to:
+  /// **'For {maladie}'**
+  String homeActionMedsFor(String maladie);
+
+  /// No description provided for @homeActionTraitementTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a treatment'**
+  String get homeActionTraitementTitle;
+
+  /// No description provided for @homeActionTraitementBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We note the condition first; medicines come right after.'**
+  String get homeActionTraitementBody;
+
+  /// No description provided for @homeCareSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your treatments and schedules, in one place.'**
+  String get homeCareSubtitle;
+
+  /// No description provided for @homeNetworkSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Support a relative, or invite someone to help you — always with a clear yes.'**
+  String get homeNetworkSubtitle;
+
+  /// No description provided for @homeCareMedsReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Medicines saved'**
+  String get homeCareMedsReady;
+
+  /// No description provided for @homeThemeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get homeThemeLabel;
+
+  /// No description provided for @homeThemeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get homeThemeLight;
+
+  /// No description provided for @homeThemeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get homeThemeDark;
+
+  /// No description provided for @homeThemeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get homeThemeSystem;
+
+  /// No description provided for @homeSyncHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The 6-digit code they generated in Fidel.'**
+  String get homeSyncHint;
+
+  /// No description provided for @homeSyncCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get homeSyncCodeLabel;
+
+  /// No description provided for @homeSyncCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to their follow-up'**
+  String get homeSyncCta;
+
+  /// No description provided for @homeSyncOk.
+  ///
+  /// In en, this message translates to:
+  /// **'You’re now connected to their follow-up.'**
+  String get homeSyncOk;
+
+  /// No description provided for @medsWizardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your medicines'**
+  String get medsWizardTitle;
+
+  /// No description provided for @medsWizardSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'One line is enough to start. You can add more later.'**
+  String get medsWizardSubtitle;
+
+  /// No description provided for @medsSuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggestions'**
+  String get medsSuggestions;
+
+  /// No description provided for @medsNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Medicine name'**
+  String get medsNameLabel;
+
+  /// No description provided for @medsDoseLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Dosage'**
+  String get medsDoseLabel;
+
+  /// No description provided for @medsDoseHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 500 mg'**
+  String get medsDoseHint;
+
+  /// No description provided for @medsTimesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Dose times'**
+  String get medsTimesLabel;
+
+  /// No description provided for @medsAddTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a time'**
+  String get medsAddTime;
+
+  /// No description provided for @medsNeedTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one time'**
+  String get medsNeedTime;
+
+  /// No description provided for @medsSaveCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get medsSaveCta;
+
+  /// No description provided for @medsSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Medicine saved. Today’s doses are ready.'**
+  String get medsSaved;
 }
 
 class _AppLocalizationsDelegate

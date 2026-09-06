@@ -403,4 +403,196 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get onboardingDoneToast => 'C’est bon — bienvenue sur Fidel';
+
+  @override
+  String get navHome => 'Accueil';
+
+  @override
+  String get navCare => 'Soins';
+
+  @override
+  String get navPeople => 'Proches';
+
+  @override
+  String get navYou => 'Toi';
+
+  @override
+  String homeHelloMorning(String name) {
+    return 'Bonjour $name 👋';
+  }
+
+  @override
+  String homeHelloAfternoon(String name) {
+    return 'Bon après-midi $name 👋';
+  }
+
+  @override
+  String homeHelloEvening(String name) {
+    return 'Bonsoir $name 👋';
+  }
+
+  @override
+  String get homeHelloMorningAnon => 'Bonjour 👋';
+
+  @override
+  String get homeHelloAfternoonAnon => 'Bon après-midi 👋';
+
+  @override
+  String get homeHelloEveningAnon => 'Bonsoir 👋';
+
+  @override
+  String get homeTagline => 'Fidel veille sur tes prises — sans te juger.';
+
+  @override
+  String get homeTodayTitle => 'Aujourd’hui';
+
+  @override
+  String get homeNextDoseLabel => 'Prochaine prise';
+
+  @override
+  String get homeAllClearTitle => 'Tu es à jour';
+
+  @override
+  String get homeAllClearBody =>
+      'Aucune prise en attente pour le moment. Repose-toi.';
+
+  @override
+  String get homeStatPending => 'À prendre';
+
+  @override
+  String get homeStatTaken => 'Prises';
+
+  @override
+  String get homeStatLate => 'En retard';
+
+  @override
+  String get homeNoDoses =>
+      'Pas encore d’horaire aujourd’hui. Ajoute un médicament pour commencer.';
+
+  @override
+  String get homeTakeCta => 'J’ai pris';
+
+  @override
+  String get homeTakenBadge => 'Pris';
+
+  @override
+  String get homeTakenToast => 'Noté — bravo.';
+
+  @override
+  String get homeActivateTitle => 'Activer mon suivi';
+
+  @override
+  String get homeActivateBody =>
+      'Rappels, traitements et prises pour toi, sur ce compte.';
+
+  @override
+  String get homeAccompanyTitle => 'Accompagner quelqu’un';
+
+  @override
+  String get homeAccompanyBody =>
+      'Entre le code d’un proche pour le suivre, avec son accord.';
+
+  @override
+  String get homeShareCodeTitle => 'Inviter un aidant';
+
+  @override
+  String get homeShareCodeBody =>
+      'Ce code expire vite. Partage-le seulement à la personne que tu choisis.';
+
+  @override
+  String get homeActionNotifTitle => 'Autoriser les rappels';
+
+  @override
+  String get homeActionNotifBody =>
+      'Sans ça, le téléphone peut couper les alarmes la nuit.';
+
+  @override
+  String get homeActionMedsTitle => 'Configurer tes médicaments';
+
+  @override
+  String get homeActionMedsBody =>
+      'Nom, dose et heures — c’est ce qui fait sonner les rappels.';
+
+  @override
+  String homeActionMedsFor(String maladie) {
+    return 'Pour $maladie';
+  }
+
+  @override
+  String get homeActionTraitementTitle => 'Ajouter un traitement';
+
+  @override
+  String get homeActionTraitementBody =>
+      'On note d’abord la maladie, les médicaments viennent juste après.';
+
+  @override
+  String get homeCareSubtitle =>
+      'Tes traitements et horaires, au même endroit.';
+
+  @override
+  String get homeNetworkSubtitle =>
+      'Accompagner un proche, ou inviter quelqu’un à t’aider — toujours avec un accord clair.';
+
+  @override
+  String get homeCareMedsReady => 'Médicaments enregistrés';
+
+  @override
+  String get homeThemeLabel => 'Apparence';
+
+  @override
+  String get homeThemeLight => 'Clair';
+
+  @override
+  String get homeThemeDark => 'Sombre';
+
+  @override
+  String get homeThemeSystem => 'Système';
+
+  @override
+  String get homeSyncHint =>
+      'Le code à 6 chiffres que la personne a généré dans Fidel.';
+
+  @override
+  String get homeSyncCodeLabel => 'Code';
+
+  @override
+  String get homeSyncCta => 'Me connecter à son suivi';
+
+  @override
+  String get homeSyncOk => 'Tu es maintenant connecté(e) à son suivi.';
+
+  @override
+  String get medsWizardTitle => 'Tes médicaments';
+
+  @override
+  String get medsWizardSubtitle =>
+      'Une ligne suffit pour commencer. Tu pourras en ajouter d’autres plus tard.';
+
+  @override
+  String get medsSuggestions => 'Suggestions';
+
+  @override
+  String get medsNameLabel => 'Nom du médicament';
+
+  @override
+  String get medsDoseLabel => 'Dosage';
+
+  @override
+  String get medsDoseHint => 'Ex. 500 mg';
+
+  @override
+  String get medsTimesLabel => 'Heures de prise';
+
+  @override
+  String get medsAddTime => 'Ajouter une heure';
+
+  @override
+  String get medsNeedTime => 'Ajoute au moins une heure';
+
+  @override
+  String get medsSaveCta => 'Enregistrer';
+
+  @override
+  String get medsSaved =>
+      'Médicament enregistré. Les prises du jour sont prêtes.';
 }

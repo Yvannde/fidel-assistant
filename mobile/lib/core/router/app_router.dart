@@ -16,7 +16,10 @@ import '../../features/auth/presentation/register_email_screen.dart';
 import '../../features/auth/presentation/register_legal_screen.dart';
 import '../../features/auth/presentation/register_otp_screen.dart';
 import '../../features/auth/presentation/register_password_screen.dart';
-import '../../features/home/presentation/home_screen.dart';
+import '../../features/home/presentation/add_traitement_screen.dart';
+import '../../features/home/presentation/home_shell.dart';
+import '../../features/home/presentation/sync_screens.dart';
+import '../../features/medicaments/presentation/medicament_wizard_screen.dart';
 import '../../features/onboarding/presentation/onboarding_besoin_suivi_screen.dart';
 import '../../features/onboarding/presentation/onboarding_gate_screen.dart';
 import '../../features/onboarding/presentation/onboarding_infos_screen.dart';
@@ -66,6 +69,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       final needsSession = loc == '/home' ||
+          loc.startsWith('/home/') ||
           loc == '/auth/google-legal' ||
           loc.startsWith('/onboarding');
       if (needsSession) {
@@ -77,7 +81,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return routeAfterAuth(session);
       }
 
-      if (loc == '/home' &&
+      if (loc.startsWith('/home') &&
           session != null &&
           session.onboardingStep != 'termine') {
         return '/onboarding';
@@ -226,7 +230,38 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/home',
         pageBuilder: (context, state) => _softPage(
           state: state,
-          child: const HomeScreen(),
+          child: const HomeShell(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/medicaments',
+        pageBuilder: (context, state) {
+          final id = state.extra as String? ?? '';
+          return _softPage(
+            state: state,
+            child: MedicamentWizardScreen(traitementId: id),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/home/traitement',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const AddTraitementScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/sync',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const SyncAidantScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/share-code',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const ShareCodeScreen(),
         ),
       ),
     ],

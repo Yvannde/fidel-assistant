@@ -76,7 +76,13 @@ class _OnboardingPermissionsScreenState
       primaryLabel: l10n.onboardingPermsAllow,
       secondaryLabel: l10n.onboardingPermsLater,
       busy: busy,
-      onBack: () => context.go('/onboarding/traitement'),
+      onBack: () {
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/onboarding/traitement');
+        }
+      },
       onPrimary: () => _finish(requestOs: true),
       onSecondary: () => _finish(requestOs: false),
       child: Column(
