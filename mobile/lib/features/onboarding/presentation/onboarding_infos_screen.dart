@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_exception.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/ui/app_toast.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/onboarding_controller.dart';
+import '../domain/onboarding_models.dart';
 import 'widgets/onboarding_shell.dart';
 
 class OnboardingInfosScreen extends ConsumerStatefulWidget {
@@ -18,12 +20,62 @@ class OnboardingInfosScreen extends ConsumerStatefulWidget {
 
 class _OnboardingInfosScreenState extends ConsumerState<OnboardingInfosScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nomCtrl = TextEditingController();
-  final _locCtrl = TextEditingController();
-  final _phoneCtrl = TextEditingController();
+  late final TextEditingController _nomCtrl;
+  late final TextEditingController _locCtrl;
+  late final TextEditingController _phoneCtrl;
   DateTime? _birth;
   String _sexe = 'F';
   String? _error;
+  var _hydrated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final draft = ref.read(onboardingControllerProvider).infos;
+    _nomCtrl = TextEditingController(text: draft.nomComplet);
+    _locCtrl = TextEditingController(text: draft.localisation);
+    _phoneCtrl = TextEditingController(text: draft.phone);
+    _birth = draft.dateNaissance;
+    _sexe = draft.sexe;
+    _nomCtrl.addListener(_persist);
+    _locCtrl.addListener(_persist);
+    _phoneCtrl.addListener(_persist);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _hydrateFromServer());
+  }
+
+  Future<void> _hydrateFromServer() async {
+    if (_hydrated) return;
+    _hydrated = true;
+    if (_nomCtrl.text.trim().isNotEmpty) return;
+    await ref.read(onboardingControllerProvider.notifier).syncFromSessionOrServer();
+    if (!mounted) return;
+    final draft = ref.read(onboardingControllerProvider).infos;
+    if (draft.nomComplet.isNotEmpty && _nomCtrl.text.isEmpty) {
+      _nomCtrl.text = draft.nomComplet;
+    }
+    if (draft.localisation.isNotEmpty && _locCtrl.text.isEmpty) {
+      _locCtrl.text = draft.localisation;
+    }
+    if (draft.phone.isNotEmpty && _phoneCtrl.text.isEmpty) {
+      _phoneCtrl.text = draft.phone;
+    }
+    setState(() {
+      _birth ??= draft.dateNaissance;
+      if (draft.sexe.isNotEmpty) _sexe = draft.sexe;
+    });
+  }
+
+  void _persist() {
+    ref.read(onboardingControllerProvider.notifier).setInfosDraft(
+          InfosDraft(
+            nomComplet: _nomCtrl.text,
+            dateNaissance: _birth,
+            sexe: _sexe,
+            localisation: _locCtrl.text,
+            phone: _phoneCtrl.text,
+          ),
+        );
+  }
 
   @override
   void dispose() {
@@ -40,8 +92,12 @@ class _OnboardingInfosScreenState extends ConsumerState<OnboardingInfosScreen> {
       initialDate: _birth ?? DateTime(now.year - 25),
       firstDate: DateTime(1920),
       lastDate: DateTime(now.year - 5),
+      helpText: AppLocalizations.of(context).onboardingBirthLabel,
     );
-    if (picked != null) setState(() => _birth = picked);
+    if (picked != null) {
+      setState(() => _birth = picked);
+      _persist();
+    }
   }
 
   Future<void> _submit() async {
@@ -78,18 +134,19 @@ class _OnboardingInfosScreenState extends ConsumerState<OnboardingInfosScreen> {
     final l10n = AppLocalizations.of(context);
     final busy = ref.watch(onboardingControllerProvider).busy;
     final theme = Theme.of(context);
+    final tokens = ThemeTokens.of(context);
     final birthLabel = _birth == null
         ? l10n.onboardingBirthHint
         : '${_birth!.day.toString().padLeft(2, '0')}/${_birth!.month.toString().padLeft(2, '0')}/${_birth!.year}';
 
     return OnboardingShell(
+      stepIndex: 0,
       title: l10n.onboardingInfosTitle,
       subtitle: l10n.onboardingInfosSubtitle,
-      progress: 0.25,
       lottieAsset: 'assets/lottie/welcome.json',
       lottieIcon: Icons.waving_hand_rounded,
+      lottieSize: 148,
       primaryLabel: l10n.onboardingContinue,
-      primaryEnabled: true,
       busy: busy,
       onPrimary: _submit,
       child: Form(
@@ -101,48 +158,65 @@ class _OnboardingInfosScreenState extends ConsumerState<OnboardingInfosScreen> {
               controller: _nomCtrl,
               enabled: !busy,
               textCapitalization: TextCapitalization.words,
+              textInputAction: TextInputAction.next,
               decoration: InputDecoration(labelText: l10n.onboardingNameLabel),
               validator: (v) =>
                   (v == null || v.trim().length < 2) ? l10n.fieldRequired : null,
             ),
             const SizedBox(height: 14),
-            OutlinedButton(
-              onPressed: busy ? null : _pickDate,
-              style: OutlinedButton.styleFrom(
-                alignment: Alignment.centerLeft,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-              ),
-              child: Text(
-                birthLabel,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: _birth == null
-                      ? theme.colorScheme.onSurfaceVariant
-                      : theme.colorScheme.onSurface,
+            InkWell(
+              onTap: busy ? null : _pickDate,
+              borderRadius: BorderRadius.circular(14),
+              child: InputDecorator(
+                decoration: InputDecoration(
+                  labelText: l10n.onboardingBirthLabel,
+                  suffixIcon: const Icon(Icons.calendar_today_outlined),
+                ),
+                child: Text(
+                  birthLabel,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: _birth == null
+                        ? tokens.textSecondary
+                        : tokens.textPrimary,
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 18),
             Text(l10n.onboardingSexLabel, style: theme.textTheme.titleSmall),
-            const SizedBox(height: 8),
-            SegmentedButton<String>(
-              segments: [
-                ButtonSegment(value: 'F', label: Text(l10n.onboardingSexF)),
-                ButtonSegment(value: 'M', label: Text(l10n.onboardingSexM)),
-                ButtonSegment(
-                  value: 'autre',
-                  label: Text(l10n.onboardingSexOther),
-                ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                for (final entry in [
+                  ('F', l10n.onboardingSexF),
+                  ('M', l10n.onboardingSexM),
+                  ('autre', l10n.onboardingSexOther),
+                ])
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        right: entry.$1 == 'autre' ? 0 : 8,
+                      ),
+                      child: _SexChip(
+                        label: entry.$2,
+                        selected: _sexe == entry.$1,
+                        onTap: busy
+                            ? null
+                            : () {
+                                setState(() => _sexe = entry.$1);
+                                _persist();
+                              },
+                      ),
+                    ),
+                  ),
               ],
-              selected: {_sexe},
-              onSelectionChanged: busy
-                  ? null
-                  : (s) => setState(() => _sexe = s.first),
             ),
             const SizedBox(height: 14),
             TextFormField(
               controller: _locCtrl,
               enabled: !busy,
               textCapitalization: TextCapitalization.words,
+              textInputAction: TextInputAction.next,
               decoration: InputDecoration(
                 labelText: l10n.onboardingLocationLabel,
                 hintText: l10n.onboardingLocationHint,
@@ -155,9 +229,11 @@ class _OnboardingInfosScreenState extends ConsumerState<OnboardingInfosScreen> {
               controller: _phoneCtrl,
               enabled: !busy,
               keyboardType: TextInputType.phone,
+              textInputAction: TextInputAction.done,
               decoration: InputDecoration(
                 labelText: l10n.onboardingPhoneLabel,
                 hintText: l10n.onboardingPhoneHint,
+                helperText: l10n.onboardingPhoneOptional,
               ),
             ),
             if (_error != null) ...[
@@ -170,6 +246,52 @@ class _OnboardingInfosScreenState extends ConsumerState<OnboardingInfosScreen> {
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SexChip extends StatelessWidget {
+  const _SexChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = ThemeTokens.of(context);
+    return Material(
+      color: selected
+          ? AppColors.primary
+          : tokens.elevated,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          height: 48,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: selected ? AppColors.primary : tokens.border,
+            ),
+          ),
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: selected
+                      ? AppColors.textOnPrimary
+                      : tokens.textPrimary,
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
         ),
       ),
     );

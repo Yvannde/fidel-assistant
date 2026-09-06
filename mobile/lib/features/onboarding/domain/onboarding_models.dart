@@ -55,3 +55,76 @@ class OnboardingStatus {
     );
   }
 }
+
+class InfosDraft {
+  const InfosDraft({
+    this.nomComplet = '',
+    this.dateNaissance,
+    this.sexe = 'F',
+    this.localisation = '',
+    this.phone = '',
+  });
+
+  final String nomComplet;
+  final DateTime? dateNaissance;
+  final String sexe;
+  final String localisation;
+  final String phone;
+
+  InfosDraft copyWith({
+    String? nomComplet,
+    DateTime? dateNaissance,
+    String? sexe,
+    String? localisation,
+    String? phone,
+    bool clearBirth = false,
+  }) {
+    return InfosDraft(
+      nomComplet: nomComplet ?? this.nomComplet,
+      dateNaissance: clearBirth ? null : (dateNaissance ?? this.dateNaissance),
+      sexe: sexe ?? this.sexe,
+      localisation: localisation ?? this.localisation,
+      phone: phone ?? this.phone,
+    );
+  }
+
+  factory InfosDraft.fromMeJson(Map<String, dynamic> json) {
+    DateTime? birth;
+    final raw = json['date_naissance']?.toString();
+    if (raw != null && raw.length >= 10) {
+      birth = DateTime.tryParse(raw.substring(0, 10));
+    }
+    return InfosDraft(
+      nomComplet: json['nom_complet'] as String? ?? '',
+      dateNaissance: birth,
+      sexe: json['sexe'] as String? ?? 'F',
+      localisation: json['localisation'] as String? ?? '',
+      phone: json['phone'] as String? ?? '',
+    );
+  }
+}
+
+class TraitementDraft {
+  const TraitementDraft({
+    this.enTraitement,
+    this.maladieIds = const {},
+    this.phase = 'en_cours',
+  });
+
+  final bool? enTraitement;
+  final Set<String> maladieIds;
+  final String phase;
+
+  TraitementDraft copyWith({
+    bool? enTraitement,
+    Set<String>? maladieIds,
+    String? phase,
+    bool clearEnTraitement = false,
+  }) {
+    return TraitementDraft(
+      enTraitement: clearEnTraitement ? null : (enTraitement ?? this.enTraitement),
+      maladieIds: maladieIds ?? this.maladieIds,
+      phase: phase ?? this.phase,
+    );
+  }
+}

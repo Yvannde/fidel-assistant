@@ -512,16 +512,58 @@ abstract class AppLocalizations {
   /// **'Continue'**
   String get onboardingContinue;
 
+  /// No description provided for @onboardingStepOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{current} / {total}'**
+  String onboardingStepOf(int current, int total);
+
+  /// No description provided for @onboardingStepProfil.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get onboardingStepProfil;
+
+  /// No description provided for @onboardingStepSuivi.
+  ///
+  /// In en, this message translates to:
+  /// **'Care'**
+  String get onboardingStepSuivi;
+
+  /// No description provided for @onboardingStepTraitement.
+  ///
+  /// In en, this message translates to:
+  /// **'Treatment'**
+  String get onboardingStepTraitement;
+
+  /// No description provided for @onboardingStepRappels.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders'**
+  String get onboardingStepRappels;
+
+  /// No description provided for @onboardingGateLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing your space…'**
+  String get onboardingGateLoading;
+
+  /// No description provided for @onboardingRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get onboardingRetry;
+
   /// No description provided for @onboardingInfosTitle.
   ///
   /// In en, this message translates to:
-  /// **'Tell us about you'**
+  /// **'What should we call you?'**
   String get onboardingInfosTitle;
 
   /// No description provided for @onboardingInfosSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'This helps us personalize your accompaniment. You can change it later.'**
+  /// **'A few details to personalize Fidel. Nothing is locked in.'**
   String get onboardingInfosSubtitle;
 
   /// No description provided for @onboardingNameLabel.
@@ -530,10 +572,16 @@ abstract class AppLocalizations {
   /// **'Full name'**
   String get onboardingNameLabel;
 
-  /// No description provided for @onboardingBirthHint.
+  /// No description provided for @onboardingBirthLabel.
   ///
   /// In en, this message translates to:
   /// **'Date of birth'**
+  String get onboardingBirthLabel;
+
+  /// No description provided for @onboardingBirthHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a date'**
   String get onboardingBirthHint;
 
   /// No description provided for @onboardingBirthRequired.
@@ -551,13 +599,13 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingSexF.
   ///
   /// In en, this message translates to:
-  /// **'F'**
+  /// **'Woman'**
   String get onboardingSexF;
 
   /// No description provided for @onboardingSexM.
   ///
   /// In en, this message translates to:
-  /// **'M'**
+  /// **'Man'**
   String get onboardingSexM;
 
   /// No description provided for @onboardingSexOther.
@@ -569,37 +617,43 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingLocationLabel.
   ///
   /// In en, this message translates to:
-  /// **'Location'**
+  /// **'City / neighborhood'**
   String get onboardingLocationLabel;
 
   /// No description provided for @onboardingLocationHint.
   ///
   /// In en, this message translates to:
-  /// **'City / neighborhood'**
+  /// **'e.g. Douala, Akwa'**
   String get onboardingLocationHint;
 
   /// No description provided for @onboardingPhoneLabel.
   ///
   /// In en, this message translates to:
-  /// **'Phone (optional)'**
+  /// **'Phone'**
   String get onboardingPhoneLabel;
 
   /// No description provided for @onboardingPhoneHint.
   ///
   /// In en, this message translates to:
-  /// **'+237…'**
+  /// **'+237 6…'**
   String get onboardingPhoneHint;
+
+  /// No description provided for @onboardingPhoneOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional — you can add it later'**
+  String get onboardingPhoneOptional;
 
   /// No description provided for @onboardingBesoinTitle.
   ///
   /// In en, this message translates to:
-  /// **'Do you want personal follow-up?'**
+  /// **'Do you want follow-up for yourself?'**
   String get onboardingBesoinTitle;
 
   /// No description provided for @onboardingBesoinSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'You can also support someone later from home. Both are possible.'**
+  /// **'You can also support someone from home. Both are possible, without a second account.'**
   String get onboardingBesoinSubtitle;
 
   /// No description provided for @onboardingBesoinYesTitle.
@@ -611,7 +665,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingBesoinYesSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Reminders, vitals, and personal accompaniment'**
+  /// **'Medication reminders, vitals, and personal accompaniment'**
   String get onboardingBesoinYesSubtitle;
 
   /// No description provided for @onboardingBesoinNoTitle.
@@ -641,20 +695,32 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingTraitementSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'If yes, select the conditions you follow. You can complete details later.'**
+  /// **'If yes, tick what you follow. Medicines and schedules come later — no pressure.'**
   String get onboardingTraitementSubtitle;
 
   /// No description provided for @onboardingTraitementYes.
   ///
   /// In en, this message translates to:
-  /// **'Yes'**
+  /// **'Yes, I’m in treatment'**
   String get onboardingTraitementYes;
+
+  /// No description provided for @onboardingTraitementYesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We only note the condition and phase for now'**
+  String get onboardingTraitementYesSubtitle;
 
   /// No description provided for @onboardingTraitementNo.
   ///
   /// In en, this message translates to:
-  /// **'No'**
+  /// **'Not right now'**
   String get onboardingTraitementNo;
+
+  /// No description provided for @onboardingTraitementNoSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You can add this later from home'**
+  String get onboardingTraitementNoSubtitle;
 
   /// No description provided for @onboardingTraitementNoHint.
   ///
@@ -665,7 +731,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingMaladiesLabel.
   ///
   /// In en, this message translates to:
-  /// **'Conditions'**
+  /// **'What are you following?'**
   String get onboardingMaladiesLabel;
 
   /// No description provided for @onboardingMaladieRequired.
@@ -674,16 +740,22 @@ abstract class AppLocalizations {
   /// **'Select at least one condition'**
   String get onboardingMaladieRequired;
 
+  /// No description provided for @onboardingMaladiesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t load the catalog. Check your connection.'**
+  String get onboardingMaladiesEmpty;
+
   /// No description provided for @onboardingPhaseLabel.
   ///
   /// In en, this message translates to:
-  /// **'Treatment phase'**
+  /// **'Where are you in it?'**
   String get onboardingPhaseLabel;
 
   /// No description provided for @onboardingPhaseDebut.
   ///
   /// In en, this message translates to:
-  /// **'Starting'**
+  /// **'Just starting'**
   String get onboardingPhaseDebut;
 
   /// No description provided for @onboardingPhaseEnCours.
@@ -701,19 +773,19 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingPhaseInconnu.
   ///
   /// In en, this message translates to:
-  /// **'Not sure'**
+  /// **'I’m not sure'**
   String get onboardingPhaseInconnu;
 
   /// No description provided for @onboardingPermsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Enable reliable reminders'**
+  /// **'So reminders actually ring'**
   String get onboardingPermsTitle;
 
   /// No description provided for @onboardingPermsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'We explain why before the system prompt. You can also continue without.'**
+  /// **'We explain before the phone asks. You can skip — reminders may then be unreliable.'**
   String get onboardingPermsSubtitle;
 
   /// No description provided for @onboardingPermsNotifTitle.
@@ -737,13 +809,13 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingPermsBatteryBody.
   ///
   /// In en, this message translates to:
-  /// **'Without an exemption, some phones kill reminders in the background.'**
+  /// **'Without an exemption, some phones kill reminders overnight.'**
   String get onboardingPermsBatteryBody;
 
   /// No description provided for @onboardingPermsAllow.
   ///
   /// In en, this message translates to:
-  /// **'Allow'**
+  /// **'Allow reminders'**
   String get onboardingPermsAllow;
 
   /// No description provided for @onboardingPermsLater.

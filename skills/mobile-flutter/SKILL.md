@@ -95,7 +95,7 @@ En production, `AppConfig.apiBaseUrl` pointe vers `https://educampro.edu.cm`.
 ## Onboarding UI
 
 - Feature `features/onboarding/` — reprise via `onboarding_step` serveur
-- Shell premium + barre de progression + Lottie locaux (`assets/lottie/`) avec fallback icône
+- Shell aligné sur l’auth (`head.png` + feuille) + progression 4 étapes + player **LottieFiles** (`dotlottie_flutter`) avec JSON officiels (`assets/lottie/`) et fallback icône
 - Pas d’écran « patient / aidant » : infos → besoin suivi → (traitement + permissions si oui) → complete
 
 ## Tests

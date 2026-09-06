@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../core/network/api_exception.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/ui/app_toast.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/onboarding_controller.dart';
@@ -66,11 +67,12 @@ class _OnboardingPermissionsScreenState
     final theme = Theme.of(context);
 
     return OnboardingShell(
+      stepIndex: 3,
       title: l10n.onboardingPermsTitle,
       subtitle: l10n.onboardingPermsSubtitle,
-      progress: 1,
       lottieAsset: 'assets/lottie/notifications.json',
       lottieIcon: Icons.notifications_active_outlined,
+      lottieSize: 164,
       primaryLabel: l10n.onboardingPermsAllow,
       secondaryLabel: l10n.onboardingPermsLater,
       busy: busy,
@@ -78,15 +80,14 @@ class _OnboardingPermissionsScreenState
       onPrimary: () => _finish(requestOs: true),
       onSecondary: () => _finish(requestOs: false),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _PermRow(
+          _PermCard(
             icon: Icons.notifications_outlined,
             title: l10n.onboardingPermsNotifTitle,
             body: l10n.onboardingPermsNotifBody,
           ),
-          const SizedBox(height: 16),
-          _PermRow(
+          const SizedBox(height: 12),
+          _PermCard(
             icon: Icons.battery_saver_outlined,
             title: l10n.onboardingPermsBatteryTitle,
             body: l10n.onboardingPermsBatteryBody,
@@ -106,8 +107,8 @@ class _OnboardingPermissionsScreenState
   }
 }
 
-class _PermRow extends StatelessWidget {
-  const _PermRow({
+class _PermCard extends StatelessWidget {
+  const _PermCard({
     required this.icon,
     required this.title,
     required this.body,
@@ -120,33 +121,51 @@ class _PermRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, color: theme.colorScheme.primary, size: 28),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                body,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  height: 1.4,
-                ),
-              ),
-            ],
+    final tokens = ThemeTokens.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: tokens.elevated,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: tokens.border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: AppColors.primary),
           ),
-        ),
-      ],
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  body,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

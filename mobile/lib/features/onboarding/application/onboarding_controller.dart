@@ -9,31 +9,47 @@ final onboardingRepositoryProvider = Provider<OnboardingRepository>((ref) {
   return OnboardingRepository(apiClient: ref.watch(apiClientProvider));
 });
 
-/// Step serveur + flags patient pour l’UI onboarding.
 class OnboardingUiState {
   const OnboardingUiState({
     this.step = 'infos',
     this.hasPatientProfile = false,
     this.maladies = const [],
+    this.maladiesFailed = false,
     this.busy = false,
+    this.infos = const InfosDraft(),
+    this.besoinActif,
+    this.traitement = const TraitementDraft(),
   });
 
   final String step;
   final bool hasPatientProfile;
   final List<MaladieCatalogItem> maladies;
+  final bool maladiesFailed;
   final bool busy;
+  final InfosDraft infos;
+  final bool? besoinActif;
+  final TraitementDraft traitement;
 
   OnboardingUiState copyWith({
     String? step,
     bool? hasPatientProfile,
     List<MaladieCatalogItem>? maladies,
+    bool? maladiesFailed,
     bool? busy,
+    InfosDraft? infos,
+    bool? besoinActif,
+    TraitementDraft? traitement,
+    bool clearBesoin = false,
   }) {
     return OnboardingUiState(
       step: step ?? this.step,
       hasPatientProfile: hasPatientProfile ?? this.hasPatientProfile,
       maladies: maladies ?? this.maladies,
+      maladiesFailed: maladiesFailed ?? this.maladiesFailed,
       busy: busy ?? this.busy,
+      infos: infos ?? this.infos,
+      besoinActif: clearBesoin ? null : (besoinActif ?? this.besoinActif),
+      traitement: traitement ?? this.traitement,
     );
   }
 }
@@ -49,6 +65,18 @@ class OnboardingController extends StateNotifier<OnboardingUiState> {
   final Ref _ref;
 
   OnboardingRepository get _repo => _ref.read(onboardingRepositoryProvider);
+
+  void setInfosDraft(InfosDraft draft) {
+    state = state.copyWith(infos: draft);
+  }
+
+  void setBesoinDraft(bool? actif) {
+    state = state.copyWith(besoinActif: actif, clearBesoin: actif == null);
+  }
+
+  void setTraitementDraft(TraitementDraft draft) {
+    state = state.copyWith(traitement: draft);
+  }
 
   Future<void> syncFromSessionOrServer() async {
     final session = _ref.read(authSessionProvider);
@@ -71,6 +99,22 @@ class OnboardingController extends StateNotifier<OnboardingUiState> {
     } catch (_) {
       // Garde le step session si le réseau échoue.
     }
+    try {
+      final profile = await _repo.fetchProfileDraft();
+      final empty = state.infos.nomComplet.trim().isEmpty;
+      if (empty && profile.nomComplet.trim().isNotEmpty) {
+        state = state.copyWith(infos: profile);
+      } else if (empty) {
+        state = state.copyWith(
+          infos: state.infos.copyWith(
+            phone: profile.phone.isNotEmpty ? profile.phone : state.infos.phone,
+            localisation: profile.localisation.isNotEmpty
+                ? profile.localisation
+                : state.infos.localisation,
+          ),
+        );
+      }
+    } catch (_) {}
   }
 
   Future<void> saveInfos({
@@ -80,7 +124,14 @@ class OnboardingController extends StateNotifier<OnboardingUiState> {
     required String localisation,
     String? phone,
   }) async {
-    state = state.copyWith(busy: true);
+    final draft = InfosDraft(
+      nomComplet: nomComplet,
+      dateNaissance: dateNaissance,
+      sexe: sexe,
+      localisation: localisation,
+      phone: phone ?? '',
+    );
+    state = state.copyWith(busy: true, infos: draft);
     try {
       final date =
           '${dateNaissance.year.toString().padLeft(4, '0')}-${dateNaissance.month.toString().padLeft(2, '0')}-${dateNaissance.day.toString().padLeft(2, '0')}';
@@ -100,7 +151,7 @@ class OnboardingController extends StateNotifier<OnboardingUiState> {
   }
 
   Future<void> setBesoinSuivi({required bool actif}) async {
-    state = state.copyWith(busy: true);
+    state = state.copyWith(busy: true, besoinActif: actif);
     try {
       final result = await _repo.setBesoinSuivi(actif: actif);
       state = state.copyWith(
@@ -118,17 +169,25 @@ class OnboardingController extends StateNotifier<OnboardingUiState> {
     }
   }
 
-  Future<void> loadMaladies() async {
-    if (state.maladies.isNotEmpty) return;
-    final list = await _repo.listMaladies();
-    state = state.copyWith(maladies: list);
+  Future<void> loadMaladies({bool force = false}) async {
+    if (state.maladies.isNotEmpty && !force) return;
+    try {
+      final list = await _repo.listMaladies();
+      state = state.copyWith(maladies: list, maladiesFailed: false);
+    } catch (_) {
+      state = state.copyWith(maladiesFailed: true);
+      rethrow;
+    }
   }
 
   Future<void> saveTraitement({
     required bool enTraitement,
     List<TraitementSelection>? traitements,
   }) async {
-    state = state.copyWith(busy: true);
+    state = state.copyWith(
+      busy: true,
+      traitement: state.traitement.copyWith(enTraitement: enTraitement),
+    );
     try {
       final step = await _repo.saveTraitement(
         enTraitement: enTraitement,

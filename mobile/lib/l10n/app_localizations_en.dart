@@ -227,17 +227,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingContinue => 'Continue';
 
   @override
-  String get onboardingInfosTitle => 'Tell us about you';
+  String onboardingStepOf(int current, int total) {
+    return '$current / $total';
+  }
+
+  @override
+  String get onboardingStepProfil => 'You';
+
+  @override
+  String get onboardingStepSuivi => 'Care';
+
+  @override
+  String get onboardingStepTraitement => 'Treatment';
+
+  @override
+  String get onboardingStepRappels => 'Reminders';
+
+  @override
+  String get onboardingGateLoading => 'Preparing your space…';
+
+  @override
+  String get onboardingRetry => 'Try again';
+
+  @override
+  String get onboardingInfosTitle => 'What should we call you?';
 
   @override
   String get onboardingInfosSubtitle =>
-      'This helps us personalize your accompaniment. You can change it later.';
+      'A few details to personalize Fidel. Nothing is locked in.';
 
   @override
   String get onboardingNameLabel => 'Full name';
 
   @override
-  String get onboardingBirthHint => 'Date of birth';
+  String get onboardingBirthLabel => 'Date of birth';
+
+  @override
+  String get onboardingBirthHint => 'Pick a date';
 
   @override
   String get onboardingBirthRequired => 'Please enter your date of birth';
@@ -246,39 +272,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingSexLabel => 'Sex';
 
   @override
-  String get onboardingSexF => 'F';
+  String get onboardingSexF => 'Woman';
 
   @override
-  String get onboardingSexM => 'M';
+  String get onboardingSexM => 'Man';
 
   @override
   String get onboardingSexOther => 'Other';
 
   @override
-  String get onboardingLocationLabel => 'Location';
+  String get onboardingLocationLabel => 'City / neighborhood';
 
   @override
-  String get onboardingLocationHint => 'City / neighborhood';
+  String get onboardingLocationHint => 'e.g. Douala, Akwa';
 
   @override
-  String get onboardingPhoneLabel => 'Phone (optional)';
+  String get onboardingPhoneLabel => 'Phone';
 
   @override
-  String get onboardingPhoneHint => '+237…';
+  String get onboardingPhoneHint => '+237 6…';
 
   @override
-  String get onboardingBesoinTitle => 'Do you want personal follow-up?';
+  String get onboardingPhoneOptional => 'Optional — you can add it later';
+
+  @override
+  String get onboardingBesoinTitle => 'Do you want follow-up for yourself?';
 
   @override
   String get onboardingBesoinSubtitle =>
-      'You can also support someone later from home. Both are possible.';
+      'You can also support someone from home. Both are possible, without a second account.';
 
   @override
   String get onboardingBesoinYesTitle => 'Yes, follow-up for me';
 
   @override
   String get onboardingBesoinYesSubtitle =>
-      'Reminders, vitals, and personal accompaniment';
+      'Medication reminders, vitals, and personal accompaniment';
 
   @override
   String get onboardingBesoinNoTitle => 'Not for now';
@@ -295,29 +324,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingTraitementSubtitle =>
-      'If yes, select the conditions you follow. You can complete details later.';
+      'If yes, tick what you follow. Medicines and schedules come later — no pressure.';
 
   @override
-  String get onboardingTraitementYes => 'Yes';
+  String get onboardingTraitementYes => 'Yes, I’m in treatment';
 
   @override
-  String get onboardingTraitementNo => 'No';
+  String get onboardingTraitementYesSubtitle =>
+      'We only note the condition and phase for now';
+
+  @override
+  String get onboardingTraitementNo => 'Not right now';
+
+  @override
+  String get onboardingTraitementNoSubtitle =>
+      'You can add this later from home';
 
   @override
   String get onboardingTraitementNoHint =>
       'No problem — you can activate follow-up later.';
 
   @override
-  String get onboardingMaladiesLabel => 'Conditions';
+  String get onboardingMaladiesLabel => 'What are you following?';
 
   @override
   String get onboardingMaladieRequired => 'Select at least one condition';
 
   @override
-  String get onboardingPhaseLabel => 'Treatment phase';
+  String get onboardingMaladiesEmpty =>
+      'Couldn’t load the catalog. Check your connection.';
 
   @override
-  String get onboardingPhaseDebut => 'Starting';
+  String get onboardingPhaseLabel => 'Where are you in it?';
+
+  @override
+  String get onboardingPhaseDebut => 'Just starting';
 
   @override
   String get onboardingPhaseEnCours => 'Ongoing';
@@ -326,14 +367,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingPhaseMaintenance => 'Maintenance';
 
   @override
-  String get onboardingPhaseInconnu => 'Not sure';
+  String get onboardingPhaseInconnu => 'I’m not sure';
 
   @override
-  String get onboardingPermsTitle => 'Enable reliable reminders';
+  String get onboardingPermsTitle => 'So reminders actually ring';
 
   @override
   String get onboardingPermsSubtitle =>
-      'We explain why before the system prompt. You can also continue without.';
+      'We explain before the phone asks. You can skip — reminders may then be unreliable.';
 
   @override
   String get onboardingPermsNotifTitle => 'Notifications';
@@ -347,10 +388,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingPermsBatteryBody =>
-      'Without an exemption, some phones kill reminders in the background.';
+      'Without an exemption, some phones kill reminders overnight.';
 
   @override
-  String get onboardingPermsAllow => 'Allow';
+  String get onboardingPermsAllow => 'Allow reminders';
 
   @override
   String get onboardingPermsLater => 'Later';

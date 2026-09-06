@@ -17,6 +17,15 @@ class OnboardingRepository {
     }
   }
 
+  Future<InfosDraft> fetchProfileDraft() async {
+    try {
+      final res = await _api.get<Map<String, dynamic>>('/auth/me');
+      return InfosDraft.fromMeJson(res.data ?? {});
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
   Future<String> saveInfos({
     required String nomComplet,
     required String dateNaissance,
@@ -60,17 +69,16 @@ class OnboardingRepository {
 
   Future<List<MaladieCatalogItem>> listMaladies() async {
     try {
-      final res = await _api.get<dynamic>(
-        '/onboarding/maladies',
-        skipAuth: true,
-      );
+      final res = await _api.get<dynamic>('/onboarding/maladies');
       final raw = res.data;
       final list = raw is List ? raw : <dynamic>[];
       return list
           .whereType<Map>()
-          .map((e) => MaladieCatalogItem.fromJson(
-                Map<String, dynamic>.from(e),
-              ))
+          .map(
+            (e) => MaladieCatalogItem.fromJson(
+              Map<String, dynamic>.from(e),
+            ),
+          )
           .toList();
     } on DioException catch (e) {
       ApiClient.throwApi(e);

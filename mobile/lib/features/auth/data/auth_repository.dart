@@ -14,17 +14,22 @@ class AuthRepository {
     GoogleSignIn? googleSignIn,
   })  : _api = apiClient,
         _tokens = tokenStorage,
-        _googleSignIn = googleSignIn ??
-            GoogleSignIn(
-              scopes: const ['email', 'openid', 'profile'],
-              serverClientId: AppConfig.googleClientIdWeb.isEmpty
-                  ? null
-                  : AppConfig.googleClientIdWeb,
-            );
+        _injectedGoogle = googleSignIn;
 
   final ApiClient _api;
   final TokenStorage _tokens;
-  final GoogleSignIn _googleSignIn;
+  final GoogleSignIn? _injectedGoogle;
+  GoogleSignIn? _googleSignIn;
+
+  GoogleSignIn get _google {
+    return _injectedGoogle ??
+        (_googleSignIn ??= GoogleSignIn(
+          scopes: const ['email', 'openid', 'profile'],
+          serverClientId: AppConfig.googleClientIdWeb.isEmpty
+              ? null
+              : AppConfig.googleClientIdWeb,
+        ));
+  }
 
   Future<AuthSession> login({
     required String email,
@@ -58,7 +63,7 @@ class AuthRepository {
       );
     }
 
-    final account = await _googleSignIn.signIn();
+    final account = await _google.signIn();
     if (account == null) {
       throw ApiException(
         code: 'GOOGLE_CANCELLED',
@@ -259,7 +264,7 @@ class AuthRepository {
     } finally {
       await _tokens.clear();
       try {
-        await _googleSignIn.signOut();
+        await _google.signOut();
       } catch (_) {}
     }
   }

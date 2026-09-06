@@ -3,11 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/ui/app_toast.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/onboarding_controller.dart';
 import '../domain/onboarding_models.dart';
+import 'widgets/onboarding_choice_card.dart';
+import 'widgets/onboarding_option_tile.dart';
 import 'widgets/onboarding_shell.dart';
 
 class OnboardingTraitementScreen extends ConsumerStatefulWidget {
@@ -20,16 +21,13 @@ class OnboardingTraitementScreen extends ConsumerStatefulWidget {
 
 class _OnboardingTraitementScreenState
     extends ConsumerState<OnboardingTraitementScreen> {
-  bool? _enTraitement;
-  final _selected = <String>{};
-  String _phase = 'en_cours';
   String? _error;
-  bool _loadingMaladies = false;
+  var _loadingMaladies = false;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
   Future<void> _load() async {
@@ -37,7 +35,7 @@ class _OnboardingTraitementScreenState
     try {
       await ref.read(onboardingControllerProvider.notifier).loadMaladies();
     } catch (_) {
-      // Catalog optional until submit with traitements.
+      // Retry affiché dans l’UI.
     } finally {
       if (mounted) setState(() => _loadingMaladies = false);
     }
@@ -45,25 +43,26 @@ class _OnboardingTraitementScreenState
 
   Future<void> _submit() async {
     final l10n = AppLocalizations.of(context);
-    if (_enTraitement == null) {
+    final draft = ref.read(onboardingControllerProvider).traitement;
+    if (draft.enTraitement == null) {
       setState(() => _error = l10n.onboardingChoiceRequired);
       return;
     }
-    if (_enTraitement == true && _selected.isEmpty) {
+    if (draft.enTraitement == true && draft.maladieIds.isEmpty) {
       setState(() => _error = l10n.onboardingMaladieRequired);
       return;
     }
     setState(() => _error = null);
     try {
-      final traitements = _enTraitement == true
-          ? _selected
+      final traitements = draft.enTraitement == true
+          ? draft.maladieIds
               .map(
-                (id) => TraitementSelection(maladieId: id, phase: _phase),
+                (id) => TraitementSelection(maladieId: id, phase: draft.phase),
               )
               .toList()
           : null;
       await ref.read(onboardingControllerProvider.notifier).saveTraitement(
-            enTraitement: _enTraitement!,
+            enTraitement: draft.enTraitement!,
             traitements: traitements,
           );
       if (!mounted) return;
@@ -83,47 +82,61 @@ class _OnboardingTraitementScreenState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(onboardingControllerProvider);
+    final draft = state.traitement;
     final theme = Theme.of(context);
-    final tokens = ThemeTokens.of(context);
 
     return OnboardingShell(
+      stepIndex: 2,
       title: l10n.onboardingTraitementTitle,
       subtitle: l10n.onboardingTraitementSubtitle,
-      progress: 0.75,
       lottieAsset: 'assets/lottie/meds.json',
       lottieIcon: Icons.medication_liquid_rounded,
+      lottieSize: 156,
       primaryLabel: l10n.onboardingContinue,
-      primaryEnabled: _enTraitement != null,
+      primaryEnabled: draft.enTraitement != null,
       busy: state.busy,
       onBack: () => context.go('/onboarding/besoin-suivi'),
       onPrimary: _submit,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              ChoiceChip(
-                label: Text(l10n.onboardingTraitementYes),
-                selected: _enTraitement == true,
-                onSelected: state.busy
-                    ? null
-                    : (_) => setState(() => _enTraitement = true),
-              ),
-              ChoiceChip(
-                label: Text(l10n.onboardingTraitementNo),
-                selected: _enTraitement == false,
-                onSelected: state.busy
-                    ? null
-                    : (_) => setState(() {
-                          _enTraitement = false;
-                          _selected.clear();
-                        }),
-              ),
-            ],
+          OnboardingChoiceCard(
+            selected: draft.enTraitement == true,
+            title: l10n.onboardingTraitementYes,
+            subtitle: l10n.onboardingTraitementYesSubtitle,
+            icon: Icons.medication_outlined,
+            onTap: state.busy
+                ? null
+                : () {
+                    ref
+                        .read(onboardingControllerProvider.notifier)
+                        .setTraitementDraft(
+                          draft.copyWith(enTraitement: true),
+                        );
+                    setState(() => _error = null);
+                  },
           ),
-          if (_enTraitement == true) ...[
+          const SizedBox(height: 12),
+          OnboardingChoiceCard(
+            selected: draft.enTraitement == false,
+            title: l10n.onboardingTraitementNo,
+            subtitle: l10n.onboardingTraitementNoSubtitle,
+            icon: Icons.hourglass_empty_rounded,
+            onTap: state.busy
+                ? null
+                : () {
+                    ref
+                        .read(onboardingControllerProvider.notifier)
+                        .setTraitementDraft(
+                          draft.copyWith(
+                            enTraitement: false,
+                            maladieIds: {},
+                          ),
+                        );
+                    setState(() => _error = null);
+                  },
+          ),
+          if (draft.enTraitement == true) ...[
             const SizedBox(height: 22),
             Text(
               l10n.onboardingMaladiesLabel,
@@ -137,60 +150,75 @@ class _OnboardingTraitementScreenState
                 padding: EdgeInsets.symmetric(vertical: 24),
                 child: Center(child: CircularProgressIndicator()),
               )
+            else if (state.maladiesFailed || state.maladies.isEmpty)
+              Column(
+                children: [
+                  Text(
+                    l10n.onboardingMaladiesEmpty,
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: state.busy ? null : _load,
+                    child: Text(l10n.onboardingRetry),
+                  ),
+                ],
+              )
             else
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: state.maladies.map((m) {
-                  final selected = _selected.contains(m.id);
-                  return FilterChip(
-                    label: Text(m.nom),
-                    selected: selected,
-                    onSelected: state.busy
-                        ? null
-                        : (v) => setState(() {
-                              if (v) {
-                                _selected.add(m.id);
-                              } else {
-                                _selected.remove(m.id);
-                              }
-                            }),
-                    selectedColor:
-                        AppColors.primary.withValues(alpha: 0.18),
-                    checkmarkColor: AppColors.primary,
-                  );
-                }).toList(),
-              ),
-            const SizedBox(height: 18),
+              ...state.maladies.map((m) {
+                final selected = draft.maladieIds.contains(m.id);
+                return OnboardingOptionTile(
+                  title: m.nom,
+                  subtitle: m.description,
+                  selected: selected,
+                  multi: true,
+                  onTap: state.busy
+                      ? null
+                      : () {
+                          final next = {...draft.maladieIds};
+                          if (selected) {
+                            next.remove(m.id);
+                          } else {
+                            next.add(m.id);
+                          }
+                          ref
+                              .read(onboardingControllerProvider.notifier)
+                              .setTraitementDraft(
+                                draft.copyWith(maladieIds: next),
+                              );
+                        },
+                );
+              }),
+            const SizedBox(height: 8),
             Text(
               l10n.onboardingPhaseLabel,
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final entry in [
-                  ('debut', l10n.onboardingPhaseDebut),
-                  ('en_cours', l10n.onboardingPhaseEnCours),
-                  ('maintenance', l10n.onboardingPhaseMaintenance),
-                  ('inconnu', l10n.onboardingPhaseInconnu),
-                ])
-                  ChoiceChip(
-                    label: Text(entry.$2),
-                    selected: _phase == entry.$1,
-                    onSelected: state.busy
-                        ? null
-                        : (_) => setState(() => _phase = entry.$1),
-                  ),
-              ],
-            ),
+            const SizedBox(height: 10),
+            for (final entry in [
+              ('debut', l10n.onboardingPhaseDebut),
+              ('en_cours', l10n.onboardingPhaseEnCours),
+              ('maintenance', l10n.onboardingPhaseMaintenance),
+              ('inconnu', l10n.onboardingPhaseInconnu),
+            ])
+              OnboardingOptionTile(
+                title: entry.$2,
+                selected: draft.phase == entry.$1,
+                onTap: state.busy
+                    ? null
+                    : () {
+                        ref
+                            .read(onboardingControllerProvider.notifier)
+                            .setTraitementDraft(
+                              draft.copyWith(phase: entry.$1),
+                            );
+                      },
+              ),
           ],
           if (_error != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
               _error!,
               style: theme.textTheme.bodySmall?.copyWith(
@@ -198,16 +226,6 @@ class _OnboardingTraitementScreenState
               ),
             ),
           ],
-          if (_enTraitement == false)
-            Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Text(
-                l10n.onboardingTraitementNoHint,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: tokens.textSecondary,
-                ),
-              ),
-            ),
         ],
       ),
     );

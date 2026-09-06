@@ -42,7 +42,12 @@ GOOGLE_CLIENT_ID_ANDROID=xxxxx.apps.googleusercontent.com
 GOOGLE_CLIENT_ID_IOS=xxxxx.apps.googleusercontent.com
 ```
 
-Même valeurs côté Flutter via `--dart-define` ou un fichier de config non commité (surtout le Web client ID pour `serverClientId`).
+Même valeurs côté Flutter dans `mobile/assets/config/app.json`. Ensuite :
+
+```bash
+cd mobile
+flutter run
+```
 
 ## 5. Ce que tu me renvoies
 

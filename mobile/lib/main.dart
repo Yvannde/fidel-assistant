@@ -12,6 +12,7 @@ import 'l10n/app_localizations.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AppConfig.load();
   final prefs = await SharedPreferences.getInstance();
 
   runApp(

@@ -7,34 +7,15 @@ Structure conforme à `skills/mobile-flutter/SKILL.md` (feature-first, offline-f
 - Flutter SDK 3.5+
 - Backend local : `make backend-run` (port 8000)
 
-## Config API
+## Démarrage
 
-| Contexte | `API_BASE_URL` |
-|---|---|
-| Émulateur Android | `http://10.0.2.2:8000` (défaut) |
-| Simulateur iOS / desktop | `http://127.0.0.1:8000` |
-| Appareil physique (même Wi‑Fi) | `http://<IP-LAN-PC>:8000` |
-| Production | `https://educampro.edu.cm` |
+Depuis `mobile/` :
 
 ```bash
-flutter pub get
-
-# Android émulateur
-flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000
-
-# iOS / Chrome
-flutter run --dart-define=API_BASE_URL=http://127.0.0.1:8000
+flutter run
 ```
 
-Google Sign-In (plus tard) :
-
-```bash
-flutter run \
-  --dart-define=API_BASE_URL=... \
-  --dart-define=GOOGLE_CLIENT_ID_ANDROID=... \
-  --dart-define=GOOGLE_CLIENT_ID_IOS=... \
-  --dart-define=GOOGLE_CLIENT_ID_WEB=...
-```
+L’URL API et Google Sign-In se lisent dans `assets/config/app.json` (IP LAN du PC + Client IDs). Pas besoin de `--dart-define` au quotidien.
 
 ## Socle en place
 

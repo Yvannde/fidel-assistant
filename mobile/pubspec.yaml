@@ -37,6 +37,7 @@ flutter:
   assets:
     - assets/images/
     - assets/lottie/
+    - assets/config/app.json
 
   fonts:
     - family: Satoshi

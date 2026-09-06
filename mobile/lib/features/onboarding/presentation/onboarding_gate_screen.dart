@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../auth/application/auth_providers.dart';
 import '../application/onboarding_controller.dart';
+import 'widgets/onboarding_lottie.dart';
 
 /// Point d’entrée `/onboarding` — sync step serveur puis redirection.
 class OnboardingGateScreen extends ConsumerStatefulWidget {
@@ -49,8 +53,47 @@ class _OnboardingGateScreenState extends ConsumerState<OnboardingGateScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: AppColors.primary,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset(
+              'assets/images/head.png',
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => const ColoredBox(
+                color: AppColors.primary,
+              ),
+            ),
+            SafeArea(
+              child: Column(
+                children: [
+                  const Spacer(),
+                  const OnboardingLottie(
+                    asset: 'assets/lottie/welcome.json',
+                    fallbackIcon: Icons.favorite_rounded,
+                    size: 160,
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    l10n.onboardingGateLoading,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: AppColors.textOnPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(flex: 2),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
