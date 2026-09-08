@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/premium.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/ui/app_toast.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../home/application/home_controller.dart';
 import '../../medicaments/data/medicaments_repository.dart';
+import '../../medicaments/presentation/widgets/home_config_shell.dart';
 import '../../onboarding/domain/onboarding_models.dart';
 import '../../onboarding/presentation/widgets/onboarding_option_tile.dart';
 
@@ -22,6 +24,8 @@ class _AddTraitementScreenState extends ConsumerState<AddTraitementScreen> {
   List<MaladieCatalogItem> _maladies = const [];
   String? _maladieId;
   String _phase = 'en_cours';
+  DateTime _dateDebut = DateTime.now();
+  int _step = 0;
   bool _loading = true;
   bool _busy = false;
 
@@ -45,9 +49,22 @@ class _AddTraitementScreenState extends ConsumerState<AddTraitementScreen> {
       setState(() => _loading = false);
       AppToast.error(
         context,
-        e is ApiException ? e.message : AppLocalizations.of(context).genericError,
+        e is ApiException
+            ? e.message
+            : AppLocalizations.of(context).genericError,
       );
     }
+  }
+
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _dateDebut,
+      firstDate: DateTime(now.year - 5),
+      lastDate: DateTime(now.year + 1),
+    );
+    if (picked != null) setState(() => _dateDebut = picked);
   }
 
   Future<void> _submit() async {
@@ -61,6 +78,7 @@ class _AddTraitementScreenState extends ConsumerState<AddTraitementScreen> {
       final id = await ref.read(medicamentsRepositoryProvider).createTraitement(
             maladieId: _maladieId!,
             phase: _phase,
+            dateDebut: _dateDebut,
           );
       await ref.read(homeControllerProvider.notifier).load();
       if (!mounted) return;
@@ -76,66 +94,115 @@ class _AddTraitementScreenState extends ConsumerState<AddTraitementScreen> {
     }
   }
 
+  void _onBack() {
+    if (_step > 0) {
+      setState(() => _step = 0);
+      return;
+    }
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/home');
+    }
+  }
+
+  void _onPrimary() {
+    if (_step == 0) {
+      if (_maladieId == null) {
+        AppToast.error(
+          context,
+          AppLocalizations.of(context).onboardingMaladieRequired,
+        );
+        return;
+      }
+      setState(() => _step = 1);
+      return;
+    }
+    _submit();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return DawnBackdrop(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          title: Text(l10n.homeActionTraitementTitle),
-        ),
-        body: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : ListView(
-                padding: const EdgeInsets.fromLTRB(22, 8, 22, 32),
-                children: [
-                  Text(
-                    l10n.onboardingMaladiesLabel,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+    final locale = Localizations.localeOf(context).toString();
+    final dateFmt = DateFormat.yMMMMd(locale);
+
+    if (_loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final labels = [l10n.configStepMaladie, l10n.configStepContexte];
+
+    return HomeConfigShell(
+      stepIndex: _step,
+      totalSteps: 2,
+      stepLabels: labels,
+      title: _step == 0 ? l10n.configTraitementTitle : l10n.configPhaseTitle,
+      subtitle:
+          _step == 0 ? l10n.configTraitementSubtitle : l10n.configPhaseSubtitle,
+      onBack: _onBack,
+      primaryLabel:
+          _step == 0 ? l10n.onboardingContinue : l10n.configTraitementCreate,
+      primaryEnabled: _step == 0 ? _maladieId != null : true,
+      busy: _busy,
+      onPrimary: _onPrimary,
+      child: _step == 0
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final m in _maladies)
+                  OnboardingOptionTile(
+                    selected: _maladieId == m.id,
+                    title: m.nom,
+                    onTap: () => setState(() => _maladieId = m.id),
                   ),
-                  const SizedBox(height: 10),
-                  for (final m in _maladies)
-                    OnboardingOptionTile(
-                      selected: _maladieId == m.id,
-                      title: m.nom,
-                      onTap: () => setState(() => _maladieId = m.id),
-                    ),
-                  const SizedBox(height: 16),
-                  Text(
-                    l10n.onboardingPhaseLabel,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final entry in [
+                  ('debut', l10n.onboardingPhaseDebut),
+                  ('en_cours', l10n.onboardingPhaseEnCours),
+                  ('maintenance', l10n.onboardingPhaseMaintenance),
+                  ('inconnu', l10n.onboardingPhaseInconnu),
+                ])
+                  OnboardingOptionTile(
+                    selected: _phase == entry.$1,
+                    title: entry.$2,
+                    onTap: () => setState(() => _phase = entry.$1),
                   ),
-                  const SizedBox(height: 10),
-                  for (final entry in [
-                    ('debut', l10n.onboardingPhaseDebut),
-                    ('en_cours', l10n.onboardingPhaseEnCours),
-                    ('maintenance', l10n.onboardingPhaseMaintenance),
-                    ('inconnu', l10n.onboardingPhaseInconnu),
-                  ])
-                    OnboardingOptionTile(
-                      selected: _phase == entry.$1,
-                      title: entry.$2,
-                      onTap: () => setState(() => _phase = entry.$1),
-                    ),
-                  const SizedBox(height: 16),
-                  FilledButton(
-                    onPressed: _busy ? null : _submit,
-                    style: FilledButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(28),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.configDateDebutLabel,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
                       ),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  onPressed: _busy ? null : _pickDate,
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    child: Text(l10n.onboardingContinue),
                   ),
-                ],
-              ),
-      ),
+                  child: Text(dateFmt.format(_dateDebut)),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  l10n.configDateDebutHint,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: ThemeTokens.of(context).textSecondary,
+                      ),
+                ),
+              ],
+            ),
     );
   }
 }

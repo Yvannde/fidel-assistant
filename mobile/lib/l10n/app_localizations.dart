@@ -1217,7 +1217,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeCareSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Your treatments and schedules, in one place.'**
+  /// **'Treatments, adherence and vitals — your follow-up in one place.'**
   String get homeCareSubtitle;
 
   /// No description provided for @homeNetworkSubtitle.
@@ -1231,6 +1231,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Medicines saved'**
   String get homeCareMedsReady;
+
+  /// No description provided for @homeCareTreatments.
+  ///
+  /// In en, this message translates to:
+  /// **'Your treatments'**
+  String get homeCareTreatments;
+
+  /// No description provided for @homeCareWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This week’s adherence'**
+  String get homeCareWeek;
+
+  /// No description provided for @homeCareAddMed.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a medicine'**
+  String get homeCareAddMed;
+
+  /// No description provided for @homeCareConfigureMeds.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up medicines'**
+  String get homeCareConfigureMeds;
+
+  /// No description provided for @homeCareEmptyPatientTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate your follow-up'**
+  String get homeCareEmptyPatientTitle;
+
+  /// No description provided for @homeCareActionTraitement.
+  ///
+  /// In en, this message translates to:
+  /// **'Treatment'**
+  String get homeCareActionTraitement;
+
+  /// No description provided for @homeCareActionMeds.
+  ///
+  /// In en, this message translates to:
+  /// **'Medicine'**
+  String get homeCareActionMeds;
+
+  /// No description provided for @homeCareActionMedsSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up'**
+  String get homeCareActionMedsSetup;
+
+  /// No description provided for @homeCareActionVital.
+  ///
+  /// In en, this message translates to:
+  /// **'Measure'**
+  String get homeCareActionVital;
 
   /// No description provided for @homeThemeLabel.
   ///
@@ -1748,6 +1802,12 @@ abstract class AppLocalizations {
   /// **'Add at least one time'**
   String get medsNeedTime;
 
+  /// No description provided for @medsNeedDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick at least one day'**
+  String get medsNeedDays;
+
   /// No description provided for @medsSaveCta.
   ///
   /// In en, this message translates to:
@@ -1759,6 +1819,276 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Medicine saved. Today’s doses are ready.'**
   String get medsSaved;
+
+  /// No description provided for @medsAddAnother.
+  ///
+  /// In en, this message translates to:
+  /// **'Add another medicine'**
+  String get medsAddAnother;
+
+  /// No description provided for @medsSaveAndAddAnother.
+  ///
+  /// In en, this message translates to:
+  /// **'Save and add another'**
+  String get medsSaveAndAddAnother;
+
+  /// No description provided for @medsFinishCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Done — go home'**
+  String get medsFinishCta;
+
+  /// No description provided for @medsConfiguredCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} medicine already on this treatment} other{{count} medicines already on this treatment}}'**
+  String medsConfiguredCount(int count);
+
+  /// No description provided for @medsMultiHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add as many as you need for this treatment, one at a time.'**
+  String get medsMultiHint;
+
+  /// No description provided for @configStepMaladie.
+  ///
+  /// In en, this message translates to:
+  /// **'Condition'**
+  String get configStepMaladie;
+
+  /// No description provided for @configStepContexte.
+  ///
+  /// In en, this message translates to:
+  /// **'Context'**
+  String get configStepContexte;
+
+  /// No description provided for @configStepIdentite.
+  ///
+  /// In en, this message translates to:
+  /// **'Identity'**
+  String get configStepIdentite;
+
+  /// No description provided for @configStepHoraires.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule'**
+  String get configStepHoraires;
+
+  /// No description provided for @configStepRecap.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get configStepRecap;
+
+  /// No description provided for @configTraitementTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Which treatment are you on?'**
+  String get configTraitementTitle;
+
+  /// No description provided for @configTraitementSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the condition you follow. Medicines come right after.'**
+  String get configTraitementSubtitle;
+
+  /// No description provided for @configPhaseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Where are you in it?'**
+  String get configPhaseTitle;
+
+  /// No description provided for @configPhaseSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Phase and start date help Fidel contextualize your follow-up.'**
+  String get configPhaseSubtitle;
+
+  /// No description provided for @configTraitementCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up medicines'**
+  String get configTraitementCreate;
+
+  /// No description provided for @configDateDebutLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Start date'**
+  String get configDateDebutLabel;
+
+  /// No description provided for @configDateDebutHint.
+  ///
+  /// In en, this message translates to:
+  /// **'If you’re unsure, leave today’s date.'**
+  String get configDateDebutHint;
+
+  /// No description provided for @medsStepIdentiteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your medicine'**
+  String get medsStepIdentiteTitle;
+
+  /// No description provided for @medsStepIdentiteSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A protocol suggestion, or free entry — you’re in control.'**
+  String get medsStepIdentiteSubtitle;
+
+  /// No description provided for @medsStepHorairesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'When to take it?'**
+  String get medsStepHorairesTitle;
+
+  /// No description provided for @medsStepHorairesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Times and days drive your reminders.'**
+  String get medsStepHorairesSubtitle;
+
+  /// No description provided for @medsStepRecapTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking good?'**
+  String get medsStepRecapTitle;
+
+  /// No description provided for @medsStepRecapSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save then add the next one, or finish if this is the last.'**
+  String get medsStepRecapSubtitle;
+
+  /// No description provided for @medsFormeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Form'**
+  String get medsFormeLabel;
+
+  /// No description provided for @medsFormeComprime.
+  ///
+  /// In en, this message translates to:
+  /// **'Tablet'**
+  String get medsFormeComprime;
+
+  /// No description provided for @medsFormeSirop.
+  ///
+  /// In en, this message translates to:
+  /// **'Syrup'**
+  String get medsFormeSirop;
+
+  /// No description provided for @medsFormeInjection.
+  ///
+  /// In en, this message translates to:
+  /// **'Injection'**
+  String get medsFormeInjection;
+
+  /// No description provided for @medsFormeAutre.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get medsFormeAutre;
+
+  /// No description provided for @medsDaysLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Days'**
+  String get medsDaysLabel;
+
+  /// No description provided for @medsDaysEvery.
+  ///
+  /// In en, this message translates to:
+  /// **'Every day'**
+  String get medsDaysEvery;
+
+  /// No description provided for @medsDaysCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Specific days'**
+  String get medsDaysCustom;
+
+  /// No description provided for @medsDayMon.
+  ///
+  /// In en, this message translates to:
+  /// **'M'**
+  String get medsDayMon;
+
+  /// No description provided for @medsDayTue.
+  ///
+  /// In en, this message translates to:
+  /// **'T'**
+  String get medsDayTue;
+
+  /// No description provided for @medsDayWed.
+  ///
+  /// In en, this message translates to:
+  /// **'W'**
+  String get medsDayWed;
+
+  /// No description provided for @medsDayThu.
+  ///
+  /// In en, this message translates to:
+  /// **'T'**
+  String get medsDayThu;
+
+  /// No description provided for @medsDayFri.
+  ///
+  /// In en, this message translates to:
+  /// **'F'**
+  String get medsDayFri;
+
+  /// No description provided for @medsDaySat.
+  ///
+  /// In en, this message translates to:
+  /// **'S'**
+  String get medsDaySat;
+
+  /// No description provided for @medsDaySun.
+  ///
+  /// In en, this message translates to:
+  /// **'S'**
+  String get medsDaySun;
+
+  /// No description provided for @medsRepasLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'With meals'**
+  String get medsRepasLabel;
+
+  /// No description provided for @medsRepasNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Not specified'**
+  String get medsRepasNone;
+
+  /// No description provided for @medsRepasAvant.
+  ///
+  /// In en, this message translates to:
+  /// **'Before meals'**
+  String get medsRepasAvant;
+
+  /// No description provided for @medsRepasApres.
+  ///
+  /// In en, this message translates to:
+  /// **'After meals'**
+  String get medsRepasApres;
+
+  /// No description provided for @medsRepasIndifferent.
+  ///
+  /// In en, this message translates to:
+  /// **'Doesn’t matter'**
+  String get medsRepasIndifferent;
+
+  /// No description provided for @medsRecapTraitementHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked to this treatment'**
+  String get medsRecapTraitementHint;
+
+  /// No description provided for @medsRecapTrust.
+  ///
+  /// In en, this message translates to:
+  /// **'You can adjust later. Fidel doesn’t give medical advice — only reminders based on what you set.'**
+  String get medsRecapTrust;
 }
 
 class _AppLocalizationsDelegate

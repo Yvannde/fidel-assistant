@@ -621,7 +621,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get homeCareSubtitle =>
-      'Tes traitements et horaires, au même endroit.';
+      'Traitements, observance et mesures — ton suivi au même endroit.';
 
   @override
   String get homeNetworkSubtitle =>
@@ -629,6 +629,33 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get homeCareMedsReady => 'Médicaments enregistrés';
+
+  @override
+  String get homeCareTreatments => 'Tes traitements';
+
+  @override
+  String get homeCareWeek => 'Observance de la semaine';
+
+  @override
+  String get homeCareAddMed => 'Ajouter un médicament';
+
+  @override
+  String get homeCareConfigureMeds => 'Configurer les médicaments';
+
+  @override
+  String get homeCareEmptyPatientTitle => 'Active ton suivi';
+
+  @override
+  String get homeCareActionTraitement => 'Traitement';
+
+  @override
+  String get homeCareActionMeds => 'Médicament';
+
+  @override
+  String get homeCareActionMedsSetup => 'Configurer';
+
+  @override
+  String get homeCareActionVital => 'Mesure';
 
   @override
   String get homeThemeLabel => 'Apparence';
@@ -934,9 +961,163 @@ class AppLocalizationsFr extends AppLocalizations {
   String get medsNeedTime => 'Ajoute au moins une heure';
 
   @override
+  String get medsNeedDays => 'Choisis au moins un jour';
+
+  @override
   String get medsSaveCta => 'Enregistrer';
 
   @override
   String get medsSaved =>
       'Médicament enregistré. Les prises du jour sont prêtes.';
+
+  @override
+  String get medsAddAnother => 'Ajouter un autre médicament';
+
+  @override
+  String get medsSaveAndAddAnother => 'Enregistrer et ajouter un autre';
+
+  @override
+  String get medsFinishCta => 'Terminer et rentrer';
+
+  @override
+  String medsConfiguredCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count médicaments déjà sur ce suivi',
+      one: '$count médicament déjà sur ce suivi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get medsMultiHint =>
+      'Tu peux en ajouter autant que nécessaire pour ce traitement, un par un.';
+
+  @override
+  String get configStepMaladie => 'Maladie';
+
+  @override
+  String get configStepContexte => 'Contexte';
+
+  @override
+  String get configStepIdentite => 'Identité';
+
+  @override
+  String get configStepHoraires => 'Horaires';
+
+  @override
+  String get configStepRecap => 'Récap';
+
+  @override
+  String get configTraitementTitle => 'Quel traitement suis-tu ?';
+
+  @override
+  String get configTraitementSubtitle =>
+      'Choisis la maladie suivie. Les médicaments viennent juste après.';
+
+  @override
+  String get configPhaseTitle => 'Où en es-tu ?';
+
+  @override
+  String get configPhaseSubtitle =>
+      'La phase et la date de début aident Fidel à contextualiser ton suivi.';
+
+  @override
+  String get configTraitementCreate => 'Configurer les médicaments';
+
+  @override
+  String get configDateDebutLabel => 'Date de début';
+
+  @override
+  String get configDateDebutHint =>
+      'Si tu n’es pas sûr, laisse la date d’aujourd’hui.';
+
+  @override
+  String get medsStepIdentiteTitle => 'Ton médicament';
+
+  @override
+  String get medsStepIdentiteSubtitle =>
+      'Une suggestion du protocole, ou saisie libre — tu restes maître.';
+
+  @override
+  String get medsStepHorairesTitle => 'Quand le prendre ?';
+
+  @override
+  String get medsStepHorairesSubtitle =>
+      'Les heures et les jours déclenchent tes rappels.';
+
+  @override
+  String get medsStepRecapTitle => 'Tout est bon ?';
+
+  @override
+  String get medsStepRecapSubtitle =>
+      'Enregistre puis ajoute le suivant, ou termine si c’est le dernier.';
+
+  @override
+  String get medsFormeLabel => 'Forme';
+
+  @override
+  String get medsFormeComprime => 'Comprimé';
+
+  @override
+  String get medsFormeSirop => 'Sirop';
+
+  @override
+  String get medsFormeInjection => 'Injection';
+
+  @override
+  String get medsFormeAutre => 'Autre';
+
+  @override
+  String get medsDaysLabel => 'Jours';
+
+  @override
+  String get medsDaysEvery => 'Tous les jours';
+
+  @override
+  String get medsDaysCustom => 'Certains jours';
+
+  @override
+  String get medsDayMon => 'L';
+
+  @override
+  String get medsDayTue => 'M';
+
+  @override
+  String get medsDayWed => 'Me';
+
+  @override
+  String get medsDayThu => 'J';
+
+  @override
+  String get medsDayFri => 'V';
+
+  @override
+  String get medsDaySat => 'S';
+
+  @override
+  String get medsDaySun => 'D';
+
+  @override
+  String get medsRepasLabel => 'Par rapport aux repas';
+
+  @override
+  String get medsRepasNone => 'Pas précisé';
+
+  @override
+  String get medsRepasAvant => 'Avant le repas';
+
+  @override
+  String get medsRepasApres => 'Après le repas';
+
+  @override
+  String get medsRepasIndifferent => 'Indifférent';
+
+  @override
+  String get medsRecapTraitementHint => 'Lié à ce traitement';
+
+  @override
+  String get medsRecapTrust =>
+      'Tu pourras ajuster plus tard. Fidel ne donne pas de conseil médical — seulement des rappels selon ce que tu configures.';
 }

@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/premium.dart';
+import '../../../core/theme/app_colors.dart' show ThemeTokens, AppColors;
 import '../../../core/ui/app_toast.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../home/application/home_controller.dart';
 import '../../home/domain/dashboard_models.dart';
+import '../../onboarding/presentation/widgets/onboarding_option_tile.dart';
 import '../data/medicaments_repository.dart';
+import 'widgets/home_config_shell.dart';
+import 'widgets/med_days_selector.dart';
+import 'widgets/med_forme_selector.dart';
+import 'widgets/med_suggestion_card.dart';
+import 'widgets/med_times_editor.dart';
 
 class MedicamentWizardScreen extends ConsumerStatefulWidget {
   const MedicamentWizardScreen({super.key, required this.traitementId});
@@ -25,7 +32,13 @@ class _MedicamentWizardScreenState extends ConsumerState<MedicamentWizardScreen>
   final _dosage = TextEditingController();
   final _times = <TimeOfDay>[const TimeOfDay(hour: 8, minute: 0)];
   String _forme = 'comprime';
+  bool _everyDay = true;
+  Set<String> _days = {};
+  String? _priseAvecRepas;
+  String? _selectedSuggestionKey;
+  int _step = 0;
   bool _busy = false;
+  List<ConfiguredMedicament> _configured = const [];
 
   @override
   void initState() {
@@ -34,7 +47,9 @@ class _MedicamentWizardScreenState extends ConsumerState<MedicamentWizardScreen>
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) context.go('/home');
       });
+      return;
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadConfigured());
   }
 
   @override
@@ -42,6 +57,18 @@ class _MedicamentWizardScreenState extends ConsumerState<MedicamentWizardScreen>
     _nom.dispose();
     _dosage.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadConfigured() async {
+    try {
+      final items = await ref
+          .read(medicamentsRepositoryProvider)
+          .listMedicaments(traitementId: widget.traitementId);
+      if (!mounted) return;
+      setState(() => _configured = items);
+    } catch (_) {
+      // Non bloquant — la liste s’enrichit à chaque enregistrement local.
+    }
   }
 
   String _fmt(TimeOfDay t) =>
@@ -63,6 +90,7 @@ class _MedicamentWizardScreenState extends ConsumerState<MedicamentWizardScreen>
     final parsed =
         s.horaires.map(_parseTime).whereType<TimeOfDay>().toList();
     setState(() {
+      _selectedSuggestionKey = '${s.nom}|${s.dosage}|${s.forme}';
       if (parsed.isNotEmpty) {
         _times
           ..clear()
@@ -71,39 +99,108 @@ class _MedicamentWizardScreenState extends ConsumerState<MedicamentWizardScreen>
     });
   }
 
-  Future<void> _addTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: const TimeOfDay(hour: 20, minute: 0),
-    );
-    if (picked != null && !_times.contains(picked)) {
-      setState(() => _times.add(picked));
+  void _resetDraft() {
+    _nom.clear();
+    _dosage.clear();
+    _forme = 'comprime';
+    _everyDay = true;
+    _days = {};
+    _priseAvecRepas = null;
+    _selectedSuggestionKey = null;
+    _times
+      ..clear()
+      ..add(const TimeOfDay(hour: 8, minute: 0));
+    setState(() => _step = 0);
+  }
+
+  List<String> _joursPayload() {
+    if (_everyDay) return const ['tous'];
+    final ordered = MedDaysSelector.weekdays
+        .where((d) => _days.contains(d))
+        .toList();
+    return ordered.isEmpty ? const ['tous'] : ordered;
+  }
+
+  DashboardTraitement? _traitement(HomeUiState state) {
+    for (final item in state.dashboard?.traitements ?? const []) {
+      if (item.id == widget.traitementId) return item;
+    }
+    return null;
+  }
+
+  void _onBack() {
+    if (_step > 0) {
+      setState(() => _step -= 1);
+      return;
+    }
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/home');
     }
   }
 
-  Future<void> _submit() async {
-    final l10n = AppLocalizations.of(context);
-    if (_nom.text.trim().isEmpty || _dosage.text.trim().isEmpty) {
-      AppToast.error(context, l10n.fieldRequired);
+  void _onPrimary(AppLocalizations l10n) {
+    if (_step == 0) {
+      if (_nom.text.trim().isEmpty || _dosage.text.trim().isEmpty) {
+        AppToast.error(context, l10n.fieldRequired);
+        return;
+      }
+      setState(() => _step = 1);
       return;
     }
-    if (_times.isEmpty) {
-      AppToast.error(context, l10n.medsNeedTime);
+    if (_step == 1) {
+      if (_times.isEmpty) {
+        AppToast.error(context, l10n.medsNeedTime);
+        return;
+      }
+      if (!_everyDay && _days.isEmpty) {
+        AppToast.error(context, l10n.medsNeedDays);
+        return;
+      }
+      setState(() => _step = 2);
       return;
     }
+    // Récap : primary = enregistrer + ajouter un autre
+    _submit(l10n, addAnother: true);
+  }
+
+  Future<void> _submit(
+    AppLocalizations l10n, {
+    required bool addAnother,
+  }) async {
     setState(() => _busy = true);
+    final savedNom = _nom.text.trim();
+    final savedDosage = _dosage.text.trim();
     try {
       await ref.read(medicamentsRepositoryProvider).createMedicament(
             traitementId: widget.traitementId,
-            nom: _nom.text,
-            dosage: _dosage.text,
+            nom: savedNom,
+            dosage: savedDosage,
             forme: _forme,
+            priseAvecRepas: _priseAvecRepas,
             heures: _times.map(_fmt).toList(),
+            jours: _joursPayload(),
           );
       await ref.read(homeControllerProvider.notifier).load();
       if (!mounted) return;
+      setState(() {
+        _configured = [
+          ..._configured,
+          ConfiguredMedicament(
+            id: 'local-${_configured.length}',
+            traitementId: widget.traitementId,
+            nom: savedNom,
+            dosage: savedDosage,
+          ),
+        ];
+      });
       AppToast.success(context, l10n.medsSaved);
-      context.go('/home');
+      if (addAnother) {
+        _resetDraft();
+      } else {
+        context.go('/home');
+      }
     } catch (e) {
       if (!mounted) return;
       AppToast.error(
@@ -115,110 +212,373 @@ class _MedicamentWizardScreenState extends ConsumerState<MedicamentWizardScreen>
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final dash = ref.watch(homeControllerProvider).dashboard;
-    DashboardTraitement? t;
-    for (final item in dash?.traitements ?? const []) {
-      if (item.id == widget.traitementId) t = item;
-    }
+  String _formeLabel(AppLocalizations l10n) => switch (_forme) {
+        'comprime' => l10n.medsFormeComprime,
+        'sirop' => l10n.medsFormeSirop,
+        'injection' => l10n.medsFormeInjection,
+        _ => l10n.medsFormeAutre,
+      };
 
-    return DawnBackdrop(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          title: Text(l10n.medsWizardTitle),
+  String _joursLabel(AppLocalizations l10n) {
+    if (_everyDay) return l10n.medsDaysEvery;
+    final map = {
+      'lundi': l10n.medsDayMon,
+      'mardi': l10n.medsDayTue,
+      'mercredi': l10n.medsDayWed,
+      'jeudi': l10n.medsDayThu,
+      'vendredi': l10n.medsDayFri,
+      'samedi': l10n.medsDaySat,
+      'dimanche': l10n.medsDaySun,
+    };
+    return MedDaysSelector.weekdays
+        .where(_days.contains)
+        .map((d) => map[d] ?? d)
+        .join(', ');
+  }
+
+  String _repasLabel(AppLocalizations l10n) => switch (_priseAvecRepas) {
+        'avant_repas' => l10n.medsRepasAvant,
+        'apres_repas' => l10n.medsRepasApres,
+        'indifferent' => l10n.medsRepasIndifferent,
+        _ => l10n.medsRepasNone,
+      };
+
+  Widget _configuredBanner(AppLocalizations l10n, ThemeData theme) {
+    if (_configured.isEmpty) return const SizedBox.shrink();
+    final tokens = ThemeTokens.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: AppColors.primary.withValues(alpha: 0.22),
+          ),
         ),
-        body: ListView(
-          padding: const EdgeInsets.fromLTRB(22, 8, 22, 32),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              l10n.medsWizardSubtitle,
-              style: TextStyle(color: ThemeTokens.of(context).textSecondary),
-            ),
-            if (t != null && t.suggestions.isNotEmpty) ...[
-              const SizedBox(height: 18),
-              Text(
-                l10n.medsSuggestions,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final s in t.suggestions)
-                    ActionChip(
-                      label: Text('${s.nom} ${s.dosage}'),
-                      onPressed: () => _applySuggestion(s),
-                    ),
-                ],
-              ),
-            ],
-            const SizedBox(height: 22),
-            TextField(
-              controller: _nom,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: InputDecoration(labelText: l10n.medsNameLabel),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: _dosage,
-              decoration: InputDecoration(
-                labelText: l10n.medsDoseLabel,
-                hintText: l10n.medsDoseHint,
-              ),
-            ),
-            const SizedBox(height: 22),
-            Text(
-              l10n.medsTimesLabel,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            Row(
               children: [
-                for (final t in _times)
-                  InputChip(
-                    label: Text(_fmt(t)),
-                    onDeleted: () => setState(() => _times.remove(t)),
+                Icon(
+                  IconsaxPlusLinear.tick_circle,
+                  size: 18,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.medsConfiguredCount(_configured.length),
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
                   ),
-                ActionChip(
-                  avatar: const Icon(Icons.add, size: 18),
-                  label: Text(l10n.medsAddTime),
-                  onPressed: _addTime,
                 ),
               ],
             ),
-            const SizedBox(height: 28),
-            FilledButton(
-              onPressed: _busy ? null : _submit,
-              style: FilledButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(28),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final m in _configured)
+                  Chip(
+                    label: Text('${m.nom} ${m.dosage}'.trim()),
+                    visualDensity: VisualDensity.compact,
+                    backgroundColor: tokens.elevated,
+                    side: BorderSide(color: tokens.border),
+                    labelStyle: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+              ],
+            ),
+            if (_step == 0) ...[
+              const SizedBox(height: 8),
+              Text(
+                l10n.medsMultiHint,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: tokens.textSecondary,
+                  height: 1.35,
                 ),
               ),
-              child: _busy
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.4,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Text(l10n.medsSaveCta),
-            ),
+            ],
           ],
         ),
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final tokens = ThemeTokens.of(context);
+    final theme = Theme.of(context);
+    final t = _traitement(ref.watch(homeControllerProvider));
+    final labels = [
+      l10n.configStepIdentite,
+      l10n.configStepHoraires,
+      l10n.configStepRecap,
+    ];
+
+    final titles = [
+      l10n.medsStepIdentiteTitle,
+      l10n.medsStepHorairesTitle,
+      l10n.medsStepRecapTitle,
+    ];
+    final subtitles = [
+      l10n.medsStepIdentiteSubtitle,
+      l10n.medsStepHorairesSubtitle,
+      l10n.medsStepRecapSubtitle,
+    ];
+
+    return HomeConfigShell(
+      stepIndex: _step,
+      totalSteps: 3,
+      stepLabels: labels,
+      title: titles[_step],
+      subtitle: subtitles[_step],
+      onBack: _onBack,
+      // Sur le récap : primary = sauver + enchaîner un autre médicament
+      primaryLabel:
+          _step == 2 ? l10n.medsSaveAndAddAnother : l10n.onboardingContinue,
+      primaryEnabled: true,
+      busy: _busy,
+      onPrimary: () => _onPrimary(l10n),
+      secondaryLabel: _step == 2 ? l10n.medsFinishCta : null,
+      secondaryOutlined: _step == 2,
+      onSecondary: _step == 2
+          ? () => _submit(l10n, addAnother: false)
+          : null,
+      child: switch (_step) {
+        0 => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _configuredBanner(l10n, theme),
+              if (t != null && t.suggestions.isNotEmpty) ...[
+                Text(
+                  l10n.medsSuggestions,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                for (final s in t.suggestions)
+                  MedSuggestionCard(
+                    suggestion: s,
+                    selected: _selectedSuggestionKey ==
+                        '${s.nom}|${s.dosage}|${s.forme}',
+                    onTap: () => _applySuggestion(s),
+                  ),
+                const SizedBox(height: 12),
+              ],
+              TextField(
+                controller: _nom,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: InputDecoration(labelText: l10n.medsNameLabel),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: _dosage,
+                decoration: InputDecoration(
+                  labelText: l10n.medsDoseLabel,
+                  hintText: l10n.medsDoseHint,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                l10n.medsFormeLabel,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              MedFormeSelector(
+                value: _forme,
+                onChanged: (v) => setState(() => _forme = v),
+              ),
+            ],
+          ),
+        1 => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                l10n.medsTimesLabel,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              MedTimesEditor(
+                times: _times,
+                onChanged: (v) => setState(() {
+                  _times
+                    ..clear()
+                    ..addAll(v);
+                }),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                l10n.medsDaysLabel,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              MedDaysSelector(
+                everyDay: _everyDay,
+                selectedDays: _days,
+                onEveryDayChanged: (v) => setState(() {
+                  _everyDay = v;
+                  if (v) _days = {};
+                }),
+                onDaysChanged: (v) => setState(() => _days = v),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                l10n.medsRepasLabel,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              OnboardingOptionTile(
+                selected: _priseAvecRepas == null,
+                title: l10n.medsRepasNone,
+                onTap: () => setState(() => _priseAvecRepas = null),
+              ),
+              OnboardingOptionTile(
+                selected: _priseAvecRepas == 'avant_repas',
+                title: l10n.medsRepasAvant,
+                onTap: () => setState(() => _priseAvecRepas = 'avant_repas'),
+              ),
+              OnboardingOptionTile(
+                selected: _priseAvecRepas == 'apres_repas',
+                title: l10n.medsRepasApres,
+                onTap: () => setState(() => _priseAvecRepas = 'apres_repas'),
+              ),
+              OnboardingOptionTile(
+                selected: _priseAvecRepas == 'indifferent',
+                title: l10n.medsRepasIndifferent,
+                onTap: () => setState(() => _priseAvecRepas = 'indifferent'),
+              ),
+            ],
+          ),
+        _ => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _configuredBanner(l10n, theme),
+              if (t != null) ...[
+                Text(
+                  t.maladieNom,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.medsRecapTraitementHint,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: tokens.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 14),
+              ],
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: tokens.elevated,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: tokens.border),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _nom.text.trim(),
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '${_dosage.text.trim()} · ${_formeLabel(l10n)}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: tokens.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _RecapRow(
+                      label: l10n.medsTimesLabel,
+                      value: _times.map(_fmt).join(' · '),
+                    ),
+                    const SizedBox(height: 8),
+                    _RecapRow(
+                      label: l10n.medsDaysLabel,
+                      value: _joursLabel(l10n),
+                    ),
+                    const SizedBox(height: 8),
+                    _RecapRow(
+                      label: l10n.medsRepasLabel,
+                      value: _repasLabel(l10n),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                l10n.medsRecapTrust,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: tokens.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+      },
+    );
+  }
+}
+
+class _RecapRow extends StatelessWidget {
+  const _RecapRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = ThemeTokens.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 88,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: tokens.textSecondary,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
