@@ -17,8 +17,6 @@ class HomeShell extends ConsumerStatefulWidget {
 }
 
 class _HomeShellState extends ConsumerState<HomeShell> {
-  int _index = 0;
-
   @override
   void initState() {
     super.initState();
@@ -29,12 +27,13 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
+    final index = ref.watch(homeTabIndexProvider);
     return DawnBackdrop(
       child: Scaffold(
         backgroundColor: Colors.transparent,
         extendBody: true,
         body: IndexedStack(
-          index: _index,
+          index: index,
           children: const [
             HomeDashboardScreen(),
             HomeCareScreen(),
@@ -43,8 +42,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           ],
         ),
         bottomNavigationBar: FidelNavBar(
-          index: _index,
-          onChanged: (i) => setState(() => _index = i),
+          index: index,
+          onChanged: (i) =>
+              ref.read(homeTabIndexProvider.notifier).state = i,
         ),
       ),
     );

@@ -30,6 +30,8 @@ abstract final class AppColors {
 
   static const Color error = Color(0xFFDC2626);
   static const Color success = Color(0xFF16A34A);
+  static const Color successDark = Color(0xFF15803D);
+  static const Color warning = Color(0xFFF59E0B);
 
   // Toasts — light
   static const Color toastSuccessBg = Color(0xFFECFDF5);

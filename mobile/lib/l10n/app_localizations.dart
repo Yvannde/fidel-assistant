@@ -857,37 +857,37 @@ abstract class AppLocalizations {
   /// No description provided for @homeHelloMorning.
   ///
   /// In en, this message translates to:
-  /// **'Good morning {name} 👋'**
+  /// **'Good morning {name}'**
   String homeHelloMorning(String name);
 
   /// No description provided for @homeHelloAfternoon.
   ///
   /// In en, this message translates to:
-  /// **'Good afternoon {name} 👋'**
+  /// **'Good afternoon {name}'**
   String homeHelloAfternoon(String name);
 
   /// No description provided for @homeHelloEvening.
   ///
   /// In en, this message translates to:
-  /// **'Good evening {name} 👋'**
+  /// **'Good evening {name}'**
   String homeHelloEvening(String name);
 
   /// No description provided for @homeHelloMorningAnon.
   ///
   /// In en, this message translates to:
-  /// **'Good morning 👋'**
+  /// **'Good morning!'**
   String get homeHelloMorningAnon;
 
   /// No description provided for @homeHelloAfternoonAnon.
   ///
   /// In en, this message translates to:
-  /// **'Good afternoon 👋'**
+  /// **'Good afternoon!'**
   String get homeHelloAfternoonAnon;
 
   /// No description provided for @homeHelloEveningAnon.
   ///
   /// In en, this message translates to:
-  /// **'Good evening 👋'**
+  /// **'Good evening!'**
   String get homeHelloEveningAnon;
 
   /// No description provided for @homeTagline.
@@ -895,6 +895,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Fidel watches your doses — never judges.'**
   String get homeTagline;
+
+  /// No description provided for @homeNotifA11y.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders'**
+  String get homeNotifA11y;
+
+  /// No description provided for @homeSettingsA11y.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get homeSettingsA11y;
+
+  /// No description provided for @homeNotifTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders'**
+  String get homeNotifTitle;
+
+  /// No description provided for @homeNotifBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders ring on this phone, even offline. Nothing is sent to a relative without your say-so.'**
+  String get homeNotifBody;
+
+  /// No description provided for @homeNotifReadyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders are ready'**
+  String get homeNotifReadyTitle;
+
+  /// No description provided for @homeNotifReadyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Fidel will ping you here, on this device — no score, no judgment.'**
+  String get homeNotifReadyBody;
 
   /// No description provided for @homeTodayTitle.
   ///
@@ -1105,6 +1141,420 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You’re now connected to their follow-up.'**
   String get homeSyncOk;
+
+  /// No description provided for @commonCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get commonCancel;
+
+  /// No description provided for @homeSnoozeCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get homeSnoozeCta;
+
+  /// No description provided for @homeSnoozeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Push this dose back'**
+  String get homeSnoozeTitle;
+
+  /// No description provided for @homeSnoozeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We move the reminder, nothing is erased.'**
+  String get homeSnoozeBody;
+
+  /// No description provided for @homeSnoozeDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Moved to {heure}'**
+  String homeSnoozeDone(String heure);
+
+  /// No description provided for @homeCountdownIn.
+  ///
+  /// In en, this message translates to:
+  /// **'in {value}'**
+  String homeCountdownIn(String value);
+
+  /// No description provided for @homeCountdownLate.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} late'**
+  String homeCountdownLate(String value);
+
+  /// No description provided for @homeCountdownNow.
+  ///
+  /// In en, this message translates to:
+  /// **'now'**
+  String get homeCountdownNow;
+
+  /// No description provided for @homeDurationHm.
+  ///
+  /// In en, this message translates to:
+  /// **'{h}h {m}'**
+  String homeDurationHm(String h, String m);
+
+  /// No description provided for @homeDurationH.
+  ///
+  /// In en, this message translates to:
+  /// **'{h}h'**
+  String homeDurationH(int h);
+
+  /// No description provided for @homeDurationM.
+  ///
+  /// In en, this message translates to:
+  /// **'{m} min'**
+  String homeDurationM(int m);
+
+  /// No description provided for @homeDayProgressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Today’s doses'**
+  String get homeDayProgressLabel;
+
+  /// No description provided for @homeDayProgressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today’s progress'**
+  String get homeDayProgressTitle;
+
+  /// No description provided for @homeDayProgressHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Doses confirmed out of those scheduled today. This is not a health score.'**
+  String get homeDayProgressHint;
+
+  /// No description provided for @homeDayProgressDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get homeDayProgressDone;
+
+  /// No description provided for @homeDayProgressOngoing.
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get homeDayProgressOngoing;
+
+  /// No description provided for @homeDayProgressUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get homeDayProgressUpcoming;
+
+  /// No description provided for @homeDayProgressLate.
+  ///
+  /// In en, this message translates to:
+  /// **'Some doses are waiting'**
+  String get homeDayProgressLate;
+
+  /// No description provided for @homeDayProgressPendingCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} upcoming'**
+  String homeDayProgressPendingCount(int count);
+
+  /// No description provided for @homeDayProgressLateCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} late'**
+  String homeDayProgressLateCount(int count);
+
+  /// No description provided for @homeTodaySummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today’s summary'**
+  String get homeTodaySummaryTitle;
+
+  /// No description provided for @homeTodaySummaryViewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View all'**
+  String get homeTodaySummaryViewAll;
+
+  /// No description provided for @homeTodaySummaryBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your latest recorded measurements.'**
+  String get homeTodaySummaryBody;
+
+  /// No description provided for @homeTodaySummaryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No measurements yet. Add one whenever you like.'**
+  String get homeTodaySummaryEmpty;
+
+  /// No description provided for @homeDayDoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Day complete'**
+  String get homeDayDoneTitle;
+
+  /// No description provided for @homeDayDoneBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Every dose is confirmed. Nicely done.'**
+  String get homeDayDoneBody;
+
+  /// No description provided for @homeWeekTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your week'**
+  String get homeWeekTitle;
+
+  /// No description provided for @homeWeekSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{confirmed} doses confirmed out of {total}'**
+  String homeWeekSummary(int confirmed, int total);
+
+  /// No description provided for @homeWeekEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Your doses for the week will show up here.'**
+  String get homeWeekEmpty;
+
+  /// No description provided for @homeWeekPerfect.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} full day} other{{count} full days}}'**
+  String homeWeekPerfect(int count);
+
+  /// No description provided for @homeRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} left} other{{count} left}}'**
+  String homeRemaining(int count);
+
+  /// No description provided for @homeCheckInTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How are you feeling today?'**
+  String get homeCheckInTitle;
+
+  /// No description provided for @homeCheckInBody.
+  ///
+  /// In en, this message translates to:
+  /// **'One tap a day, just to keep track.'**
+  String get homeCheckInBody;
+
+  /// No description provided for @homeCheckInOk.
+  ///
+  /// In en, this message translates to:
+  /// **'I’m okay'**
+  String get homeCheckInOk;
+
+  /// No description provided for @homeCheckInBad.
+  ///
+  /// In en, this message translates to:
+  /// **'Not great'**
+  String get homeCheckInBad;
+
+  /// No description provided for @homeCheckInDoneOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Today: okay'**
+  String get homeCheckInDoneOk;
+
+  /// No description provided for @homeCheckInDoneBad.
+  ///
+  /// In en, this message translates to:
+  /// **'Today: not great'**
+  String get homeCheckInDoneBad;
+
+  /// No description provided for @homeCheckInThanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks, noted.'**
+  String get homeCheckInThanks;
+
+  /// No description provided for @homeTreatmentDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day {day}'**
+  String homeTreatmentDay(int day);
+
+  /// No description provided for @homeTreatmentDayOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Day {day} of {total}'**
+  String homeTreatmentDayOf(int day, int total);
+
+  /// No description provided for @homeTreatmentDayUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'day'**
+  String get homeTreatmentDayUnit;
+
+  /// No description provided for @homeTreatmentOngoing.
+  ///
+  /// In en, this message translates to:
+  /// **'Treatment in progress'**
+  String get homeTreatmentOngoing;
+
+  /// No description provided for @homePhaseDebut.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get homePhaseDebut;
+
+  /// No description provided for @homePhaseEnCours.
+  ///
+  /// In en, this message translates to:
+  /// **'Ongoing'**
+  String get homePhaseEnCours;
+
+  /// No description provided for @homePhaseMaintenance.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance'**
+  String get homePhaseMaintenance;
+
+  /// No description provided for @homeMomentMorning.
+  ///
+  /// In en, this message translates to:
+  /// **'Morning'**
+  String get homeMomentMorning;
+
+  /// No description provided for @homeMomentAfternoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Afternoon'**
+  String get homeMomentAfternoon;
+
+  /// No description provided for @homeMomentEvening.
+  ///
+  /// In en, this message translates to:
+  /// **'Evening'**
+  String get homeMomentEvening;
+
+  /// No description provided for @homeVitalsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your tracking'**
+  String get homeVitalsTitle;
+
+  /// No description provided for @homeVitalsAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get homeVitalsAdd;
+
+  /// No description provided for @homeVitalsFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'First measurement saved. The curve shows up from the next one.'**
+  String get homeVitalsFirst;
+
+  /// No description provided for @homeVitalsSystolic.
+  ///
+  /// In en, this message translates to:
+  /// **'Systolic'**
+  String get homeVitalsSystolic;
+
+  /// No description provided for @homeVitalsDiastolic.
+  ///
+  /// In en, this message translates to:
+  /// **'Diastolic'**
+  String get homeVitalsDiastolic;
+
+  /// No description provided for @homeVitalsSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Measurement saved.'**
+  String get homeVitalsSaved;
+
+  /// No description provided for @homeVitalsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track a measurement'**
+  String get homeVitalsEmptyTitle;
+
+  /// No description provided for @homeVitalsEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight, blood pressure, blood sugar… now and then is enough.'**
+  String get homeVitalsEmptyBody;
+
+  /// No description provided for @constantePoids.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight'**
+  String get constantePoids;
+
+  /// No description provided for @constanteTension.
+  ///
+  /// In en, this message translates to:
+  /// **'Blood pressure'**
+  String get constanteTension;
+
+  /// No description provided for @constanteGlycemie.
+  ///
+  /// In en, this message translates to:
+  /// **'Blood sugar'**
+  String get constanteGlycemie;
+
+  /// No description provided for @constanteTemperature.
+  ///
+  /// In en, this message translates to:
+  /// **'Temperature'**
+  String get constanteTemperature;
+
+  /// No description provided for @constanteSommeil.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep'**
+  String get constanteSommeil;
+
+  /// No description provided for @constanteHumeur.
+  ///
+  /// In en, this message translates to:
+  /// **'Mood'**
+  String get constanteHumeur;
+
+  /// No description provided for @addVitalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New measurement'**
+  String get addVitalTitle;
+
+  /// No description provided for @addVitalValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get addVitalValue;
+
+  /// No description provided for @addVitalSystolic.
+  ///
+  /// In en, this message translates to:
+  /// **'Systolic'**
+  String get addVitalSystolic;
+
+  /// No description provided for @addVitalDiastolic.
+  ///
+  /// In en, this message translates to:
+  /// **'Diastolic'**
+  String get addVitalDiastolic;
+
+  /// No description provided for @addVitalDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Measured on'**
+  String get addVitalDate;
+
+  /// No description provided for @addVitalSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get addVitalSave;
+
+  /// No description provided for @addVitalInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid number.'**
+  String get addVitalInvalid;
 
   /// No description provided for @medsWizardTitle.
   ///

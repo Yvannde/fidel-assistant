@@ -418,30 +418,50 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String homeHelloMorning(String name) {
-    return 'Bonjour $name 👋';
+    return 'Bonjour $name';
   }
 
   @override
   String homeHelloAfternoon(String name) {
-    return 'Bon après-midi $name 👋';
+    return 'Bon après-midi $name';
   }
 
   @override
   String homeHelloEvening(String name) {
-    return 'Bonsoir $name 👋';
+    return 'Bonsoir $name';
   }
 
   @override
-  String get homeHelloMorningAnon => 'Bonjour 👋';
+  String get homeHelloMorningAnon => 'Bonjour !';
 
   @override
-  String get homeHelloAfternoonAnon => 'Bon après-midi 👋';
+  String get homeHelloAfternoonAnon => 'Bon après-midi !';
 
   @override
-  String get homeHelloEveningAnon => 'Bonsoir 👋';
+  String get homeHelloEveningAnon => 'Bonsoir !';
 
   @override
   String get homeTagline => 'Fidel veille sur tes prises — sans te juger.';
+
+  @override
+  String get homeNotifA11y => 'Rappels';
+
+  @override
+  String get homeSettingsA11y => 'Réglages';
+
+  @override
+  String get homeNotifTitle => 'Rappels';
+
+  @override
+  String get homeNotifBody =>
+      'Les rappels sonnent sur ce téléphone, même hors ligne. Rien n’est envoyé à un proche sans ton accord.';
+
+  @override
+  String get homeNotifReadyTitle => 'Les rappels sont prêts';
+
+  @override
+  String get homeNotifReadyBody =>
+      'Fidel te préviendra ici, sur l’appareil — pas de score, pas de jugement.';
 
   @override
   String get homeTodayTitle => 'Aujourd’hui';
@@ -560,6 +580,256 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get homeSyncOk => 'Tu es maintenant connecté(e) à son suivi.';
+
+  @override
+  String get commonCancel => 'Annuler';
+
+  @override
+  String get homeSnoozeCta => 'Plus tard';
+
+  @override
+  String get homeSnoozeTitle => 'Reporter la prise';
+
+  @override
+  String get homeSnoozeBody => 'On décale le rappel, rien n’est effacé.';
+
+  @override
+  String homeSnoozeDone(String heure) {
+    return 'Reporté à $heure';
+  }
+
+  @override
+  String homeCountdownIn(String value) {
+    return 'dans $value';
+  }
+
+  @override
+  String homeCountdownLate(String value) {
+    return 'en retard de $value';
+  }
+
+  @override
+  String get homeCountdownNow => 'maintenant';
+
+  @override
+  String homeDurationHm(String h, String m) {
+    return '$h h $m';
+  }
+
+  @override
+  String homeDurationH(int h) {
+    return '$h h';
+  }
+
+  @override
+  String homeDurationM(int m) {
+    return '$m min';
+  }
+
+  @override
+  String get homeDayProgressLabel => 'Prises du jour';
+
+  @override
+  String get homeDayProgressTitle => 'Progression du jour';
+
+  @override
+  String get homeDayProgressHint =>
+      'Nombre de prises confirmées sur celles prévues aujourd’hui. Ce n’est pas un score de santé.';
+
+  @override
+  String get homeDayProgressDone => 'Terminé';
+
+  @override
+  String get homeDayProgressOngoing => 'En cours';
+
+  @override
+  String get homeDayProgressUpcoming => 'À venir';
+
+  @override
+  String get homeDayProgressLate => 'Des prises attendent';
+
+  @override
+  String homeDayProgressPendingCount(int count) {
+    return '$count à venir';
+  }
+
+  @override
+  String homeDayProgressLateCount(int count) {
+    return '$count en retard';
+  }
+
+  @override
+  String get homeTodaySummaryTitle => 'Résumé du jour';
+
+  @override
+  String get homeTodaySummaryViewAll => 'Tout voir';
+
+  @override
+  String get homeTodaySummaryBody => 'Tes dernières mesures enregistrées.';
+
+  @override
+  String get homeTodaySummaryEmpty =>
+      'Aucune mesure pour l’instant. Ajoute-en une quand tu veux.';
+
+  @override
+  String get homeDayDoneTitle => 'Journée bouclée';
+
+  @override
+  String get homeDayDoneBody =>
+      'Toutes tes prises sont confirmées. Beau travail.';
+
+  @override
+  String get homeWeekTitle => 'Ta semaine';
+
+  @override
+  String homeWeekSummary(int confirmed, int total) {
+    return '$confirmed prises confirmées sur $total';
+  }
+
+  @override
+  String get homeWeekEmpty => 'Tes prises de la semaine s’afficheront ici.';
+
+  @override
+  String homeWeekPerfect(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count jours complets',
+      one: '$count jour complet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeRemaining(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count restantes',
+      one: '$count restante',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeCheckInTitle => 'Comment tu te sens aujourd’hui ?';
+
+  @override
+  String get homeCheckInBody => 'Un geste par jour, pour garder une trace.';
+
+  @override
+  String get homeCheckInOk => 'Ça va';
+
+  @override
+  String get homeCheckInBad => 'Pas top';
+
+  @override
+  String get homeCheckInDoneOk => 'Aujourd’hui : ça va';
+
+  @override
+  String get homeCheckInDoneBad => 'Aujourd’hui : pas top';
+
+  @override
+  String get homeCheckInThanks => 'Merci, c’est noté.';
+
+  @override
+  String homeTreatmentDay(int day) {
+    return 'Jour $day';
+  }
+
+  @override
+  String homeTreatmentDayOf(int day, int total) {
+    return 'Jour $day sur $total';
+  }
+
+  @override
+  String get homeTreatmentDayUnit => 'jour';
+
+  @override
+  String get homeTreatmentOngoing => 'Traitement en cours';
+
+  @override
+  String get homePhaseDebut => 'Début';
+
+  @override
+  String get homePhaseEnCours => 'En cours';
+
+  @override
+  String get homePhaseMaintenance => 'Entretien';
+
+  @override
+  String get homeMomentMorning => 'Matin';
+
+  @override
+  String get homeMomentAfternoon => 'Après-midi';
+
+  @override
+  String get homeMomentEvening => 'Soir';
+
+  @override
+  String get homeVitalsTitle => 'Ton suivi';
+
+  @override
+  String get homeVitalsAdd => 'Ajouter';
+
+  @override
+  String get homeVitalsFirst =>
+      'Première mesure enregistrée. La courbe apparaîtra dès la suivante.';
+
+  @override
+  String get homeVitalsSystolic => 'Systolique';
+
+  @override
+  String get homeVitalsDiastolic => 'Diastolique';
+
+  @override
+  String get homeVitalsSaved => 'Mesure enregistrée.';
+
+  @override
+  String get homeVitalsEmptyTitle => 'Suivre une constante';
+
+  @override
+  String get homeVitalsEmptyBody =>
+      'Poids, tension, glycémie… une mesure de temps en temps suffit.';
+
+  @override
+  String get constantePoids => 'Poids';
+
+  @override
+  String get constanteTension => 'Tension';
+
+  @override
+  String get constanteGlycemie => 'Glycémie';
+
+  @override
+  String get constanteTemperature => 'Température';
+
+  @override
+  String get constanteSommeil => 'Sommeil';
+
+  @override
+  String get constanteHumeur => 'Humeur';
+
+  @override
+  String get addVitalTitle => 'Nouvelle mesure';
+
+  @override
+  String get addVitalValue => 'Valeur';
+
+  @override
+  String get addVitalSystolic => 'Systolique';
+
+  @override
+  String get addVitalDiastolic => 'Diastolique';
+
+  @override
+  String get addVitalDate => 'Mesurée le';
+
+  @override
+  String get addVitalSave => 'Enregistrer';
+
+  @override
+  String get addVitalInvalid => 'Entre une valeur chiffrée valide.';
 
   @override
   String get medsWizardTitle => 'Tes médicaments';

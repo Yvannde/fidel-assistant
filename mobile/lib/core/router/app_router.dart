@@ -17,6 +17,7 @@ import '../../features/auth/presentation/register_legal_screen.dart';
 import '../../features/auth/presentation/register_otp_screen.dart';
 import '../../features/auth/presentation/register_password_screen.dart';
 import '../../features/home/presentation/add_traitement_screen.dart';
+import '../../features/home/presentation/home_notifications_screen.dart';
 import '../../features/home/presentation/home_shell.dart';
 import '../../features/home/presentation/sync_screens.dart';
 import '../../features/medicaments/presentation/medicament_wizard_screen.dart';
@@ -262,6 +263,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => _softPage(
           state: state,
           child: const ShareCodeScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/notifications',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const HomeNotificationsScreen(),
         ),
       ),
     ],

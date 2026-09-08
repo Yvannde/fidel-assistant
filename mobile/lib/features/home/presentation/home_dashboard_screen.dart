@@ -1,14 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/network/api_exception.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/premium.dart';
 import '../../../core/ui/app_toast.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/home_controller.dart';
 import '../domain/dashboard_models.dart';
+import 'widgets/add_constante_sheet.dart';
+import 'widgets/check_in_card.dart';
+import 'widgets/day_progress_card.dart';
+import 'widgets/day_ring.dart';
+import 'widgets/dose_timeline.dart';
+import 'widgets/home_header.dart';
+import 'widgets/home_skeleton.dart';
+import 'widgets/next_dose_card.dart';
+import 'widgets/snooze_sheet.dart';
+import 'widgets/today_summary_card.dart';
+import 'widgets/treatment_card.dart';
 
 class HomeDashboardScreen extends ConsumerWidget {
   const HomeDashboardScreen({super.key});
@@ -17,7 +30,6 @@ class HomeDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(homeControllerProvider);
     final l10n = AppLocalizations.of(context);
-    final tokens = ThemeTokens.of(context);
     final now = DateTime.now();
 
     return RefreshIndicator(
@@ -28,55 +40,447 @@ class HomeDashboardScreen extends ConsumerWidget {
         slivers: [
           SliverPadding(
             padding: EdgeInsets.fromLTRB(
-              22,
-              12 + MediaQuery.paddingOf(context).top,
-              22,
+              Premium.screenPad,
+              10 + MediaQuery.paddingOf(context).top,
+              Premium.screenPad,
               Premium.navClearance,
             ),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                _Greeting(
-                  name: state.profile?.firstName ?? '',
-                  l10n: l10n,
+                HomeHeader(
+                  name: state.profile?.headerName ?? '',
+                  initial: state.profile?.initial ?? '',
+                  loading: state.loading && state.profile == null,
                 ),
-                const SizedBox(height: 22),
-                if (state.loading)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 48),
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                else if (state.error != null && state.profile == null)
-                  PremiumCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(state.error!, style: TextStyle(color: tokens.textSecondary)),
-                        const SizedBox(height: 12),
-                        FilledButton(
-                          onPressed: () =>
-                              ref.read(homeControllerProvider.notifier).load(),
-                          child: Text(l10n.onboardingRetry),
-                        ),
-                      ],
-                    ),
-                  )
-                else if (!state.hasPatient)
-                  _CapabilityHome(l10n: l10n)
-                else ...[
-                  _HeroCard(dashboard: state.dashboard, now: now, l10n: l10n),
-                  const SizedBox(height: 16),
-                  _StatRow(dashboard: state.dashboard, now: now, l10n: l10n),
-                  const SizedBox(height: 22),
-                  Text(
-                    l10n.homeTodayTitle,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                  const SizedBox(height: 12),
-                  _TodayList(dashboard: state.dashboard, now: now, l10n: l10n),
-                ],
+                const SizedBox(height: 16),
+                ..._body(context, ref, state, l10n, now),
               ]),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _body(
+    BuildContext context,
+    WidgetRef ref,
+    HomeUiState state,
+    AppLocalizations l10n,
+    DateTime now,
+  ) {
+    if (state.loading && state.profile == null) {
+      return const [HomeDashboardSkeleton()];
+    }
+
+    if (state.error != null && state.profile == null) {
+      return [_ErrorCard(message: state.error!, l10n: l10n)];
+    }
+
+    if (!state.hasPatient) {
+      return [_ActivateBanner(l10n: l10n)];
+    }
+
+    final dash = state.dashboardForDay;
+    final prises = state.visiblePrises;
+    final cta = _onboardingCta(context, state, l10n);
+    final showCheckIn = state.isTodaySelected &&
+        (state.needsCheckIn || state.todayCheckIn != null);
+    final traitements = dash?.traitements ?? const <DashboardTraitement>[];
+    final dashLoading = state.loading && state.dashboard == null;
+
+    return [
+      if (cta != null) ...[cta, const SizedBox(height: 12)],
+
+      // Progression du jour (prises confirmées / prévues) — pas un score santé
+      if (state.isTodaySelected) ...[
+        DayProgressCard(
+          dashboard: dash,
+          now: now,
+          loading: dashLoading,
+        ),
+        const SizedBox(height: 12),
+      ],
+
+      // Hero prochaine prise
+      if (state.isTodaySelected)
+        if (prises.isNotEmpty) ...[
+          NextDoseCard(
+            next: dash?.nextDose(now),
+            done: dash?.takenCount() ?? 0,
+            total: prises.length,
+            busy: state.busy,
+            onConfirm: () => _confirmNext(context, ref, dash, now, l10n),
+            onSnooze: () => _snoozeNext(context, ref, dash, now, l10n),
+          ),
+          const SizedBox(height: 12),
+        ] else if (cta == null && !dashLoading) ...[
+          _QuietNotice(
+            title: l10n.homeAllClearTitle,
+            body: l10n.homeAllClearBody,
+          ),
+          const SizedBox(height: 12),
+        ]
+      else ...[
+        _DaySummaryCard(day: state.day, prises: prises, l10n: l10n),
+        const SizedBox(height: 12),
+      ],
+
+      // Résumé : dernières constantes réelles
+      if (state.isTodaySelected) ...[
+        TodaySummaryCard(
+          series: state.constanteSeries,
+          known: state.constantesKnown,
+          onAdd: () => AddConstanteSheet.show(context),
+          onViewAll: () =>
+              ref.read(homeTabIndexProvider.notifier).state = 1,
+          subtitle: _summarySubtitle(state, l10n),
+        ),
+        const SizedBox(height: 16),
+      ],
+
+      // Panneau Aujourd’hui : check-in + timeline
+      _SectionLabel(
+        title: state.isTodaySelected
+            ? l10n.homeTodayTitle
+            : _prettyDate(context, state.day),
+        trailing: _remainingLabel(l10n, prises),
+      ),
+      const SizedBox(height: 8),
+      PremiumCard(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (showCheckIn) ...[
+              CheckInRow(
+                answer: state.todayCheckIn,
+                busy: state.checkInBusy,
+                onAnswer: (statut) => _checkIn(context, ref, statut, l10n),
+              ),
+              const SizedBox(height: 10),
+              Divider(height: 1, color: ThemeTokens.of(context).border),
+              const SizedBox(height: 4),
+            ],
+            DoseTimeline(
+              prises: prises,
+              now: now,
+              busy: state.busy,
+              onConfirm: (prise) => _confirm(context, ref, prise.id, l10n),
+            ),
+          ],
+        ),
+      ),
+
+      // Panneau Suivi : traitement (+ détail constantes si besoin)
+      if (traitements.isNotEmpty) ...[
+        const SizedBox(height: 16),
+        _SectionLabel(title: l10n.navCare),
+        const SizedBox(height: 8),
+        PremiumCard(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var i = 0; i < traitements.length; i++) ...[
+                if (i > 0) ...[
+                  const SizedBox(height: 12),
+                  Divider(height: 1, color: ThemeTokens.of(context).border),
+                  const SizedBox(height: 12),
+                ],
+                TreatmentBlock(
+                  traitement: traitements[i],
+                  detail: state.traitementDetails[traitements[i].id],
+                  onTap: () =>
+                      ref.read(homeTabIndexProvider.notifier).state = 1,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    ];
+  }
+
+  static String? _summarySubtitle(HomeUiState state, AppLocalizations l10n) {
+    final checkIn = state.todayCheckIn;
+    if (checkIn != null) {
+      return checkIn.isOk ? l10n.homeCheckInDoneOk : l10n.homeCheckInDoneBad;
+    }
+    return null;
+  }
+
+  Widget? _onboardingCta(
+    BuildContext context,
+    HomeUiState state,
+    AppLocalizations l10n,
+  ) {
+    final dash = state.dashboard;
+    if (dash == null || !state.isTodaySelected) return null;
+
+    if (dash.prochaineAction == 'activer_notifications') {
+      return _CtaBanner(
+        icon: IconsaxPlusLinear.notification,
+        title: l10n.homeActionNotifTitle,
+        subtitle: l10n.homeActionNotifBody,
+        onTap: () => context.push('/home/notifications'),
+      );
+    }
+    if (dash.traitements.isEmpty) {
+      return _CtaBanner(
+        icon: IconsaxPlusLinear.health,
+        title: l10n.homeActionTraitementTitle,
+        subtitle: l10n.homeActionTraitementBody,
+        onTap: () => context.push('/home/traitement'),
+      );
+    }
+    final unconfigured = dash.firstUnconfigured;
+    if (unconfigured != null) {
+      return _CtaBanner(
+        icon: IconsaxPlusLinear.hospital,
+        title: l10n.homeActionMedsTitle,
+        subtitle: l10n.homeActionMedsFor(unconfigured.maladieNom),
+        onTap: () => context.push('/home/medicaments', extra: unconfigured.id),
+      );
+    }
+    return null;
+  }
+
+  static String? _remainingLabel(
+    AppLocalizations l10n,
+    List<PriseDuJour> prises,
+  ) {
+    final remaining = prises.where((p) => !p.isTaken).length;
+    if (prises.isEmpty || remaining == 0) return null;
+    return l10n.homeRemaining(remaining);
+  }
+
+  static String _prettyDate(BuildContext context, DateTime day) {
+    final locale = Localizations.localeOf(context).toString();
+    final raw = DateFormat.MMMMEEEEd(locale).format(day);
+    return raw.isEmpty ? raw : raw[0].toUpperCase() + raw.substring(1);
+  }
+
+  Future<void> _confirmNext(
+    BuildContext context,
+    WidgetRef ref,
+    PatientDashboard? dash,
+    DateTime now,
+    AppLocalizations l10n,
+  ) async {
+    final next = dash?.nextDose(now);
+    if (next == null) return;
+    await _confirm(context, ref, next.id, l10n);
+  }
+
+  Future<void> _confirm(
+    BuildContext context,
+    WidgetRef ref,
+    String priseId,
+    AppLocalizations l10n,
+  ) async {
+    try {
+      await ref.read(homeControllerProvider.notifier).confirmPrise(priseId);
+      if (context.mounted) AppToast.success(context, l10n.homeTakenToast);
+    } catch (e) {
+      if (context.mounted) {
+        AppToast.error(
+          context,
+          e is ApiException ? e.message : l10n.genericError,
+        );
+      }
+    }
+  }
+
+  Future<void> _snoozeNext(
+    BuildContext context,
+    WidgetRef ref,
+    PatientDashboard? dash,
+    DateTime now,
+    AppLocalizations l10n,
+  ) async {
+    final next = dash?.nextDose(now);
+    if (next == null) return;
+
+    final delay = await SnoozeSheet.show(context, next.medicamentNom);
+    if (delay == null || !context.mounted) return;
+
+    final target = DateTime.now().add(delay);
+    try {
+      await ref
+          .read(homeControllerProvider.notifier)
+          .reportPrise(next.id, target);
+      if (context.mounted) {
+        AppToast.success(
+          context,
+          l10n.homeSnoozeDone(DateFormat.Hm().format(target)),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        AppToast.error(
+          context,
+          e is ApiException ? e.message : l10n.genericError,
+        );
+      }
+    }
+  }
+
+  Future<void> _checkIn(
+    BuildContext context,
+    WidgetRef ref,
+    String statut,
+    AppLocalizations l10n,
+  ) async {
+    try {
+      await ref.read(homeControllerProvider.notifier).submitCheckIn(statut);
+    } catch (e) {
+      if (context.mounted) {
+        AppToast.error(
+          context,
+          e is ApiException ? e.message : l10n.genericError,
+        );
+      }
+    }
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({required this.title, this.trailing});
+
+  final String title;
+  final String? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = ThemeTokens.of(context);
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: AppTheme.fontFamily,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.2,
+              color: tokens.textSecondary,
+            ),
+          ),
+        ),
+        if (trailing != null)
+          Text(
+            trailing!,
+            style: TextStyle(
+              fontFamily: AppTheme.fontFamily,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primary,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _CtaBanner extends StatelessWidget {
+  const _CtaBanner({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = ThemeTokens.of(context);
+    return Material(
+      color: AppColors.primary.withValues(alpha: tokens.isDark ? 0.14 : 0.06),
+      borderRadius: BorderRadius.circular(Premium.radius),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(Premium.radius),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Icon(icon, size: 20, color: AppColors.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontFamily: AppTheme.fontFamily,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: tokens.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: AppTheme.fontFamily,
+                        fontSize: 12,
+                        height: 1.3,
+                        color: tokens.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                IconsaxPlusLinear.arrow_right_3,
+                size: 16,
+                color: AppColors.primary,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QuietNotice extends StatelessWidget {
+  const _QuietNotice({required this.title, required this.body});
+
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = ThemeTokens.of(context);
+    return PremiumCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            body,
+            style: TextStyle(
+              fontFamily: AppTheme.fontFamily,
+              fontSize: 13,
+              height: 1.35,
+              color: tokens.textSecondary,
             ),
           ),
         ],
@@ -85,128 +489,22 @@ class HomeDashboardScreen extends ConsumerWidget {
   }
 }
 
-class _Greeting extends StatelessWidget {
-  const _Greeting({required this.name, required this.l10n});
-
-  final String name;
-  final AppLocalizations l10n;
-
-  @override
-  Widget build(BuildContext context) {
-    final hour = DateTime.now().hour;
-    final String hello;
-    if (name.isEmpty) {
-      hello = hour < 12
-          ? l10n.homeHelloMorningAnon
-          : hour < 18
-              ? l10n.homeHelloAfternoonAnon
-              : l10n.homeHelloEveningAnon;
-    } else {
-      hello = hour < 12
-          ? l10n.homeHelloMorning(name)
-          : hour < 18
-              ? l10n.homeHelloAfternoon(name)
-              : l10n.homeHelloEvening(name);
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          hello,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-                height: 1.15,
-                letterSpacing: -0.6,
-              ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          l10n.homeTagline,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: ThemeTokens.of(context).textSecondary,
-                height: 1.4,
-              ),
-        ),
-      ],
-    );
-  }
-}
-
-class _HeroCard extends StatelessWidget {
-  const _HeroCard({
-    required this.dashboard,
-    required this.now,
+class _DaySummaryCard extends StatelessWidget {
+  const _DaySummaryCard({
+    required this.day,
+    required this.prises,
     required this.l10n,
   });
 
-  final PatientDashboard? dashboard;
-  final DateTime now;
+  final DateTime day;
+  final List<PriseDuJour> prises;
   final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
-    final action = dashboard?.prochaineAction;
-    if (action == 'activer_notifications') {
-      return PremiumCard(
-        onTap: () => context.push('/onboarding/permissions'),
-        child: _CtaBody(
-          icon: Icons.notifications_active_rounded,
-          title: l10n.homeActionNotifTitle,
-          subtitle: l10n.homeActionNotifBody,
-        ),
-      );
-    }
-    if (action == 'configurer_medicaments' ||
-        (dashboard?.traitements.isNotEmpty == true &&
-            dashboard?.medicamentsConfigures == false)) {
-      final t = dashboard?.firstUnconfigured;
-      return PremiumCard(
-        onTap: t == null
-            ? null
-            : () => context.push('/home/medicaments', extra: t.id),
-        child: _CtaBody(
-          icon: Icons.medication_liquid_rounded,
-          title: l10n.homeActionMedsTitle,
-          subtitle: t == null
-              ? l10n.homeActionMedsBody
-              : l10n.homeActionMedsFor(t.maladieNom),
-        ),
-      );
-    }
-    if (dashboard != null && dashboard!.traitements.isEmpty) {
-      return PremiumCard(
-        onTap: () => context.push('/home/traitement'),
-        child: _CtaBody(
-          icon: Icons.favorite_rounded,
-          title: l10n.homeActionTraitementTitle,
-          subtitle: l10n.homeActionTraitementBody,
-        ),
-      );
-    }
+    final tokens = ThemeTokens.of(context);
+    final taken = prises.where((p) => p.isTaken).length;
 
-    final next = dashboard?.nextDose(now);
-    if (next == null) {
-      return PremiumCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.homeAllClearTitle,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              l10n.homeAllClearBody,
-              style: TextStyle(color: ThemeTokens.of(context).textSecondary),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final time = DateFormat.Hm().format(next.heurePrevue.toLocal());
     return PremiumCard(
       child: Row(
         children: [
@@ -215,214 +513,39 @@ class _HeroCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  l10n.homeNextDoseLabel,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: ThemeTokens.of(context).textSecondary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  time,
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                  HomeDashboardScreen._prettyDate(context, day),
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
-                        height: 1,
-                        letterSpacing: -1.4,
                       ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 4),
                 Text(
-                  '${next.medicamentNom} · ${next.dosage}',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  prises.isEmpty
+                      ? l10n.homeNoDoses
+                      : l10n.homeWeekSummary(taken, prises.length),
+                  style: TextStyle(
+                    fontFamily: AppTheme.fontFamily,
+                    fontSize: 13,
+                    height: 1.35,
+                    color: tokens.textSecondary,
+                  ),
                 ),
               ],
             ),
           ),
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
+          if (prises.isNotEmpty) ...[
+            const SizedBox(width: 12),
+            DayRing(
+              done: taken,
+              total: prises.length,
+              trackColor: tokens.isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : const Color(0xFFEEF2F7),
+              progressColor: AppColors.primary,
+              labelColor: tokens.textPrimary,
+              size: 56,
+              stroke: 5,
             ),
-            child: const Icon(
-              Icons.schedule_rounded,
-              color: AppColors.primary,
-              size: 30,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CtaBody extends StatelessWidget {
-  const _CtaBody({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Icon(icon, color: Colors.white, size: 28),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  color: ThemeTokens.of(context).textSecondary,
-                  height: 1.35,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const Icon(Icons.arrow_forward_rounded, color: AppColors.primary),
-      ],
-    );
-  }
-}
-
-class _StatRow extends StatelessWidget {
-  const _StatRow({
-    required this.dashboard,
-    required this.now,
-    required this.l10n,
-  });
-
-  final PatientDashboard? dashboard;
-  final DateTime now;
-  final AppLocalizations l10n;
-
-  @override
-  Widget build(BuildContext context) {
-    final pending = dashboard?.pendingCount(now) ?? 0;
-    final taken = dashboard?.takenCount() ?? 0;
-    final late = dashboard?.lateCount(now) ?? 0;
-    return Row(
-      children: [
-        Expanded(
-          child: _MiniStat(
-            label: l10n.homeStatPending,
-            value: '$pending',
-            color: AppColors.primary,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _MiniStat(
-            label: l10n.homeStatTaken,
-            value: '$taken',
-            color: AppColors.success,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _MiniStat(
-            label: l10n.homeStatLate,
-            value: '$late',
-            color: late > 0 ? AppColors.error : ThemeTokens.of(context).textSecondary,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _MiniStat extends StatelessWidget {
-  const _MiniStat({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  final String label;
-  final String value;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return PremiumCard(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: color,
-                ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TodayList extends ConsumerWidget {
-  const _TodayList({
-    required this.dashboard,
-    required this.now,
-    required this.l10n,
-  });
-
-  final PatientDashboard? dashboard;
-  final DateTime now;
-  final AppLocalizations l10n;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final prises = dashboard?.prisesAujourdhui ?? const <PriseDuJour>[];
-    if (prises.isEmpty) {
-      return PremiumCard(
-        child: Text(
-          l10n.homeNoDoses,
-          style: TextStyle(color: ThemeTokens.of(context).textSecondary),
-        ),
-      );
-    }
-
-    return PremiumCard(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Column(
-        children: [
-          for (var i = 0; i < prises.length; i++) ...[
-            if (i > 0) const Divider(height: 1),
-            _PriseTile(prise: prises[i], now: now, l10n: l10n),
           ],
         ],
       ),
@@ -430,118 +553,62 @@ class _TodayList extends ConsumerWidget {
   }
 }
 
-class _PriseTile extends ConsumerWidget {
-  const _PriseTile({
-    required this.prise,
-    required this.now,
-    required this.l10n,
-  });
+class _ErrorCard extends ConsumerWidget {
+  const _ErrorCard({required this.message, required this.l10n});
 
-  final PriseDuJour prise;
-  final DateTime now;
+  final String message;
   final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final time = DateFormat.Hm().format(prise.heurePrevue.toLocal());
-    final late = prise.isLate(now);
-    final busy = ref.watch(homeControllerProvider).busy;
-
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      leading: CircleAvatar(
-        backgroundColor: prise.isTaken
-            ? AppColors.success.withValues(alpha: 0.15)
-            : late
-                ? AppColors.error.withValues(alpha: 0.12)
-                : AppColors.primary.withValues(alpha: 0.12),
-        child: Icon(
-          prise.isTaken
-              ? Icons.check_rounded
-              : Icons.medication_rounded,
-          color: prise.isTaken
-              ? AppColors.success
-              : late
-                  ? AppColors.error
-                  : AppColors.primary,
-        ),
+    return PremiumCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            message,
+            style: TextStyle(color: ThemeTokens.of(context).textSecondary),
+          ),
+          const SizedBox(height: 12),
+          FilledButton(
+            onPressed: () => ref.read(homeControllerProvider.notifier).load(),
+            child: Text(l10n.onboardingRetry),
+          ),
+        ],
       ),
-      title: Text(
-        prise.medicamentNom,
-        style: const TextStyle(fontWeight: FontWeight.w700),
-      ),
-      subtitle: Text('$time · ${prise.dosage}'),
-      trailing: prise.isPending
-          ? TextButton(
-              onPressed: busy
-                  ? null
-                  : () async {
-                      try {
-                        await ref
-                            .read(homeControllerProvider.notifier)
-                            .confirmPrise(prise.id);
-                        if (context.mounted) {
-                          AppToast.success(context, l10n.homeTakenToast);
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
-                          AppToast.error(
-                            context,
-                            e is ApiException ? e.message : l10n.genericError,
-                          );
-                        }
-                      }
-                    },
-              child: Text(l10n.homeTakeCta),
-            )
-          : Text(
-              l10n.homeTakenBadge,
-              style: const TextStyle(
-                color: AppColors.success,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
     );
   }
 }
 
-class _CapabilityHome extends ConsumerWidget {
-  const _CapabilityHome({required this.l10n});
+class _ActivateBanner extends ConsumerWidget {
+  const _ActivateBanner({required this.l10n});
 
   final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final busy = ref.watch(homeControllerProvider).busy;
-    return Column(
-      children: [
-        PremiumCard(
-          onTap: busy
-              ? null
-              : () async {
-                  try {
-                    await ref
-                        .read(homeControllerProvider.notifier)
-                        .activateFollowUp();
-                    if (context.mounted) {
-                      context.push('/home/traitement');
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      AppToast.error(
-                        context,
-                        e is ApiException ? e.message : l10n.genericError,
-                      );
-                    }
-                  }
-                },
-          child: _CtaBody(
-            icon: Icons.favorite_rounded,
-            title: l10n.homeActivateTitle,
-            subtitle: l10n.homeActivateBody,
-          ),
-        ),
-      ],
+    return _CtaBanner(
+      icon: IconsaxPlusLinear.health,
+      title: l10n.homeActivateTitle,
+      subtitle: l10n.homeActivateBody,
+      onTap: busy
+          ? () {}
+          : () async {
+              try {
+                await ref
+                    .read(homeControllerProvider.notifier)
+                    .activateFollowUp();
+                if (context.mounted) context.push('/home/traitement');
+              } catch (e) {
+                if (context.mounted) {
+                  AppToast.error(
+                    context,
+                    e is ApiException ? e.message : l10n.genericError,
+                  );
+                }
+              }
+            },
     );
   }
 }

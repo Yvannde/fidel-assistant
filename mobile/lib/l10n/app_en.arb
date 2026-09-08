@@ -147,22 +147,28 @@
   "navCare": "Care",
   "navPeople": "People",
   "navYou": "You",
-  "homeHelloMorning": "Good morning {name} 👋",
+  "homeHelloMorning": "Good morning {name}",
   "@homeHelloMorning": {
     "placeholders": { "name": { "type": "String" } }
   },
-  "homeHelloAfternoon": "Good afternoon {name} 👋",
+  "homeHelloAfternoon": "Good afternoon {name}",
   "@homeHelloAfternoon": {
     "placeholders": { "name": { "type": "String" } }
   },
-  "homeHelloEvening": "Good evening {name} 👋",
+  "homeHelloEvening": "Good evening {name}",
   "@homeHelloEvening": {
     "placeholders": { "name": { "type": "String" } }
   },
-  "homeHelloMorningAnon": "Good morning 👋",
-  "homeHelloAfternoonAnon": "Good afternoon 👋",
-  "homeHelloEveningAnon": "Good evening 👋",
+  "homeHelloMorningAnon": "Good morning!",
+  "homeHelloAfternoonAnon": "Good afternoon!",
+  "homeHelloEveningAnon": "Good evening!",
   "homeTagline": "Fidel watches your doses — never judges.",
+  "homeNotifA11y": "Reminders",
+  "homeSettingsA11y": "Settings",
+  "homeNotifTitle": "Reminders",
+  "homeNotifBody": "Reminders ring on this phone, even offline. Nothing is sent to a relative without your say-so.",
+  "homeNotifReadyTitle": "Reminders are ready",
+  "homeNotifReadyBody": "Fidel will ping you here, on this device — no score, no judgment.",
   "homeTodayTitle": "Today",
   "homeNextDoseLabel": "Next dose",
   "homeAllClearTitle": "You’re up to date",
@@ -201,6 +207,123 @@
   "homeSyncCodeLabel": "Code",
   "homeSyncCta": "Connect to their follow-up",
   "homeSyncOk": "You’re now connected to their follow-up.",
+  "commonCancel": "Cancel",
+  "homeSnoozeCta": "Later",
+  "homeSnoozeTitle": "Push this dose back",
+  "homeSnoozeBody": "We move the reminder, nothing is erased.",
+  "homeSnoozeDone": "Moved to {heure}",
+  "@homeSnoozeDone": {
+    "placeholders": { "heure": { "type": "String" } }
+  },
+  "homeCountdownIn": "in {value}",
+  "@homeCountdownIn": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "homeCountdownLate": "{value} late",
+  "@homeCountdownLate": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "homeCountdownNow": "now",
+  "homeDurationHm": "{h}h {m}",
+  "@homeDurationHm": {
+    "placeholders": {
+      "h": { "type": "String" },
+      "m": { "type": "String" }
+    }
+  },
+  "homeDurationH": "{h}h",
+  "@homeDurationH": {
+    "placeholders": { "h": { "type": "int" } }
+  },
+  "homeDurationM": "{m} min",
+  "@homeDurationM": {
+    "placeholders": { "m": { "type": "int" } }
+  },
+  "homeDayProgressLabel": "Today’s doses",
+  "homeDayProgressTitle": "Today’s progress",
+  "homeDayProgressHint": "Doses confirmed out of those scheduled today. This is not a health score.",
+  "homeDayProgressDone": "Done",
+  "homeDayProgressOngoing": "In progress",
+  "homeDayProgressUpcoming": "Upcoming",
+  "homeDayProgressLate": "Some doses are waiting",
+  "homeDayProgressPendingCount": "{count} upcoming",
+  "@homeDayProgressPendingCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "homeDayProgressLateCount": "{count} late",
+  "@homeDayProgressLateCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "homeTodaySummaryTitle": "Today’s summary",
+  "homeTodaySummaryViewAll": "View all",
+  "homeTodaySummaryBody": "Your latest recorded measurements.",
+  "homeTodaySummaryEmpty": "No measurements yet. Add one whenever you like.",
+  "homeDayDoneTitle": "Day complete",
+  "homeDayDoneBody": "Every dose is confirmed. Nicely done.",
+  "homeWeekTitle": "Your week",
+  "homeWeekSummary": "{confirmed} doses confirmed out of {total}",
+  "@homeWeekSummary": {
+    "placeholders": {
+      "confirmed": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "homeWeekEmpty": "Your doses for the week will show up here.",
+  "homeWeekPerfect": "{count, plural, one{{count} full day} other{{count} full days}}",
+  "@homeWeekPerfect": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "homeRemaining": "{count, plural, one{{count} left} other{{count} left}}",
+  "@homeRemaining": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "homeCheckInTitle": "How are you feeling today?",
+  "homeCheckInBody": "One tap a day, just to keep track.",
+  "homeCheckInOk": "I’m okay",
+  "homeCheckInBad": "Not great",
+  "homeCheckInDoneOk": "Today: okay",
+  "homeCheckInDoneBad": "Today: not great",
+  "homeCheckInThanks": "Thanks, noted.",
+  "homeTreatmentDay": "Day {day}",
+  "@homeTreatmentDay": {
+    "placeholders": { "day": { "type": "int" } }
+  },
+  "homeTreatmentDayOf": "Day {day} of {total}",
+  "@homeTreatmentDayOf": {
+    "placeholders": {
+      "day": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "homeTreatmentDayUnit": "day",
+  "homeTreatmentOngoing": "Treatment in progress",
+  "homePhaseDebut": "Start",
+  "homePhaseEnCours": "Ongoing",
+  "homePhaseMaintenance": "Maintenance",
+  "homeMomentMorning": "Morning",
+  "homeMomentAfternoon": "Afternoon",
+  "homeMomentEvening": "Evening",
+  "homeVitalsTitle": "Your tracking",
+  "homeVitalsAdd": "Add",
+  "homeVitalsFirst": "First measurement saved. The curve shows up from the next one.",
+  "homeVitalsSystolic": "Systolic",
+  "homeVitalsDiastolic": "Diastolic",
+  "homeVitalsSaved": "Measurement saved.",
+  "homeVitalsEmptyTitle": "Track a measurement",
+  "homeVitalsEmptyBody": "Weight, blood pressure, blood sugar… now and then is enough.",
+  "constantePoids": "Weight",
+  "constanteTension": "Blood pressure",
+  "constanteGlycemie": "Blood sugar",
+  "constanteTemperature": "Temperature",
+  "constanteSommeil": "Sleep",
+  "constanteHumeur": "Mood",
+  "addVitalTitle": "New measurement",
+  "addVitalValue": "Value",
+  "addVitalSystolic": "Systolic",
+  "addVitalDiastolic": "Diastolic",
+  "addVitalDate": "Measured on",
+  "addVitalSave": "Save",
+  "addVitalInvalid": "Enter a valid number.",
   "medsWizardTitle": "Your medicines",
   "medsWizardSubtitle": "One line is enough to start. You can add more later.",
   "medsSuggestions": "Suggestions",

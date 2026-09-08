@@ -17,7 +17,12 @@ class HomeNetworkScreen extends ConsumerWidget {
     final padTop = 12 + MediaQuery.paddingOf(context).top;
 
     return ListView(
-      padding: EdgeInsets.fromLTRB(22, padTop, 22, Premium.navClearance),
+      padding: EdgeInsets.fromLTRB(
+        Premium.screenPad,
+        padTop,
+        Premium.screenPad,
+        Premium.navClearance,
+      ),
       children: [
         Text(
           l10n.navPeople,
@@ -71,13 +76,13 @@ class _NetworkCard extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(16),
+              color: AppColors.primary.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(Premium.radiusSm),
             ),
-            child: Icon(icon, color: AppColors.primary, size: 22),
+            child: Icon(icon, color: AppColors.primary, size: 20),
           ),
           const SizedBox(width: 14),
           Expanded(

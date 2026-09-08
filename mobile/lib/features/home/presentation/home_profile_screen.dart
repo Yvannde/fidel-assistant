@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../core/theme/premium.dart';
 import '../../../l10n/app_localizations.dart';
@@ -17,7 +18,12 @@ class HomeProfileScreen extends ConsumerWidget {
     final padTop = 12 + MediaQuery.paddingOf(context).top;
 
     return ListView(
-      padding: EdgeInsets.fromLTRB(22, padTop, 22, Premium.navClearance),
+      padding: EdgeInsets.fromLTRB(
+        Premium.screenPad,
+        padTop,
+        Premium.screenPad,
+        Premium.navClearance,
+      ),
       children: [
         Text(
           l10n.navYou,
@@ -33,7 +39,7 @@ class HomeProfileScreen extends ConsumerWidget {
               ListTile(
                 title: Text(l10n.homeThemeLabel),
                 subtitle: Text(_themeLabel(l10n, themeMode)),
-                trailing: const Icon(Icons.chevron_right_rounded),
+                trailing: const Icon(IconsaxPlusLinear.arrow_right_3, size: 18),
                 onTap: () => _cycleTheme(ref, themeMode),
               ),
               const Divider(height: 1),

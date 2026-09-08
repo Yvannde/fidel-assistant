@@ -41,17 +41,13 @@ class FidelNavBar extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: dark ? const Color(0xFF121A28) : Colors.white,
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(
-            color: dark
-                ? Colors.white.withValues(alpha: 0.06)
-                : const Color(0xFF0F172A).withValues(alpha: 0.05),
-          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: tokens.border),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: dark ? 0.38 : 0.07),
-              blurRadius: 28,
-              offset: const Offset(0, 12),
+              color: Colors.black.withValues(alpha: dark ? 0.28 : 0.05),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -124,7 +120,7 @@ class _NavItem extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: selected ? 10 : 8),
               decoration: BoxDecoration(
                 color: selected ? AppColors.primary : Colors.transparent,
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../core/theme/premium.dart';
 import '../../../l10n/app_localizations.dart';
@@ -17,7 +18,12 @@ class HomeCareScreen extends ConsumerWidget {
     final padTop = 12 + MediaQuery.paddingOf(context).top;
 
     return ListView(
-      padding: EdgeInsets.fromLTRB(22, padTop, 22, Premium.navClearance),
+      padding: EdgeInsets.fromLTRB(
+        Premium.screenPad,
+        padTop,
+        Premium.screenPad,
+        Premium.navClearance,
+      ),
       children: [
         Text(
           l10n.navCare,
@@ -55,9 +61,10 @@ class HomeCareScreen extends ConsumerWidget {
                       children: [
                         Text(
                           t.maladieNom,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -73,16 +80,17 @@ class HomeCareScreen extends ConsumerWidget {
                   ),
                   Icon(
                     t.medicamentsConfigures
-                        ? Icons.check_circle_rounded
-                        : Icons.add_circle_outline_rounded,
+                        ? IconsaxPlusLinear.tick_circle
+                        : IconsaxPlusLinear.add_circle,
                     color: t.medicamentsConfigures
                         ? AppColors.success
                         : AppColors.primary,
+                    size: 22,
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
           ],
       ],
     );

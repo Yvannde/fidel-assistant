@@ -132,22 +132,28 @@
   "navCare": "Soins",
   "navPeople": "Proches",
   "navYou": "Toi",
-  "homeHelloMorning": "Bonjour {name} 👋",
+  "homeHelloMorning": "Bonjour {name}",
   "@homeHelloMorning": {
     "placeholders": { "name": { "type": "String" } }
   },
-  "homeHelloAfternoon": "Bon après-midi {name} 👋",
+  "homeHelloAfternoon": "Bon après-midi {name}",
   "@homeHelloAfternoon": {
     "placeholders": { "name": { "type": "String" } }
   },
-  "homeHelloEvening": "Bonsoir {name} 👋",
+  "homeHelloEvening": "Bonsoir {name}",
   "@homeHelloEvening": {
     "placeholders": { "name": { "type": "String" } }
   },
-  "homeHelloMorningAnon": "Bonjour 👋",
-  "homeHelloAfternoonAnon": "Bon après-midi 👋",
-  "homeHelloEveningAnon": "Bonsoir 👋",
+  "homeHelloMorningAnon": "Bonjour !",
+  "homeHelloAfternoonAnon": "Bon après-midi !",
+  "homeHelloEveningAnon": "Bonsoir !",
   "homeTagline": "Fidel veille sur tes prises — sans te juger.",
+  "homeNotifA11y": "Rappels",
+  "homeSettingsA11y": "Réglages",
+  "homeNotifTitle": "Rappels",
+  "homeNotifBody": "Les rappels sonnent sur ce téléphone, même hors ligne. Rien n’est envoyé à un proche sans ton accord.",
+  "homeNotifReadyTitle": "Les rappels sont prêts",
+  "homeNotifReadyBody": "Fidel te préviendra ici, sur l’appareil — pas de score, pas de jugement.",
   "homeTodayTitle": "Aujourd’hui",
   "homeNextDoseLabel": "Prochaine prise",
   "homeAllClearTitle": "Tu es à jour",
@@ -186,6 +192,123 @@
   "homeSyncCodeLabel": "Code",
   "homeSyncCta": "Me connecter à son suivi",
   "homeSyncOk": "Tu es maintenant connecté(e) à son suivi.",
+  "commonCancel": "Annuler",
+  "homeSnoozeCta": "Plus tard",
+  "homeSnoozeTitle": "Reporter la prise",
+  "homeSnoozeBody": "On décale le rappel, rien n’est effacé.",
+  "homeSnoozeDone": "Reporté à {heure}",
+  "@homeSnoozeDone": {
+    "placeholders": { "heure": { "type": "String" } }
+  },
+  "homeCountdownIn": "dans {value}",
+  "@homeCountdownIn": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "homeCountdownLate": "en retard de {value}",
+  "@homeCountdownLate": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "homeCountdownNow": "maintenant",
+  "homeDurationHm": "{h} h {m}",
+  "@homeDurationHm": {
+    "placeholders": {
+      "h": { "type": "String" },
+      "m": { "type": "String" }
+    }
+  },
+  "homeDurationH": "{h} h",
+  "@homeDurationH": {
+    "placeholders": { "h": { "type": "int" } }
+  },
+  "homeDurationM": "{m} min",
+  "@homeDurationM": {
+    "placeholders": { "m": { "type": "int" } }
+  },
+  "homeDayProgressLabel": "Prises du jour",
+  "homeDayProgressTitle": "Progression du jour",
+  "homeDayProgressHint": "Nombre de prises confirmées sur celles prévues aujourd’hui. Ce n’est pas un score de santé.",
+  "homeDayProgressDone": "Terminé",
+  "homeDayProgressOngoing": "En cours",
+  "homeDayProgressUpcoming": "À venir",
+  "homeDayProgressLate": "Des prises attendent",
+  "homeDayProgressPendingCount": "{count} à venir",
+  "@homeDayProgressPendingCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "homeDayProgressLateCount": "{count} en retard",
+  "@homeDayProgressLateCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "homeTodaySummaryTitle": "Résumé du jour",
+  "homeTodaySummaryViewAll": "Tout voir",
+  "homeTodaySummaryBody": "Tes dernières mesures enregistrées.",
+  "homeTodaySummaryEmpty": "Aucune mesure pour l’instant. Ajoute-en une quand tu veux.",
+  "homeDayDoneTitle": "Journée bouclée",
+  "homeDayDoneBody": "Toutes tes prises sont confirmées. Beau travail.",
+  "homeWeekTitle": "Ta semaine",
+  "homeWeekSummary": "{confirmed} prises confirmées sur {total}",
+  "@homeWeekSummary": {
+    "placeholders": {
+      "confirmed": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "homeWeekEmpty": "Tes prises de la semaine s’afficheront ici.",
+  "homeWeekPerfect": "{count, plural, one{{count} jour complet} other{{count} jours complets}}",
+  "@homeWeekPerfect": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "homeRemaining": "{count, plural, one{{count} restante} other{{count} restantes}}",
+  "@homeRemaining": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "homeCheckInTitle": "Comment tu te sens aujourd’hui ?",
+  "homeCheckInBody": "Un geste par jour, pour garder une trace.",
+  "homeCheckInOk": "Ça va",
+  "homeCheckInBad": "Pas top",
+  "homeCheckInDoneOk": "Aujourd’hui : ça va",
+  "homeCheckInDoneBad": "Aujourd’hui : pas top",
+  "homeCheckInThanks": "Merci, c’est noté.",
+  "homeTreatmentDay": "Jour {day}",
+  "@homeTreatmentDay": {
+    "placeholders": { "day": { "type": "int" } }
+  },
+  "homeTreatmentDayOf": "Jour {day} sur {total}",
+  "@homeTreatmentDayOf": {
+    "placeholders": {
+      "day": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "homeTreatmentDayUnit": "jour",
+  "homeTreatmentOngoing": "Traitement en cours",
+  "homePhaseDebut": "Début",
+  "homePhaseEnCours": "En cours",
+  "homePhaseMaintenance": "Entretien",
+  "homeMomentMorning": "Matin",
+  "homeMomentAfternoon": "Après-midi",
+  "homeMomentEvening": "Soir",
+  "homeVitalsTitle": "Ton suivi",
+  "homeVitalsAdd": "Ajouter",
+  "homeVitalsFirst": "Première mesure enregistrée. La courbe apparaîtra dès la suivante.",
+  "homeVitalsSystolic": "Systolique",
+  "homeVitalsDiastolic": "Diastolique",
+  "homeVitalsSaved": "Mesure enregistrée.",
+  "homeVitalsEmptyTitle": "Suivre une constante",
+  "homeVitalsEmptyBody": "Poids, tension, glycémie… une mesure de temps en temps suffit.",
+  "constantePoids": "Poids",
+  "constanteTension": "Tension",
+  "constanteGlycemie": "Glycémie",
+  "constanteTemperature": "Température",
+  "constanteSommeil": "Sommeil",
+  "constanteHumeur": "Humeur",
+  "addVitalTitle": "Nouvelle mesure",
+  "addVitalValue": "Valeur",
+  "addVitalSystolic": "Systolique",
+  "addVitalDiastolic": "Diastolique",
+  "addVitalDate": "Mesurée le",
+  "addVitalSave": "Enregistrer",
+  "addVitalInvalid": "Entre une valeur chiffrée valide.",
   "medsWizardTitle": "Tes médicaments",
   "medsWizardSubtitle": "Une ligne suffit pour commencer. Tu pourras en ajouter d’autres plus tard.",
   "medsSuggestions": "Suggestions",
