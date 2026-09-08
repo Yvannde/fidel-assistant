@@ -445,6 +445,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeSettingsA11y => 'Settings';
 
   @override
+  String get homeMoreA11y => 'More options';
+
+  @override
   String get homeNotifTitle => 'Reminders';
 
   @override

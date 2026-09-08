@@ -150,6 +150,7 @@
   "homeTagline": "Fidel veille sur tes prises — sans te juger.",
   "homeNotifA11y": "Rappels",
   "homeSettingsA11y": "Réglages",
+  "homeMoreA11y": "Plus d’options",
   "homeNotifTitle": "Rappels",
   "homeNotifBody": "Les rappels sonnent sur ce téléphone, même hors ligne. Rien n’est envoyé à un proche sans ton accord.",
   "homeNotifReadyTitle": "Les rappels sont prêts",

@@ -38,23 +38,22 @@ class HomeDashboardScreen extends ConsumerWidget {
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
+          HomeStickyHeader(
+            name: state.profile?.headerName ?? '',
+            initial: state.profile?.initial ?? '',
+            loading: state.loading && state.profile == null,
+          ),
           SliverPadding(
             padding: EdgeInsets.fromLTRB(
               Premium.screenPad,
-              10 + MediaQuery.paddingOf(context).top,
+              16,
               Premium.screenPad,
               Premium.navClearance,
             ),
             sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                HomeHeader(
-                  name: state.profile?.headerName ?? '',
-                  initial: state.profile?.initial ?? '',
-                  loading: state.loading && state.profile == null,
-                ),
-                const SizedBox(height: 16),
-                ..._body(context, ref, state, l10n, now),
-              ]),
+              delegate: SliverChildListDelegate(
+                _body(context, ref, state, l10n, now),
+              ),
             ),
           ),
         ],

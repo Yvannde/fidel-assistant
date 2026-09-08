@@ -11,6 +11,112 @@ import '../../../../l10n/app_localizations.dart';
 import '../../application/home_controller.dart';
 import 'home_skeleton.dart';
 
+/// En-tête + strip L–D, épinglé au scroll.
+class HomeStickyHeader extends ConsumerWidget {
+  const HomeStickyHeader({
+    super.key,
+    required this.name,
+    required this.initial,
+    this.loading = false,
+  });
+
+  final String name;
+  final String initial;
+  final bool loading;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final top = MediaQuery.paddingOf(context).top;
+    return SliverPersistentHeader(
+      pinned: true,
+      delegate: _HomeHeaderDelegate(
+        name: name,
+        initial: initial,
+        loading: loading,
+        topInset: top,
+      ),
+    );
+  }
+}
+
+class _HomeHeaderDelegate extends SliverPersistentHeaderDelegate {
+  _HomeHeaderDelegate({
+    required this.name,
+    required this.initial,
+    required this.loading,
+    required this.topInset,
+  });
+
+  final String name;
+  final String initial;
+  final bool loading;
+  final double topInset;
+
+  /// Salut + nom (2 lignes max) + tagline + strip — hauteur stable.
+  static const double _contentHeight = 178;
+
+  @override
+  double get maxExtent => topInset + 10 + _contentHeight;
+
+  @override
+  double get minExtent => maxExtent;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final tokens = ThemeTokens.of(context);
+    final stuck = shrinkOffset > 0.5 || overlapsContent;
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Premium.canvas(dark),
+          border: Border(
+            bottom: BorderSide(
+              color: stuck ? tokens.border : Colors.transparent,
+            ),
+          ),
+          boxShadow: stuck
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: dark ? 0.25 : 0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+        ),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            Premium.screenPad,
+            topInset + 10,
+            Premium.screenPad,
+            12,
+          ),
+          child: HomeHeader(
+            name: name,
+            initial: initial,
+            loading: loading,
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _HomeHeaderDelegate oldDelegate) {
+    return name != oldDelegate.name ||
+        initial != oldDelegate.initial ||
+        loading != oldDelegate.loading ||
+        topInset != oldDelegate.topInset;
+  }
+}
+
 class HomeHeader extends ConsumerWidget {
   const HomeHeader({
     super.key,
@@ -34,6 +140,7 @@ class HomeHeader extends ConsumerWidget {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,11 +212,7 @@ class HomeHeader extends ConsumerWidget {
               onTap: () => context.push('/home/notifications'),
             ),
             const SizedBox(width: 6),
-            _HeaderIcon(
-              icon: IconsaxPlusLinear.setting_2,
-              tooltip: l10n.homeSettingsA11y,
-              onTap: () => ref.read(homeTabIndexProvider.notifier).state = 3,
-            ),
+            _MoreMenuButton(tooltip: l10n.homeMoreA11y),
           ],
         ),
         const SizedBox(height: 16),
@@ -144,6 +247,106 @@ class HomeHeader extends ConsumerWidget {
     if (hour < 12) return l10n.homeHelloMorningAnon;
     if (hour < 18) return l10n.homeHelloAfternoonAnon;
     return l10n.homeHelloEveningAnon;
+  }
+}
+
+class _MoreMenuButton extends ConsumerWidget {
+  const _MoreMenuButton({required this.tooltip});
+
+  final String tooltip;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final tokens = ThemeTokens.of(context);
+    final radius = BorderRadius.circular(Premium.radiusSm);
+    final hasPatient = ref.watch(homeControllerProvider).hasPatient;
+
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: tokens.isDark ? tokens.elevated : Colors.white,
+        borderRadius: radius,
+        child: InkWell(
+          borderRadius: radius,
+          onTap: () async {
+            HapticFeedback.selectionClick();
+            final box = context.findRenderObject() as RenderBox?;
+            final overlay =
+                Overlay.of(context).context.findRenderObject() as RenderBox?;
+            if (box == null || overlay == null) return;
+
+            final position = RelativeRect.fromRect(
+              Rect.fromPoints(
+                box.localToGlobal(Offset.zero, ancestor: overlay),
+                box.localToGlobal(
+                  box.size.bottomRight(Offset.zero),
+                  ancestor: overlay,
+                ),
+              ),
+              Offset.zero & overlay.size,
+            );
+
+            final selected = await showMenu<String>(
+              context: context,
+              position: position,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(Premium.radius),
+              ),
+              items: [
+                PopupMenuItem<String>(
+                  value: 'invite',
+                  enabled: hasPatient,
+                  child: Row(
+                    children: [
+                      Icon(
+                        IconsaxPlusLinear.user_add,
+                        size: 18,
+                        color: hasPatient
+                            ? tokens.textPrimary
+                            : tokens.textSecondary,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          l10n.homeShareCodeTitle,
+                          style: TextStyle(
+                            fontFamily: AppTheme.fontFamily,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: hasPatient
+                                ? tokens.textPrimary
+                                : tokens.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+
+            if (!context.mounted || selected == null) return;
+            if (selected == 'invite') {
+              context.push('/home/share-code');
+            }
+          },
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              borderRadius: radius,
+              border: Border.all(color: tokens.border),
+            ),
+            child: Icon(
+              IconsaxPlusLinear.more_2,
+              size: 20,
+              color: tokens.textPrimary,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

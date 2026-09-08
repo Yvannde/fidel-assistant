@@ -8,7 +8,8 @@ export 'app_colors.dart' show AppColors, ThemeTokens;
 abstract final class Premium {
   static const double radius = 12;
   static const double radiusSm = 8;
-  static const double navHeight = 60;
+  static const double navHeight = 56;
+  static const double navRadius = 28;
   static const double navClearance = 100;
   static const double screenPad = 16;
 

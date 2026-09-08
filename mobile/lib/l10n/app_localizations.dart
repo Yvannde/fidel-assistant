@@ -908,6 +908,12 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get homeSettingsA11y;
 
+  /// No description provided for @homeMoreA11y.
+  ///
+  /// In en, this message translates to:
+  /// **'More options'**
+  String get homeMoreA11y;
+
   /// No description provided for @homeNotifTitle.
   ///
   /// In en, this message translates to:

@@ -165,6 +165,7 @@
   "homeTagline": "Fidel watches your doses — never judges.",
   "homeNotifA11y": "Reminders",
   "homeSettingsA11y": "Settings",
+  "homeMoreA11y": "More options",
   "homeNotifTitle": "Reminders",
   "homeNotifBody": "Reminders ring on this phone, even offline. Nothing is sent to a relative without your say-so.",
   "homeNotifReadyTitle": "Reminders are ready",
