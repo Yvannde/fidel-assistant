@@ -17,6 +17,8 @@ import '../../features/auth/presentation/register_legal_screen.dart';
 import '../../features/auth/presentation/register_otp_screen.dart';
 import '../../features/auth/presentation/register_password_screen.dart';
 import '../../features/home/presentation/add_traitement_screen.dart';
+import '../../features/home/presentation/aidants_invite_screen.dart';
+import '../../features/home/presentation/aidants_list_screen.dart';
 import '../../features/home/presentation/home_notifications_screen.dart';
 import '../../features/home/presentation/home_shell.dart';
 import '../../features/home/presentation/sync_screens.dart';
@@ -259,11 +261,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
-        path: '/home/share-code',
+        path: '/home/aidants',
         pageBuilder: (context, state) => _softPage(
           state: state,
-          child: const ShareCodeScreen(),
+          child: const AidantsListScreen(),
         ),
+      ),
+      GoRoute(
+        path: '/home/aidants/invite',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const AidantsInviteScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/share-code',
+        redirect: (context, state) => '/home/aidants',
       ),
       GoRoute(
         path: '/home/notifications',

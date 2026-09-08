@@ -523,6 +523,77 @@ class AppLocalizationsFr extends AppLocalizations {
       'Ce code expire vite. Partage-le seulement à la personne que tu choisis.';
 
   @override
+  String get homeAidantsTitle => 'Tes aidants';
+
+  @override
+  String get homeAidantsIntro =>
+      'Tu peux inviter quelqu’un à t’accompagner sur Fidel — toujours avec ton accord.';
+
+  @override
+  String get homeAidantsSection => 'Statut des aidants';
+
+  @override
+  String get homeAidantsSectionHint =>
+      'Appuie sur un aidant pour gérer l’accès ou le retirer.';
+
+  @override
+  String get homeAidantsEmpty => 'Aucun aidant pour l’instant.';
+
+  @override
+  String get homeAidantsEmptyTitle => 'Pas encore d’aidant';
+
+  @override
+  String get homeAidantsEmptyBody =>
+      'Invite quelqu’un de confiance pour t’accompagner sur tes prises — tu gardes le contrôle de ce qu’il voit.';
+
+  @override
+  String get homeAidantsInviteCta => 'Inviter un aidant';
+
+  @override
+  String get homeAidantsTrust =>
+      'L’accès est limité à ce que tu autorises. Tu peux révoquer à tout moment —';
+
+  @override
+  String get homeAidantsTrustHighlight => 'toujours avec ton consentement.';
+
+  @override
+  String get homeAidantsManageTitle => 'Gérer l’accès';
+
+  @override
+  String get homeAidantsPermObservance => 'Voir les prises';
+
+  @override
+  String get homeAidantsPermConstantes => 'Voir les constantes';
+
+  @override
+  String get homeAidantsRevoke => 'Retirer l’accès';
+
+  @override
+  String get homeAidantsRevoked => 'L’aidant n’a plus accès à ton suivi.';
+
+  @override
+  String get homeAidantsPermObservanceOnly => 'Observance';
+
+  @override
+  String get homeAidantsPermBoth => 'Observance et constantes';
+
+  @override
+  String get homeAidantsPermNone => 'Accès limité';
+
+  @override
+  String get homeInviteCopy => 'Copier le code';
+
+  @override
+  String get homeInviteCopied => 'Code copié';
+
+  @override
+  String get homeInviteAltLink => 'Tu as un code ? Accompagner quelqu’un';
+
+  @override
+  String get homeInviteHint =>
+      'Partage ce code avec la personne que tu invites. Elle l’entre dans Fidel pour se connecter à ton suivi.';
+
+  @override
   String get homeActionNotifTitle => 'Autoriser les rappels';
 
   @override

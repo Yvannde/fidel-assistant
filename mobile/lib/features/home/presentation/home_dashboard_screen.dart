@@ -32,32 +32,31 @@ class HomeDashboardScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final now = DateTime.now();
 
-    return RefreshIndicator(
-      color: AppColors.primary,
-      onRefresh: () => ref.read(homeControllerProvider.notifier).load(),
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          HomeStickyHeader(
-            name: state.profile?.headerName ?? '',
-            initial: state.profile?.initial ?? '',
-            loading: state.loading && state.profile == null,
-          ),
-          SliverPadding(
-            padding: EdgeInsets.fromLTRB(
-              Premium.screenPad,
-              16,
-              Premium.screenPad,
-              Premium.navClearance,
-            ),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate(
-                _body(context, ref, state, l10n, now),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        HomePinnedHeader(
+          name: state.profile?.headerName ?? '',
+          initial: state.profile?.initial ?? '',
+          loading: state.loading && state.profile == null,
+        ),
+        Expanded(
+          child: RefreshIndicator(
+            color: AppColors.primary,
+            onRefresh: () => ref.read(homeControllerProvider.notifier).load(),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(
+                Premium.screenPad,
+                16,
+                Premium.screenPad,
+                Premium.navClearance,
               ),
+              children: _body(context, ref, state, l10n, now),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

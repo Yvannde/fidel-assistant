@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
+import '../domain/aidant_models.dart';
 import '../domain/constante_models.dart';
 import '../domain/dashboard_models.dart';
 
@@ -185,6 +186,46 @@ class HomeRepository {
       final res = await _api.post<Map<String, dynamic>>(
         '/aidants/me/sync',
         data: {'code': code.trim()},
+      );
+      return res.data?['message'] as String? ?? '';
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<List<AidantRelation>> listAidants() async {
+    try {
+      final res = await _api.get<dynamic>('/patients/me/aidants');
+      final data = res.data;
+      if (data is! List) return const [];
+      return data
+          .whereType<Map>()
+          .map((e) => AidantRelation.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<AidantRelation> updateAidantPermissions({
+    required String aidantId,
+    required AidantPermissions permissions,
+  }) async {
+    try {
+      final res = await _api.patch<Map<String, dynamic>>(
+        '/patients/me/aidants/$aidantId/permissions',
+        data: {'niveau_permission': permissions.toJson()},
+      );
+      return AidantRelation.fromJson(res.data ?? {});
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<String> revokeAidant(String aidantId) async {
+    try {
+      final res = await _api.delete<Map<String, dynamic>>(
+        '/patients/me/aidants/$aidantId',
       );
       return res.data?['message'] as String? ?? '';
     } on DioException catch (e) {

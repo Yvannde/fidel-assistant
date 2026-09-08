@@ -11,9 +11,9 @@ import '../../../../l10n/app_localizations.dart';
 import '../../application/home_controller.dart';
 import 'home_skeleton.dart';
 
-/// En-tête + strip L–D, épinglé au scroll.
-class HomeStickyHeader extends ConsumerWidget {
-  const HomeStickyHeader({
+/// Bandeau fixe (hors scroll) : salut, actions, strip L–D.
+class HomePinnedHeader extends ConsumerWidget {
+  const HomePinnedHeader({
     super.key,
     required this.name,
     required this.initial,
@@ -26,77 +26,20 @@ class HomeStickyHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final top = MediaQuery.paddingOf(context).top;
-    return SliverPersistentHeader(
-      pinned: true,
-      delegate: _HomeHeaderDelegate(
-        name: name,
-        initial: initial,
-        loading: loading,
-        topInset: top,
-      ),
-    );
-  }
-}
-
-class _HomeHeaderDelegate extends SliverPersistentHeaderDelegate {
-  _HomeHeaderDelegate({
-    required this.name,
-    required this.initial,
-    required this.loading,
-    required this.topInset,
-  });
-
-  final String name;
-  final String initial;
-  final bool loading;
-  final double topInset;
-
-  /// Salut + nom (2 lignes max) + tagline + strip — hauteur stable.
-  static const double _contentHeight = 178;
-
-  @override
-  double get maxExtent => topInset + 10 + _contentHeight;
-
-  @override
-  double get minExtent => maxExtent;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final tokens = ThemeTokens.of(context);
-    final stuck = shrinkOffset > 0.5 || overlapsContent;
+    final top = MediaQuery.paddingOf(context).top;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: Premium.canvas(dark),
-          border: Border(
-            bottom: BorderSide(
-              color: stuck ? tokens.border : Colors.transparent,
-            ),
-          ),
-          boxShadow: stuck
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: dark ? 0.25 : 0.06),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
-        ),
+      child: Material(
+        color: Premium.canvas(dark),
+        elevation: 0,
         child: Padding(
           padding: EdgeInsets.fromLTRB(
             Premium.screenPad,
-            topInset + 10,
+            top + 8,
             Premium.screenPad,
-            12,
+            10,
           ),
           child: HomeHeader(
             name: name,
@@ -106,14 +49,6 @@ class _HomeHeaderDelegate extends SliverPersistentHeaderDelegate {
         ),
       ),
     );
-  }
-
-  @override
-  bool shouldRebuild(covariant _HomeHeaderDelegate oldDelegate) {
-    return name != oldDelegate.name ||
-        initial != oldDelegate.initial ||
-        loading != oldDelegate.loading ||
-        topInset != oldDelegate.topInset;
   }
 }
 
@@ -290,13 +225,18 @@ class _MoreMenuButton extends ConsumerWidget {
             final selected = await showMenu<String>(
               context: context,
               position: position,
+              color: tokens.isDark ? tokens.elevated : Colors.white,
+              surfaceTintColor: Colors.transparent,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(Premium.radius),
+                side: BorderSide(color: tokens.border),
               ),
               items: [
                 PopupMenuItem<String>(
                   value: 'invite',
                   enabled: hasPatient,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   child: Row(
                     children: [
                       Icon(
@@ -328,7 +268,7 @@ class _MoreMenuButton extends ConsumerWidget {
 
             if (!context.mounted || selected == null) return;
             if (selected == 'invite') {
-              context.push('/home/share-code');
+              context.push('/home/aidants');
             }
           },
           child: Container(

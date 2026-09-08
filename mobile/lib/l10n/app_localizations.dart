@@ -1040,6 +1040,138 @@ abstract class AppLocalizations {
   /// **'This code expires quickly. Share it only with someone you choose.'**
   String get homeShareCodeBody;
 
+  /// No description provided for @homeAidantsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your caregivers'**
+  String get homeAidantsTitle;
+
+  /// No description provided for @homeAidantsIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'You can invite someone to support you on Fidel — always with your consent.'**
+  String get homeAidantsIntro;
+
+  /// No description provided for @homeAidantsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Caregiver status'**
+  String get homeAidantsSection;
+
+  /// No description provided for @homeAidantsSectionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a caregiver to manage access or remove them.'**
+  String get homeAidantsSectionHint;
+
+  /// No description provided for @homeAidantsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No caregivers yet.'**
+  String get homeAidantsEmpty;
+
+  /// No description provided for @homeAidantsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No caregivers yet'**
+  String get homeAidantsEmptyTitle;
+
+  /// No description provided for @homeAidantsEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite someone you trust to support your doses — you stay in control of what they can see.'**
+  String get homeAidantsEmptyBody;
+
+  /// No description provided for @homeAidantsInviteCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite a caregiver'**
+  String get homeAidantsInviteCta;
+
+  /// No description provided for @homeAidantsTrust.
+  ///
+  /// In en, this message translates to:
+  /// **'Access is limited to what you allow. You can revoke anytime —'**
+  String get homeAidantsTrust;
+
+  /// No description provided for @homeAidantsTrustHighlight.
+  ///
+  /// In en, this message translates to:
+  /// **'always with your consent.'**
+  String get homeAidantsTrustHighlight;
+
+  /// No description provided for @homeAidantsManageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage access'**
+  String get homeAidantsManageTitle;
+
+  /// No description provided for @homeAidantsPermObservance.
+  ///
+  /// In en, this message translates to:
+  /// **'See doses'**
+  String get homeAidantsPermObservance;
+
+  /// No description provided for @homeAidantsPermConstantes.
+  ///
+  /// In en, this message translates to:
+  /// **'See vitals'**
+  String get homeAidantsPermConstantes;
+
+  /// No description provided for @homeAidantsRevoke.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove access'**
+  String get homeAidantsRevoke;
+
+  /// No description provided for @homeAidantsRevoked.
+  ///
+  /// In en, this message translates to:
+  /// **'This caregiver no longer has access to your follow-up.'**
+  String get homeAidantsRevoked;
+
+  /// No description provided for @homeAidantsPermObservanceOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Adherence'**
+  String get homeAidantsPermObservanceOnly;
+
+  /// No description provided for @homeAidantsPermBoth.
+  ///
+  /// In en, this message translates to:
+  /// **'Adherence and vitals'**
+  String get homeAidantsPermBoth;
+
+  /// No description provided for @homeAidantsPermNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Limited access'**
+  String get homeAidantsPermNone;
+
+  /// No description provided for @homeInviteCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy code'**
+  String get homeInviteCopy;
+
+  /// No description provided for @homeInviteCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Code copied'**
+  String get homeInviteCopied;
+
+  /// No description provided for @homeInviteAltLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Have a code? Support someone'**
+  String get homeInviteAltLink;
+
+  /// No description provided for @homeInviteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Share this code with the person you invite. They enter it in Fidel to join your follow-up.'**
+  String get homeInviteHint;
+
   /// No description provided for @homeActionNotifTitle.
   ///
   /// In en, this message translates to:

@@ -516,6 +516,78 @@ class AppLocalizationsEn extends AppLocalizations {
       'This code expires quickly. Share it only with someone you choose.';
 
   @override
+  String get homeAidantsTitle => 'Your caregivers';
+
+  @override
+  String get homeAidantsIntro =>
+      'You can invite someone to support you on Fidel — always with your consent.';
+
+  @override
+  String get homeAidantsSection => 'Caregiver status';
+
+  @override
+  String get homeAidantsSectionHint =>
+      'Tap a caregiver to manage access or remove them.';
+
+  @override
+  String get homeAidantsEmpty => 'No caregivers yet.';
+
+  @override
+  String get homeAidantsEmptyTitle => 'No caregivers yet';
+
+  @override
+  String get homeAidantsEmptyBody =>
+      'Invite someone you trust to support your doses — you stay in control of what they can see.';
+
+  @override
+  String get homeAidantsInviteCta => 'Invite a caregiver';
+
+  @override
+  String get homeAidantsTrust =>
+      'Access is limited to what you allow. You can revoke anytime —';
+
+  @override
+  String get homeAidantsTrustHighlight => 'always with your consent.';
+
+  @override
+  String get homeAidantsManageTitle => 'Manage access';
+
+  @override
+  String get homeAidantsPermObservance => 'See doses';
+
+  @override
+  String get homeAidantsPermConstantes => 'See vitals';
+
+  @override
+  String get homeAidantsRevoke => 'Remove access';
+
+  @override
+  String get homeAidantsRevoked =>
+      'This caregiver no longer has access to your follow-up.';
+
+  @override
+  String get homeAidantsPermObservanceOnly => 'Adherence';
+
+  @override
+  String get homeAidantsPermBoth => 'Adherence and vitals';
+
+  @override
+  String get homeAidantsPermNone => 'Limited access';
+
+  @override
+  String get homeInviteCopy => 'Copy code';
+
+  @override
+  String get homeInviteCopied => 'Code copied';
+
+  @override
+  String get homeInviteAltLink => 'Have a code? Support someone';
+
+  @override
+  String get homeInviteHint =>
+      'Share this code with the person you invite. They enter it in Fidel to join your follow-up.';
+
+  @override
   String get homeActionNotifTitle => 'Allow reminders';
 
   @override

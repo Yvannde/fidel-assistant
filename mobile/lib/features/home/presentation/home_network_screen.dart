@@ -48,7 +48,7 @@ class HomeNetworkScreen extends ConsumerWidget {
             icon: IconsaxPlusBold.scan_barcode,
             title: l10n.homeShareCodeTitle,
             subtitle: l10n.homeShareCodeBody,
-            onTap: () => context.push('/home/share-code'),
+            onTap: () => context.push('/home/aidants'),
           ),
         ],
       ],
