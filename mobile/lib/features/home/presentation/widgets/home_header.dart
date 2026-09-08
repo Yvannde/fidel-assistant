@@ -9,7 +9,6 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/premium.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../application/home_controller.dart';
-import '../../domain/dashboard_models.dart';
 import 'home_skeleton.dart';
 
 class HomeHeader extends ConsumerWidget {
@@ -37,6 +36,7 @@ class HomeHeader extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               child: loading
@@ -46,6 +46,8 @@ class HomeHeader extends ConsumerWidget {
                         HomeSkeleton(width: 100, height: 12),
                         SizedBox(height: 8),
                         HomeSkeleton(width: 160, height: 22),
+                        SizedBox(height: 8),
+                        HomeSkeleton(width: 220, height: 12),
                       ],
                     )
                   : Column(
@@ -79,6 +81,19 @@ class HomeHeader extends ConsumerWidget {
                             ),
                           ),
                         ],
+                        const SizedBox(height: 6),
+                        Text(
+                          l10n.homeTagline,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: AppTheme.fontFamily,
+                            fontSize: 13,
+                            height: 1.35,
+                            fontWeight: FontWeight.w500,
+                            color: tokens.textSecondary,
+                          ),
+                        ),
                       ],
                     ),
             ),
@@ -97,7 +112,7 @@ class HomeHeader extends ConsumerWidget {
             ),
           ],
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 16),
         if (loading)
           Row(
             children: [
@@ -113,8 +128,6 @@ class HomeHeader extends ConsumerWidget {
                         height: 34,
                         radius: Premium.radiusSm,
                       ),
-                      const SizedBox(height: 6),
-                      const HomeSkeleton(width: 10, height: 12, radius: 2),
                     ],
                   ),
                 ),
@@ -195,39 +208,31 @@ class _HeaderIcon extends StatelessWidget {
   }
 }
 
-/// Sélecteur L–D + barres d’observance sous chaque jour.
+/// Sélecteur L–D uniquement — le graphe d’observance vit dans HomeKpisWeek.
 class _WeekStrip extends ConsumerWidget {
   const _WeekStrip();
-
-  static const double _barMax = 22;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tokens = ThemeTokens.of(context);
     final locale = Localizations.localeOf(context).toString();
-    final state = ref.watch(homeControllerProvider);
-    final selected = state.day;
+    final selected = ref.watch(homeControllerProvider).day;
     final today = homeDateOnly(DateTime.now());
-    final week = state.week;
     final start = homeWeekStart(today);
     final days = [for (var i = 0; i < 7; i++) start.add(Duration(days: i))];
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        for (var i = 0; i < 7; i++)
+        for (final day in days)
           Expanded(
             child: _DayCell(
-              day: days[i],
-              adherence: week[i],
-              selected: homeSameDay(days[i], selected),
-              isToday: homeSameDay(days[i], today),
-              isFuture: days[i].isAfter(today),
+              day: day,
+              selected: homeSameDay(day, selected),
+              isToday: homeSameDay(day, today),
               tokens: tokens,
               locale: locale,
-              barMax: _barMax,
               onTap: () =>
-                  ref.read(homeControllerProvider.notifier).selectDay(days[i]),
+                  ref.read(homeControllerProvider.notifier).selectDay(day),
             ),
           ),
       ],
@@ -238,24 +243,18 @@ class _WeekStrip extends ConsumerWidget {
 class _DayCell extends StatelessWidget {
   const _DayCell({
     required this.day,
-    required this.adherence,
     required this.selected,
     required this.isToday,
-    required this.isFuture,
     required this.tokens,
     required this.locale,
-    required this.barMax,
     required this.onTap,
   });
 
   final DateTime day;
-  final DayAdherence adherence;
   final bool selected;
   final bool isToday;
-  final bool isFuture;
   final ThemeTokens tokens;
   final String locale;
-  final double barMax;
   final VoidCallback onTap;
 
   @override
@@ -263,13 +262,6 @@ class _DayCell extends StatelessWidget {
     final label = selected
         ? _cap(DateFormat.EEEE(locale).format(day))
         : _initial(DateFormat.E(locale).format(day));
-    final ratio = adherence.ratio ?? 0.0;
-    final barH = isFuture || !adherence.hasDoses
-        ? 3.0
-        : (3.0 + (barMax - 3) * ratio).clamp(3.0, barMax);
-    final barColor = adherence.isComplete
-        ? AppColors.success
-        : (selected || isToday ? AppColors.primary : tokens.textSecondary);
 
     return InkWell(
       onTap: () {
@@ -309,7 +301,9 @@ class _DayCell extends StatelessWidget {
                         : const Color(0xFFF1F5F9)),
                 borderRadius: BorderRadius.circular(Premium.radiusSm),
                 border: isToday && !selected
-                    ? Border.all(color: AppColors.primary.withValues(alpha: 0.4))
+                    ? Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.4),
+                      )
                     : null,
               ),
               child: Text(
@@ -320,19 +314,6 @@ class _DayCell extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   color: selected ? Colors.white : tokens.textPrimary,
                 ),
-              ),
-            ),
-            const SizedBox(height: 6),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeOutCubic,
-              width: 10,
-              height: barH,
-              decoration: BoxDecoration(
-                color: isFuture
-                    ? tokens.border
-                    : barColor.withValues(alpha: adherence.hasDoses ? 1 : 0.25),
-                borderRadius: BorderRadius.circular(2),
               ),
             ),
           ],

@@ -62,6 +62,8 @@ class DoseTimeline extends StatelessWidget {
     final sorted = [...prises]
       ..sort((a, b) => a.heurePrevue.compareTo(b.heurePrevue));
 
+    final nextId = _nextUntakenId(sorted, now);
+
     final groups = <_Moment, List<PriseDuJour>>{};
     for (final p in sorted) {
       groups.putIfAbsent(_momentOf(p.heurePrevue.toLocal()), () => []).add(p);
@@ -83,6 +85,7 @@ class DoseTimeline extends StatelessWidget {
             busy: busy,
             isFirst: index == 0,
             isLast: index == lastIndex,
+            isNext: prise.id == nextId,
             onConfirm: () => onConfirm(prise),
           ),
         );
@@ -99,6 +102,23 @@ class DoseTimeline extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       child: body,
     );
+  }
+
+  /// Prochaine prise non confirmée : overdue la plus ancienne, sinon la plus proche.
+  static String? _nextUntakenId(List<PriseDuJour> sorted, DateTime now) {
+    PriseDuJour? overdue;
+    PriseDuJour? upcoming;
+    for (final p in sorted) {
+      if (p.isTaken) continue;
+      final t = p.heurePrevue.toLocal();
+      if (t.isBefore(now) || t.isAtSameMomentAs(now)) {
+        overdue ??= p;
+      } else {
+        upcoming ??= p;
+        break;
+      }
+    }
+    return (overdue ?? upcoming)?.id;
   }
 
   static _Moment _momentOf(DateTime time) {
@@ -132,7 +152,7 @@ class _MomentHeader extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(
-            width: 24,
+            width: 28,
             child: Icon(icon, size: 14, color: tokens.textSecondary),
           ),
           Text(
@@ -158,6 +178,7 @@ class _DoseRow extends StatelessWidget {
     required this.busy,
     required this.isFirst,
     required this.isLast,
+    required this.isNext,
     required this.onConfirm,
   });
 
@@ -166,6 +187,7 @@ class _DoseRow extends StatelessWidget {
   final bool busy;
   final bool isFirst;
   final bool isLast;
+  final bool isNext;
   final VoidCallback onConfirm;
 
   static const double _height = 56;
@@ -182,13 +204,22 @@ class _DoseRow extends StatelessWidget {
             ? AppColors.warning
             : AppColors.primary;
 
-    return SizedBox(
+    return Container(
       height: _height,
+      margin: const EdgeInsets.symmetric(vertical: 1),
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      decoration: BoxDecoration(
+        color: isNext
+            ? AppColors.primary.withValues(alpha: tokens.isDark ? 0.12 : 0.05)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(Premium.radiusSm),
+      ),
       child: Row(
         children: [
           _Rail(
             accent: accent,
             filled: taken,
+            emphasized: isNext,
             isFirst: isFirst,
             isLast: isLast,
             tokens: tokens,
@@ -202,7 +233,11 @@ class _DoseRow extends StatelessWidget {
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -0.3,
-                color: taken ? tokens.textSecondary : tokens.textPrimary,
+                color: taken
+                    ? tokens.textSecondary
+                    : isNext
+                        ? AppColors.primary
+                        : tokens.textPrimary,
               ),
             ),
           ),
@@ -218,7 +253,7 @@ class _DoseRow extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: AppTheme.fontFamily,
                     fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: isNext ? FontWeight.w700 : FontWeight.w600,
                     height: 1.2,
                     color: taken ? tokens.textSecondary : tokens.textPrimary,
                   ),
@@ -265,6 +300,7 @@ class _Rail extends StatelessWidget {
   const _Rail({
     required this.accent,
     required this.filled,
+    required this.emphasized,
     required this.isFirst,
     required this.isLast,
     required this.tokens,
@@ -272,36 +308,52 @@ class _Rail extends StatelessWidget {
 
   final Color accent;
   final bool filled;
+  final bool emphasized;
   final bool isFirst;
   final bool isLast;
   final ThemeTokens tokens;
 
   @override
   Widget build(BuildContext context) {
-    final line = tokens.border;
+    final line = tokens.isDark
+        ? Colors.white.withValues(alpha: 0.14)
+        : const Color(0xFFD6DEE8);
+    final dotSize = emphasized ? 14.0 : 12.0;
 
     return SizedBox(
-      width: 22,
+      width: 26,
       child: Column(
         children: [
           Expanded(
             child: Container(
-              width: 1.5,
+              width: 2,
               color: isFirst ? Colors.transparent : line,
             ),
           ),
           Container(
-            width: 12,
-            height: 12,
+            width: dotSize,
+            height: dotSize,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: filled ? accent : Colors.transparent,
-              border: Border.all(color: accent, width: 1.5),
+              border: Border.all(
+                color: accent,
+                width: emphasized ? 2.2 : 1.8,
+              ),
+              boxShadow: emphasized && !filled
+                  ? [
+                      BoxShadow(
+                        color: accent.withValues(alpha: 0.28),
+                        blurRadius: 6,
+                        spreadRadius: 0.5,
+                      ),
+                    ]
+                  : null,
             ),
           ),
           Expanded(
             child: Container(
-              width: 1.5,
+              width: 2,
               color: isLast ? Colors.transparent : line,
             ),
           ),

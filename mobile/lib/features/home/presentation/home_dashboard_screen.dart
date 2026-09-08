@@ -13,10 +13,10 @@ import '../application/home_controller.dart';
 import '../domain/dashboard_models.dart';
 import 'widgets/add_constante_sheet.dart';
 import 'widgets/check_in_card.dart';
-import 'widgets/day_progress_card.dart';
 import 'widgets/day_ring.dart';
 import 'widgets/dose_timeline.dart';
 import 'widgets/home_header.dart';
+import 'widgets/home_kpis_week.dart';
 import 'widgets/home_skeleton.dart';
 import 'widgets/next_dose_card.dart';
 import 'widgets/snooze_sheet.dart';
@@ -88,21 +88,11 @@ class HomeDashboardScreen extends ConsumerWidget {
         (state.needsCheckIn || state.todayCheckIn != null);
     final traitements = dash?.traitements ?? const <DashboardTraitement>[];
     final dashLoading = state.loading && state.dashboard == null;
+    final nowKpis = DateTime.now();
 
     return [
-      if (cta != null) ...[cta, const SizedBox(height: 12)],
-
-      // Progression du jour (prises confirmées / prévues) — pas un score santé
-      if (state.isTodaySelected) ...[
-        DayProgressCard(
-          dashboard: dash,
-          now: now,
-          loading: dashLoading,
-        ),
-        const SizedBox(height: 12),
-      ],
-
-      // Hero prochaine prise
+      // 1. CTA setup puis hero action
+      if (cta != null) ...[cta, const SizedBox(height: 16)],
       if (state.isTodaySelected)
         if (prises.isNotEmpty) ...[
           NextDoseCard(
@@ -113,33 +103,30 @@ class HomeDashboardScreen extends ConsumerWidget {
             onConfirm: () => _confirmNext(context, ref, dash, now, l10n),
             onSnooze: () => _snoozeNext(context, ref, dash, now, l10n),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
         ] else if (cta == null && !dashLoading) ...[
-          _QuietNotice(
+          HomeQuietHero(
             title: l10n.homeAllClearTitle,
             body: l10n.homeAllClearBody,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
         ]
       else ...[
         _DaySummaryCard(day: state.day, prises: prises, l10n: l10n),
-        const SizedBox(height: 12),
-      ],
-
-      // Résumé : dernières constantes réelles
-      if (state.isTodaySelected) ...[
-        TodaySummaryCard(
-          series: state.constanteSeries,
-          known: state.constantesKnown,
-          onAdd: () => AddConstanteSheet.show(context),
-          onViewAll: () =>
-              ref.read(homeTabIndexProvider.notifier).state = 1,
-          subtitle: _summarySubtitle(state, l10n),
-        ),
         const SizedBox(height: 16),
       ],
 
-      // Panneau Aujourd’hui : check-in + timeline
+      // 2. KPIs du jour + graphe semaine
+      HomeKpisWeek(
+        pending: dash?.pendingCount(nowKpis) ?? 0,
+        taken: dash?.takenCount() ?? 0,
+        late: dash?.lateCount(nowKpis) ?? 0,
+        week: state.week,
+        weekLoading: state.weekLoading,
+      ),
+      const SizedBox(height: 20),
+
+      // 3. Timeline + check-in
       _SectionLabel(
         title: state.isTodaySelected
             ? l10n.homeTodayTitle
@@ -172,9 +159,9 @@ class HomeDashboardScreen extends ConsumerWidget {
         ),
       ),
 
-      // Panneau Suivi : traitement (+ détail constantes si besoin)
+      // 4. Traitement
       if (traitements.isNotEmpty) ...[
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         _SectionLabel(title: l10n.navCare),
         const SizedBox(height: 8),
         PremiumCard(
@@ -197,6 +184,29 @@ class HomeDashboardScreen extends ConsumerWidget {
               ],
             ],
           ),
+        ),
+      ],
+
+      // 5. Constantes — en bas, pas en résumé wellness
+      if (state.isTodaySelected && state.constantesKnown) ...[
+        const SizedBox(height: 20),
+        _SectionLabel(title: l10n.homeVitalsTitle),
+        const SizedBox(height: 8),
+        TodaySummaryCard(
+          series: state.constanteSeries,
+          known: state.constantesKnown,
+          onAdd: () => AddConstanteSheet.show(context),
+          onViewAll: () =>
+              ref.read(homeTabIndexProvider.notifier).state = 1,
+          subtitle: _summarySubtitle(state, l10n),
+        ),
+      ] else if (state.isTodaySelected && !state.constantesKnown) ...[
+        const SizedBox(height: 20),
+        TodaySummaryCard(
+          series: const [],
+          known: false,
+          onAdd: () => AddConstanteSheet.show(context),
+          onViewAll: () {},
         ),
       ],
     ];
@@ -449,41 +459,6 @@ class _CtaBanner extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _QuietNotice extends StatelessWidget {
-  const _QuietNotice({required this.title, required this.body});
-
-  final String title;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = ThemeTokens.of(context);
-    return PremiumCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            body,
-            style: TextStyle(
-              fontFamily: AppTheme.fontFamily,
-              fontSize: 13,
-              height: 1.35,
-              color: tokens.textSecondary,
-            ),
-          ),
-        ],
       ),
     );
   }

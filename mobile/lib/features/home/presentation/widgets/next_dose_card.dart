@@ -66,9 +66,18 @@ class _NextDoseCardState extends State<NextDoseCard> {
     final l10n = AppLocalizations.of(context);
     final next = widget.next;
     final allDone = next == null && widget.total > 0;
-    final colors = allDone
-        ? const [AppColors.success, AppColors.successDark]
-        : const [AppColors.primarySoft, AppColors.primaryDark];
+    final late = next != null && next.heurePrevue.toLocal().isBefore(_now);
+
+    final List<Color> colors;
+    if (allDone) {
+      colors = const [AppColors.success, AppColors.successDark];
+    } else if (late) {
+      colors = const [Color(0xFFFBBF24), Color(0xFFD97706)];
+    } else {
+      colors = const [AppColors.primarySoft, AppColors.primaryDark];
+    }
+
+    final dark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       decoration: BoxDecoration(
@@ -78,41 +87,43 @@ class _NextDoseCardState extends State<NextDoseCard> {
           end: Alignment.bottomRight,
           colors: colors,
         ),
+        boxShadow: dark
+            ? null
+            : [
+                BoxShadow(
+                  color: colors.last.withValues(alpha: 0.28),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
       ),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       child: allDone
           ? _doneBody(context, l10n)
-          : _nextBody(context, l10n, next!),
+          : _nextBody(context, l10n, next!, late: late),
     );
   }
 
   Widget _nextBody(
     BuildContext context,
     AppLocalizations l10n,
-    PriseDuJour next,
-  ) {
+    PriseDuJour next, {
+    required bool late,
+  }) {
     final scheduled = next.heurePrevue.toLocal();
-    final late = scheduled.isBefore(_now);
-    final delta = late ? _now.difference(scheduled) : scheduled.difference(_now);
+    final delta =
+        late ? _now.difference(scheduled) : scheduled.difference(_now);
+    final countdown = _countdownText(l10n, delta, late);
+    final actionFg = late ? const Color(0xFF92400E) : AppColors.primaryDark;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                l10n.homeNextDoseLabel.toUpperCase(),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: _label,
-              ),
-            ),
-            _CountdownChip(
-              text: _countdownText(l10n, delta, late),
-              late: late,
-            ),
-          ],
+        Text(
+          l10n.homeNextDoseLabel.toUpperCase(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: _label,
         ),
         const SizedBox(height: 12),
         Row(
@@ -135,15 +146,29 @@ class _NextDoseCardState extends State<NextDoseCard> {
                   ),
                   const SizedBox(height: 8),
                   Text(
+                    countdown,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: AppTheme.fontFamily,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      height: 1.2,
+                      letterSpacing: -0.3,
+                      color: Colors.white.withValues(alpha: 0.94),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
                     next.medicamentNom,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: AppTheme.fontFamily,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                       height: 1.2,
-                      color: Colors.white,
+                      color: Colors.white.withValues(alpha: 0.92),
                     ),
                   ),
                   if (next.dosage.isNotEmpty) ...[
@@ -156,7 +181,7 @@ class _NextDoseCardState extends State<NextDoseCard> {
                         fontFamily: AppTheme.fontFamily,
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: Colors.white.withValues(alpha: 0.8),
+                        color: Colors.white.withValues(alpha: 0.78),
                       ),
                     ),
                   ],
@@ -181,10 +206,12 @@ class _NextDoseCardState extends State<NextDoseCard> {
             Expanded(
               flex: 3,
               child: _SolidAction(
+                key: ValueKey(next.id),
                 label: l10n.homeTakeCta,
                 icon: IconsaxPlusLinear.tick_circle,
-                foreground: AppColors.primaryDark,
-                onTap: widget.busy ? null : widget.onConfirm,
+                foreground: actionFg,
+                enabled: !widget.busy,
+                onTap: widget.onConfirm,
               ),
             ),
             const SizedBox(width: 8),
@@ -269,36 +296,64 @@ class _NextDoseCardState extends State<NextDoseCard> {
   );
 }
 
-class _CountdownChip extends StatelessWidget {
-  const _CountdownChip({required this.text, required this.late});
+/// Quiet / all-clear — même silhouette gradient que le hero « journée terminée ».
+class HomeQuietHero extends StatelessWidget {
+  const HomeQuietHero({
+    super.key,
+    required this.title,
+    required this.body,
+  });
 
-  final String text;
-  final bool late;
+  final String title;
+  final String body;
 
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    const colors = [AppColors.success, AppColors.successDark];
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: late ? Colors.white : Colors.white.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(Premium.radiusSm),
+        borderRadius: BorderRadius.circular(Premium.radius),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: colors,
+        ),
+        boxShadow: dark
+            ? null
+            : [
+                BoxShadow(
+                  color: AppColors.successDark.withValues(alpha: 0.28),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            late ? IconsaxPlusLinear.info_circle : IconsaxPlusLinear.clock,
-            size: 14,
-            color: late ? AppColors.primaryDark : Colors.white,
-          ),
-          const SizedBox(width: 5),
           Text(
-            text,
+            title,
+            style: const TextStyle(
+              fontFamily: AppTheme.fontFamily,
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              height: 1.15,
+              letterSpacing: -0.6,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            body,
             style: TextStyle(
               fontFamily: AppTheme.fontFamily,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: late ? AppColors.primaryDark : Colors.white,
+              fontSize: 13,
+              height: 1.35,
+              fontWeight: FontWeight.w500,
+              color: Colors.white.withValues(alpha: 0.85),
             ),
           ),
         ],
@@ -307,54 +362,92 @@ class _CountdownChip extends StatelessWidget {
   }
 }
 
-class _SolidAction extends StatelessWidget {
+class _SolidAction extends StatefulWidget {
   const _SolidAction({
+    super.key,
     required this.label,
     required this.icon,
     required this.foreground,
+    required this.enabled,
     required this.onTap,
   });
 
   final String label;
   final IconData icon;
   final Color foreground;
-  final VoidCallback? onTap;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  State<_SolidAction> createState() => _SolidActionState();
+}
+
+class _SolidActionState extends State<_SolidAction> {
+  bool _pressed = false;
+  bool _confirmed = false;
+
+  Future<void> _handleTap() async {
+    if (!widget.enabled || _confirmed) return;
+    HapticFeedback.mediumImpact();
+    setState(() => _confirmed = true);
+    await Future<void>.delayed(const Duration(milliseconds: 380));
+    if (!mounted) return;
+    widget.onTap();
+  }
 
   @override
   Widget build(BuildContext context) {
     final radius = BorderRadius.circular(Premium.radiusSm);
-    return Material(
-      color: Colors.white.withValues(alpha: onTap == null ? 0.55 : 1),
-      borderRadius: radius,
-      child: InkWell(
+    final disabled = !widget.enabled && !_confirmed;
+
+    return AnimatedScale(
+      scale: _pressed ? 0.98 : 1,
+      duration: const Duration(milliseconds: 90),
+      curve: Curves.easeOut,
+      child: Material(
+        color: Colors.white.withValues(alpha: disabled ? 0.55 : 1),
         borderRadius: radius,
-        onTap: onTap == null
-            ? null
-            : () {
-                HapticFeedback.mediumImpact();
-                onTap!();
-              },
-        child: SizedBox(
-          height: 44,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 18, color: foreground),
-              const SizedBox(width: 7),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: AppTheme.fontFamily,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: foreground,
-                  ),
-                ),
-              ),
-            ],
+        child: InkWell(
+          borderRadius: radius,
+          onTap: disabled ? null : _handleTap,
+          onHighlightChanged: (v) {
+            if (mounted) setState(() => _pressed = v);
+          },
+          child: SizedBox(
+            height: 44,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+              child: _confirmed
+                  ? Icon(
+                      IconsaxPlusLinear.tick_circle,
+                      key: const ValueKey('check'),
+                      size: 22,
+                      color: widget.foreground,
+                    )
+                  : Row(
+                      key: const ValueKey('label'),
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(widget.icon, size: 18, color: widget.foreground),
+                        const SizedBox(width: 7),
+                        Flexible(
+                          child: Text(
+                            widget.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: AppTheme.fontFamily,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: widget.foreground,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
           ),
         ),
       ),
