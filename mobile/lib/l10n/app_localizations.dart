@@ -1217,7 +1217,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeCareSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Treatments, adherence and vitals — your follow-up in one place.'**
+  /// **'Vitals, doses and log — the detail of your follow-up.'**
   String get homeCareSubtitle;
 
   /// No description provided for @homeNetworkSubtitle.
@@ -1285,6 +1285,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Measure'**
   String get homeCareActionVital;
+
+  /// No description provided for @homeCareJournal.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up log'**
+  String get homeCareJournal;
+
+  /// No description provided for @homeCareJournalEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here yet. Confirm a dose or add a measurement.'**
+  String get homeCareJournalEmpty;
+
+  /// No description provided for @homeCareProgressPrises.
+  ///
+  /// In en, this message translates to:
+  /// **'Doses'**
+  String get homeCareProgressPrises;
+
+  /// No description provided for @homeCareProgressLate.
+  ///
+  /// In en, this message translates to:
+  /// **'Late'**
+  String get homeCareProgressLate;
+
+  /// No description provided for @homeCareProgressCheckIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Check-in'**
+  String get homeCareProgressCheckIn;
+
+  /// No description provided for @homeCareProgressCheckInTodo.
+  ///
+  /// In en, this message translates to:
+  /// **'To do'**
+  String get homeCareProgressCheckInTodo;
+
+  /// No description provided for @homeCareProgressCheckInOk.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get homeCareProgressCheckInOk;
+
+  /// No description provided for @homeCareProgressCheckInBad.
+  ///
+  /// In en, this message translates to:
+  /// **'Not great'**
+  String get homeCareProgressCheckInBad;
+
+  /// No description provided for @homeCareHeroDosesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Today’s doses'**
+  String get homeCareHeroDosesLabel;
+
+  /// No description provided for @homeCareHeroDosesValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{taken} / {total}'**
+  String homeCareHeroDosesValue(int taken, int total);
+
+  /// No description provided for @homeCareHeroNoVital.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a measurement to see your curve here.'**
+  String get homeCareHeroNoVital;
+
+  /// No description provided for @homeCareFeedPriseTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'Taken'**
+  String get homeCareFeedPriseTaken;
+
+  /// No description provided for @homeCareFeedPriseMissed.
+  ///
+  /// In en, this message translates to:
+  /// **'Missed'**
+  String get homeCareFeedPriseMissed;
+
+  /// No description provided for @homeCareFeedPrisePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get homeCareFeedPrisePending;
+
+  /// No description provided for @homeCareOfValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{current} of {total}'**
+  String homeCareOfValue(int current, int total);
 
   /// No description provided for @homeThemeLabel.
   ///

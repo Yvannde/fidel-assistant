@@ -204,7 +204,7 @@
   },
   "homeActionTraitementTitle": "Ajouter un traitement",
   "homeActionTraitementBody": "On note d’abord la maladie, les médicaments viennent juste après.",
-  "homeCareSubtitle": "Traitements, observance et mesures — ton suivi au même endroit.",
+  "homeCareSubtitle": "Mesures, prises et journal — le détail de ton suivi.",
   "homeNetworkSubtitle": "Accompagner un proche, ou inviter quelqu’un à t’aider — toujours avec un accord clair.",
   "homeCareMedsReady": "Médicaments enregistrés",
   "homeCareTreatments": "Tes traitements",
@@ -216,6 +216,33 @@
   "homeCareActionMeds": "Médicament",
   "homeCareActionMedsSetup": "Configurer",
   "homeCareActionVital": "Mesure",
+  "homeCareJournal": "Journal du suivi",
+  "homeCareJournalEmpty": "Rien à afficher pour l’instant. Confirme une prise ou ajoute une mesure.",
+  "homeCareProgressPrises": "Prises",
+  "homeCareProgressLate": "Retards",
+  "homeCareProgressCheckIn": "Check-in",
+  "homeCareProgressCheckInTodo": "À faire",
+  "homeCareProgressCheckInOk": "Ça va",
+  "homeCareProgressCheckInBad": "Pas top",
+  "homeCareHeroDosesLabel": "Prises du jour",
+  "homeCareHeroDosesValue": "{taken} / {total}",
+  "@homeCareHeroDosesValue": {
+    "placeholders": {
+      "taken": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "homeCareHeroNoVital": "Ajoute une mesure pour voir ta courbe ici.",
+  "homeCareFeedPriseTaken": "Confirmée",
+  "homeCareFeedPriseMissed": "Manquée",
+  "homeCareFeedPrisePending": "En attente",
+  "homeCareOfValue": "{current} sur {total}",
+  "@homeCareOfValue": {
+    "placeholders": {
+      "current": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
   "homeThemeLabel": "Apparence",
   "homeThemeLight": "Clair",
   "homeThemeDark": "Sombre",

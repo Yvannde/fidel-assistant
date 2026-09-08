@@ -219,7 +219,7 @@
   },
   "homeActionTraitementTitle": "Add a treatment",
   "homeActionTraitementBody": "We note the condition first; medicines come right after.",
-  "homeCareSubtitle": "Treatments, adherence and vitals — your follow-up in one place.",
+  "homeCareSubtitle": "Vitals, doses and log — the detail of your follow-up.",
   "homeNetworkSubtitle": "Support a relative, or invite someone to help you — always with a clear yes.",
   "homeCareMedsReady": "Medicines saved",
   "homeCareTreatments": "Your treatments",
@@ -231,6 +231,33 @@
   "homeCareActionMeds": "Medicine",
   "homeCareActionMedsSetup": "Set up",
   "homeCareActionVital": "Measure",
+  "homeCareJournal": "Follow-up log",
+  "homeCareJournalEmpty": "Nothing here yet. Confirm a dose or add a measurement.",
+  "homeCareProgressPrises": "Doses",
+  "homeCareProgressLate": "Late",
+  "homeCareProgressCheckIn": "Check-in",
+  "homeCareProgressCheckInTodo": "To do",
+  "homeCareProgressCheckInOk": "OK",
+  "homeCareProgressCheckInBad": "Not great",
+  "homeCareHeroDosesLabel": "Today’s doses",
+  "homeCareHeroDosesValue": "{taken} / {total}",
+  "@homeCareHeroDosesValue": {
+    "placeholders": {
+      "taken": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "homeCareHeroNoVital": "Add a measurement to see your curve here.",
+  "homeCareFeedPriseTaken": "Taken",
+  "homeCareFeedPriseMissed": "Missed",
+  "homeCareFeedPrisePending": "Pending",
+  "homeCareOfValue": "{current} of {total}",
+  "@homeCareOfValue": {
+    "placeholders": {
+      "current": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
   "homeThemeLabel": "Appearance",
   "homeThemeLight": "Light",
   "homeThemeDark": "Dark",

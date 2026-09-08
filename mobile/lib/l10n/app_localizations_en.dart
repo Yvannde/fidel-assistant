@@ -615,7 +615,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeCareSubtitle =>
-      'Treatments, adherence and vitals — your follow-up in one place.';
+      'Vitals, doses and log — the detail of your follow-up.';
 
   @override
   String get homeNetworkSubtitle =>
@@ -650,6 +650,56 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeCareActionVital => 'Measure';
+
+  @override
+  String get homeCareJournal => 'Follow-up log';
+
+  @override
+  String get homeCareJournalEmpty =>
+      'Nothing here yet. Confirm a dose or add a measurement.';
+
+  @override
+  String get homeCareProgressPrises => 'Doses';
+
+  @override
+  String get homeCareProgressLate => 'Late';
+
+  @override
+  String get homeCareProgressCheckIn => 'Check-in';
+
+  @override
+  String get homeCareProgressCheckInTodo => 'To do';
+
+  @override
+  String get homeCareProgressCheckInOk => 'OK';
+
+  @override
+  String get homeCareProgressCheckInBad => 'Not great';
+
+  @override
+  String get homeCareHeroDosesLabel => 'Today’s doses';
+
+  @override
+  String homeCareHeroDosesValue(int taken, int total) {
+    return '$taken / $total';
+  }
+
+  @override
+  String get homeCareHeroNoVital => 'Add a measurement to see your curve here.';
+
+  @override
+  String get homeCareFeedPriseTaken => 'Taken';
+
+  @override
+  String get homeCareFeedPriseMissed => 'Missed';
+
+  @override
+  String get homeCareFeedPrisePending => 'Pending';
+
+  @override
+  String homeCareOfValue(int current, int total) {
+    return '$current of $total';
+  }
 
   @override
   String get homeThemeLabel => 'Appearance';

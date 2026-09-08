@@ -621,7 +621,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get homeCareSubtitle =>
-      'Traitements, observance et mesures — ton suivi au même endroit.';
+      'Mesures, prises et journal — le détail de ton suivi.';
 
   @override
   String get homeNetworkSubtitle =>
@@ -656,6 +656,57 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get homeCareActionVital => 'Mesure';
+
+  @override
+  String get homeCareJournal => 'Journal du suivi';
+
+  @override
+  String get homeCareJournalEmpty =>
+      'Rien à afficher pour l’instant. Confirme une prise ou ajoute une mesure.';
+
+  @override
+  String get homeCareProgressPrises => 'Prises';
+
+  @override
+  String get homeCareProgressLate => 'Retards';
+
+  @override
+  String get homeCareProgressCheckIn => 'Check-in';
+
+  @override
+  String get homeCareProgressCheckInTodo => 'À faire';
+
+  @override
+  String get homeCareProgressCheckInOk => 'Ça va';
+
+  @override
+  String get homeCareProgressCheckInBad => 'Pas top';
+
+  @override
+  String get homeCareHeroDosesLabel => 'Prises du jour';
+
+  @override
+  String homeCareHeroDosesValue(int taken, int total) {
+    return '$taken / $total';
+  }
+
+  @override
+  String get homeCareHeroNoVital =>
+      'Ajoute une mesure pour voir ta courbe ici.';
+
+  @override
+  String get homeCareFeedPriseTaken => 'Confirmée';
+
+  @override
+  String get homeCareFeedPriseMissed => 'Manquée';
+
+  @override
+  String get homeCareFeedPrisePending => 'En attente';
+
+  @override
+  String homeCareOfValue(int current, int total) {
+    return '$current sur $total';
+  }
 
   @override
   String get homeThemeLabel => 'Apparence';

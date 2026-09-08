@@ -10,11 +10,12 @@ import '../../../l10n/app_localizations.dart';
 import '../application/home_controller.dart';
 import '../domain/dashboard_models.dart';
 import 'widgets/add_constante_sheet.dart';
-import 'widgets/constante_card.dart';
-import 'widgets/home_kpis_week.dart';
+import 'widgets/care_activity_feed.dart';
+import 'widgets/care_hero_metric.dart';
+import 'widgets/care_progress_cards.dart';
 import 'widgets/treatment_card.dart';
 
-/// Onglet Soins — hub de suivi (traitements, observance, constantes).
+/// Onglet Soins — hub de suivi dense (hero, courbe, progression, journal).
 class HomeCareScreen extends ConsumerWidget {
   const HomeCareScreen({super.key});
 
@@ -25,12 +26,24 @@ class HomeCareScreen extends ConsumerWidget {
     final state = ref.watch(homeControllerProvider);
     final dash = state.dashboard;
     final traitements = dash?.traitements ?? const <DashboardTraitement>[];
+    final prises = dash?.prisesAujourdhui ?? const <PriseDuJour>[];
     final padTop = 12 + MediaQuery.paddingOf(context).top;
     final now = DateTime.now();
 
     final unconfigured = dash?.firstUnconfigured;
     final medsTargetId = unconfigured?.id ??
         (traitements.isNotEmpty ? traitements.first.id : null);
+    final taken = dash?.takenCount() ?? 0;
+    final late = dash?.lateCount(now) ?? 0;
+    final totalPrises = prises.length;
+
+    final feedItems = CareFeedItem.build(
+      l10n: l10n,
+      context: context,
+      prises: prises,
+      constantes: state.constantes,
+      checkIn: state.todayCheckIn,
+    );
 
     return RefreshIndicator(
       color: AppColors.primary,
@@ -62,7 +75,17 @@ class HomeCareScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 18),
-          if (state.hasPatient) ...[
+
+          if (!state.hasPatient)
+            _CareEmptyCard(
+              icon: IconsaxPlusLinear.health,
+              title: l10n.homeCareEmptyPatientTitle,
+              body: l10n.homeActivateBody,
+              cta: l10n.navHome,
+              onTap: () =>
+                  ref.read(homeTabIndexProvider.notifier).state = 0,
+            )
+          else ...[
             _CareQuickActions(
               onTraitement: () => context.push('/home/traitement'),
               onMeds: medsTargetId == null
@@ -74,112 +97,91 @@ class HomeCareScreen extends ConsumerWidget {
               onVital: () => AddConstanteSheet.show(context),
               medsNeedsConfig: unconfigured != null,
             ),
-            const SizedBox(height: 22),
-          ],
+            const SizedBox(height: 18),
 
-          if (!state.hasPatient)
-            _CareEmptyCard(
-              icon: IconsaxPlusLinear.health,
-              title: l10n.homeCareEmptyPatientTitle,
-              body: l10n.homeActivateBody,
-              cta: l10n.navHome,
-              onTap: () =>
-                  ref.read(homeTabIndexProvider.notifier).state = 0,
-            )
-          else if (traitements.isEmpty)
-            _CareEmptyCard(
-              icon: IconsaxPlusLinear.hospital,
-              title: l10n.homeActionTraitementTitle,
-              body: l10n.homeActionTraitementBody,
-              cta: l10n.homeActionTraitementTitle,
-              onTap: () => context.push('/home/traitement'),
-            )
-          else ...[
-            if (unconfigured != null) ...[
+            if (traitements.isEmpty)
               _CareEmptyCard(
-                icon: IconsaxPlusLinear.add_circle,
-                title: l10n.homeActionMedsTitle,
-                body: l10n.homeActionMedsFor(unconfigured.maladieNom),
-                cta: l10n.homeCareConfigureMeds,
-                onTap: () => context.push(
-                  '/home/medicaments',
-                  extra: unconfigured.id,
+                icon: IconsaxPlusLinear.hospital,
+                title: l10n.homeActionTraitementTitle,
+                body: l10n.homeActionTraitementBody,
+                cta: l10n.homeActionTraitementTitle,
+                onTap: () => context.push('/home/traitement'),
+              )
+            else ...[
+              if (unconfigured != null) ...[
+                _CareEmptyCard(
+                  icon: IconsaxPlusLinear.add_circle,
+                  title: l10n.homeActionMedsTitle,
+                  body: l10n.homeActionMedsFor(unconfigured.maladieNom),
+                  cta: l10n.homeCareConfigureMeds,
+                  onTap: () => context.push(
+                    '/home/medicaments',
+                    extra: unconfigured.id,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-            ],
+                const SizedBox(height: 16),
+              ],
 
-            _CareSectionLabel(title: l10n.homeCareTreatments),
-            const SizedBox(height: 8),
-            PremiumCard(
-              padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  for (var i = 0; i < traitements.length; i++) ...[
-                    if (i > 0) ...[
-                      const SizedBox(height: 12),
-                      Divider(height: 1, color: tokens.border),
-                      const SizedBox(height: 12),
-                    ],
-                    TreatmentBlock(
-                      traitement: traitements[i],
-                      detail: state.traitementDetails[traitements[i].id],
-                    ),
-                    const SizedBox(height: 10),
-                    if (!traitements[i].medicamentsConfigures)
+              CareHeroMetric(
+                series: state.constantesKnown
+                    ? state.constanteSeries
+                    : const [],
+                prises: prises,
+                taken: taken,
+                totalPrises: totalPrises,
+                onAddVital: () => AddConstanteSheet.show(context),
+                onRefresh: () =>
+                    ref.read(homeControllerProvider.notifier).load(),
+              ),
+              const SizedBox(height: 14),
+              CareProgressCards(
+                taken: taken,
+                total: totalPrises,
+                late: late,
+                checkIn: state.checkInKnown ? state.todayCheckIn : null,
+              ),
+              const SizedBox(height: 22),
+              _CareSectionLabel(title: l10n.homeCareJournal),
+              const SizedBox(height: 10),
+              CareActivityFeed(
+                items: feedItems,
+                onAddVital: () => AddConstanteSheet.show(context),
+                onPendingPriseTap: () =>
+                    ref.read(homeTabIndexProvider.notifier).state = 0,
+              ),
+              const SizedBox(height: 22),
+              _CareSectionLabel(title: l10n.homeCareTreatments),
+              const SizedBox(height: 8),
+              PremiumCard(
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (var i = 0; i < traitements.length; i++) ...[
+                      if (i > 0) ...[
+                        const SizedBox(height: 12),
+                        Divider(height: 1, color: tokens.border),
+                        const SizedBox(height: 12),
+                      ],
+                      TreatmentBlock(
+                        traitement: traitements[i],
+                        detail: state.traitementDetails[traitements[i].id],
+                      ),
+                      const SizedBox(height: 10),
                       _CareInlineCta(
-                        label: l10n.homeCareConfigureMeds,
-                        onTap: () => context.push(
-                          '/home/medicaments',
-                          extra: traitements[i].id,
-                        ),
-                      )
-                    else
-                      _CareInlineCta(
-                        label: l10n.homeCareAddMed,
+                        label: traitements[i].medicamentsConfigures
+                            ? l10n.homeCareAddMed
+                            : l10n.homeCareConfigureMeds,
                         onTap: () => context.push(
                           '/home/medicaments',
                           extra: traitements[i].id,
                         ),
                       ),
+                    ],
                   ],
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 22),
-            _CareSectionLabel(title: l10n.homeCareWeek),
-            const SizedBox(height: 8),
-            HomeKpisWeek(
-              pending: dash?.pendingCount(now) ?? 0,
-              taken: dash?.takenCount() ?? 0,
-              late: dash?.lateCount(now) ?? 0,
-              week: state.week,
-              weekLoading: state.weekLoading,
-            ),
-          ],
-
-          if (state.hasPatient) ...[
-            const SizedBox(height: 22),
-            _CareSectionLabel(title: l10n.homeVitalsTitle),
-            const SizedBox(height: 8),
-            if (state.constantesKnown && state.constanteSeries.isNotEmpty)
-              PremiumCard(
-                padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-                child: ConstanteBlock(
-                  series: state.constanteSeries,
-                  onAdd: () => AddConstanteSheet.show(context),
                 ),
-              )
-            else
-              _CareEmptyCard(
-                icon: IconsaxPlusLinear.chart_2,
-                title: l10n.homeVitalsEmptyTitle,
-                body: l10n.homeVitalsEmptyBody,
-                cta: l10n.homeVitalsAdd,
-                onTap: () => AddConstanteSheet.show(context),
               ),
+            ],
           ],
         ],
       ),
@@ -246,7 +248,7 @@ class _CareQuickActions extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(
           child: _QuickActionChip(
-            icon: IconsaxPlusLinear.chart_2,
+            icon: IconsaxPlusLinear.activity,
             label: l10n.homeCareActionVital,
             onTap: onVital,
           ),
