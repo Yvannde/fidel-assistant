@@ -13,6 +13,7 @@ import 'widgets/add_constante_sheet.dart';
 import 'widgets/care_activity_feed.dart';
 import 'widgets/care_hero_metric.dart';
 import 'widgets/care_progress_cards.dart';
+import 'widgets/home_skeleton.dart';
 import 'widgets/treatment_card.dart';
 
 /// Onglet Soins — hub de suivi dense (hero, courbe, progression, journal).
@@ -76,7 +77,9 @@ class HomeCareScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 18),
 
-          if (!state.hasPatient)
+          if (state.loading && state.profile == null)
+            const HomeCareSkeleton()
+          else if (!state.hasPatient)
             _CareEmptyCard(
               icon: IconsaxPlusLinear.health,
               title: l10n.homeCareEmptyPatientTitle,
@@ -85,6 +88,8 @@ class HomeCareScreen extends ConsumerWidget {
               onTap: () =>
                   ref.read(homeTabIndexProvider.notifier).state = 0,
             )
+          else if (state.loading && state.dashboard == null)
+            const HomeCareSkeleton()
           else ...[
             _CareQuickActions(
               onTraitement: () => context.push('/home/traitement'),

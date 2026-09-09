@@ -21,6 +21,12 @@ import '../../features/home/presentation/aidants_invite_screen.dart';
 import '../../features/home/presentation/aidants_list_screen.dart';
 import '../../features/home/presentation/home_notifications_screen.dart';
 import '../../features/home/presentation/home_shell.dart';
+import '../../features/home/presentation/profile_account_screen.dart';
+import '../../features/home/presentation/profile_consent_screen.dart';
+import '../../features/home/presentation/profile_contacts_urgence_screen.dart';
+import '../../features/home/presentation/profile_delete_account_screen.dart';
+import '../../features/home/presentation/profile_patient_settings_screen.dart';
+import '../../features/home/presentation/profile_voix_screen.dart';
 import '../../features/home/presentation/sync_screens.dart';
 import '../../features/medicaments/presentation/medicament_wizard_screen.dart';
 import '../../features/onboarding/presentation/onboarding_besoin_suivi_screen.dart';
@@ -38,7 +44,10 @@ class _RouterRefresh extends ChangeNotifier {
 
 final _routerRefreshProvider = Provider<_RouterRefresh>((ref) {
   final refresh = _RouterRefresh();
-  ref.listen<Locale?>(localeControllerProvider, (_, __) => refresh.ping());
+  // Uniquement au 1er choix de langue (null → fr/en), pas à chaque switch Profil.
+  ref.listen<Locale?>(localeControllerProvider, (prev, next) {
+    if (prev == null && next != null) refresh.ping();
+  });
   ref.listen<AuthSession?>(authSessionProvider, (_, __) => refresh.ping());
   ref.onDispose(refresh.dispose);
   return refresh;
@@ -283,6 +292,48 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => _softPage(
           state: state,
           child: const HomeNotificationsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/profile/account',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const ProfileAccountScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/profile/patient-settings',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const ProfilePatientSettingsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/profile/contacts',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const ProfileContactsUrgenceScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/profile/voix',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const ProfileVoixScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/profile/consent',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const ProfileConsentScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/profile/delete',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const ProfileDeleteAccountScreen(),
         ),
       ),
     ],

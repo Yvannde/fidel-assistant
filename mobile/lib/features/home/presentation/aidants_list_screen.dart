@@ -13,6 +13,7 @@ import '../application/aidants_controller.dart';
 import '../domain/aidant_models.dart';
 import 'widgets/aidants_empty_state.dart';
 import 'widgets/home_lottie.dart';
+import 'widgets/home_skeleton.dart';
 
 /// Liste des aidants liés — structure type « appareils connectés ».
 class AidantsListScreen extends ConsumerStatefulWidget {
@@ -145,10 +146,7 @@ class _AidantsListScreenState extends ConsumerState<AidantsListScreen> {
               ),
               const SizedBox(height: 14),
               if (state.loading && state.aidants.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 28),
-                  child: Center(child: CircularProgressIndicator()),
-                )
+                const ProfileListSkeleton(count: 3)
               else if (state.error != null && state.aidants.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16),

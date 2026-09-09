@@ -88,11 +88,7 @@ class HomeKpisWeek extends StatelessWidget {
                 ),
               ),
               if (showWeekSkeleton)
-                const SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
+                const HomeSkeleton(width: 14, height: 14, radius: 7),
             ],
           ),
           const SizedBox(height: 14),

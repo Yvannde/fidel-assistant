@@ -2281,6 +2281,360 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You’ll sign out on this device. Your data stays safe.'**
   String get profileLogoutConfirm;
+
+  /// No description provided for @commonSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get commonSave;
+
+  /// No description provided for @commonDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get commonDelete;
+
+  /// No description provided for @profileSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get profileSaved;
+
+  /// No description provided for @profileSectionAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get profileSectionAccount;
+
+  /// No description provided for @profileAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account details'**
+  String get profileAccountTitle;
+
+  /// No description provided for @profileAccountTileHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone, time zone'**
+  String get profileAccountTileHint;
+
+  /// No description provided for @profileAccountHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Details linked to your Fidel account — no medical advice here.'**
+  String get profileAccountHint;
+
+  /// No description provided for @profilePhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get profilePhone;
+
+  /// No description provided for @profileEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get profileEmail;
+
+  /// No description provided for @profileTimezone.
+  ///
+  /// In en, this message translates to:
+  /// **'Time zone'**
+  String get profileTimezone;
+
+  /// No description provided for @profilePatientSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up settings'**
+  String get profilePatientSettingsTitle;
+
+  /// No description provided for @profilePatientSettingsTileHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications, battery, discreet mode'**
+  String get profilePatientSettingsTileHint;
+
+  /// No description provided for @profilePatientSettingsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'These options only apply to your patient follow-up on this device and account.'**
+  String get profilePatientSettingsHint;
+
+  /// No description provided for @profileNotifGranted.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications allowed'**
+  String get profileNotifGranted;
+
+  /// No description provided for @profileNotifGrantedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Whether Fidel may remind you about doses'**
+  String get profileNotifGrantedHint;
+
+  /// No description provided for @profileBatteryExempt.
+  ///
+  /// In en, this message translates to:
+  /// **'Unrestricted battery'**
+  String get profileBatteryExempt;
+
+  /// No description provided for @profileBatteryExemptHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Helps keep reminders working overnight'**
+  String get profileBatteryExemptHint;
+
+  /// No description provided for @profileDiscreteNotif.
+  ///
+  /// In en, this message translates to:
+  /// **'Discreet notifications'**
+  String get profileDiscreteNotif;
+
+  /// No description provided for @profileDiscreteNotifHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Sobriety-friendly wording without sensitive detail'**
+  String get profileDiscreteNotifHint;
+
+  /// No description provided for @profileContactsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency contacts'**
+  String get profileContactsTitle;
+
+  /// No description provided for @profileContactsTileHint.
+  ///
+  /// In en, this message translates to:
+  /// **'For SOS and escalation'**
+  String get profileContactsTileHint;
+
+  /// No description provided for @profileContactsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'These people may be reached if you trigger SOS. You stay in control of that gesture.'**
+  String get profileContactsHint;
+
+  /// No description provided for @profileContactsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No contacts yet.'**
+  String get profileContactsEmpty;
+
+  /// No description provided for @profileContactAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a contact'**
+  String get profileContactAdd;
+
+  /// No description provided for @profileContactName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get profileContactName;
+
+  /// No description provided for @profileContactRelation.
+  ///
+  /// In en, this message translates to:
+  /// **'Relation (e.g. son, neighbour)'**
+  String get profileContactRelation;
+
+  /// No description provided for @profileContactDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove contact'**
+  String get profileContactDelete;
+
+  /// No description provided for @profileContactDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name} from your emergency contacts?'**
+  String profileContactDeleteConfirm(String name);
+
+  /// No description provided for @profileVoixTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder voice'**
+  String get profileVoixTitle;
+
+  /// No description provided for @profileVoixTileHint.
+  ///
+  /// In en, this message translates to:
+  /// **'System or custom message'**
+  String get profileVoixTileHint;
+
+  /// No description provided for @profileVoixHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Sound for the local reminder. Short audio (mp3, m4a…), max 2 MB.'**
+  String get profileVoixHint;
+
+  /// No description provided for @profileVoixSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System voice'**
+  String get profileVoixSystem;
+
+  /// No description provided for @profileVoixSystemHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard phone notification'**
+  String get profileVoixSystemHint;
+
+  /// No description provided for @profileVoixCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom voice'**
+  String get profileVoixCustom;
+
+  /// No description provided for @profileVoixCustomHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick an audio file'**
+  String get profileVoixCustomHint;
+
+  /// No description provided for @profileVoixCustomActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom file active'**
+  String get profileVoixCustomActive;
+
+  /// No description provided for @profileVoixPickFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t read that file. Try again with mp3 or m4a.'**
+  String get profileVoixPickFailed;
+
+  /// No description provided for @profileVoixTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'File too large — 2 MB max.'**
+  String get profileVoixTooLarge;
+
+  /// No description provided for @profileContactsEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one trusted person for SOS.'**
+  String get profileContactsEmptyHint;
+
+  /// No description provided for @profileContactAddHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Name, number and relation — used only if you trigger SOS.'**
+  String get profileContactAddHint;
+
+  /// No description provided for @profileSectionAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Alerts & consent'**
+  String get profileSectionAlerts;
+
+  /// No description provided for @profileConsentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Alert preferences'**
+  String get profileConsentTitle;
+
+  /// No description provided for @profileConsentTileHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Always ask before alerting a third party'**
+  String get profileConsentTileHint;
+
+  /// No description provided for @profileConsentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'By default, Fidel always asks before notifying someone. Turning off “always ask” enables an opt-in auto rule (e.g. 48h) — never pre-checked.'**
+  String get profileConsentHint;
+
+  /// No description provided for @profileConsentAlwaysAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'Always ask me'**
+  String get profileConsentAlwaysAsk;
+
+  /// No description provided for @profileConsentAutoHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Opt-in auto rule (48h delay)'**
+  String get profileConsentAutoHint;
+
+  /// No description provided for @profileAlertRappelMed.
+  ///
+  /// In en, this message translates to:
+  /// **'Medication reminder'**
+  String get profileAlertRappelMed;
+
+  /// No description provided for @profileAlertStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Low stock'**
+  String get profileAlertStock;
+
+  /// No description provided for @profileAlertConstanteUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Improving vitals'**
+  String get profileAlertConstanteUp;
+
+  /// No description provided for @profileAlertConstanteDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Vitals to watch'**
+  String get profileAlertConstanteDown;
+
+  /// No description provided for @profileAlertCheckin.
+  ///
+  /// In en, this message translates to:
+  /// **'Missed check-in'**
+  String get profileAlertCheckin;
+
+  /// No description provided for @profileAlertDepistage.
+  ///
+  /// In en, this message translates to:
+  /// **'Screening recommended'**
+  String get profileAlertDepistage;
+
+  /// No description provided for @profileSectionCaregiver.
+  ///
+  /// In en, this message translates to:
+  /// **'Support someone'**
+  String get profileSectionCaregiver;
+
+  /// No description provided for @profileSyncTileHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a code to become a caregiver'**
+  String get profileSyncTileHint;
+
+  /// No description provided for @profileDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete my account'**
+  String get profileDeleteTitle;
+
+  /// No description provided for @profileDeleteTileHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently disable access'**
+  String get profileDeleteTileHint;
+
+  /// No description provided for @profileDeleteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account will be deactivated (soft delete). You can only sign back in if support reactivates you.'**
+  String get profileDeleteHint;
+
+  /// No description provided for @profileDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm deleting your Fidel account?'**
+  String get profileDeleteConfirm;
+
+  /// No description provided for @profileDeleteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get profileDeleteAction;
 }
 
 class _AppLocalizationsDelegate

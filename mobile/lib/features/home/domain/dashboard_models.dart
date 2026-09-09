@@ -6,6 +6,8 @@ class HomeProfile {
     this.email = '',
     this.phone,
     this.langue,
+    this.fuseauHoraire,
+    this.hasPassword = false,
   });
 
   final String nomComplet;
@@ -14,6 +16,8 @@ class HomeProfile {
   final String email;
   final String? phone;
   final String? langue;
+  final String? fuseauHoraire;
+  final bool hasPassword;
 
   String get firstName {
     final parts = nomComplet.trim().split(RegExp(r'\s+'));
@@ -55,6 +59,8 @@ class HomeProfile {
       email: json['email'] as String? ?? '',
       phone: json['phone'] as String?,
       langue: json['langue'] as String?,
+      fuseauHoraire: json['fuseau_horaire'] as String?,
+      hasPassword: json['has_password'] as bool? ?? false,
     );
   }
 }

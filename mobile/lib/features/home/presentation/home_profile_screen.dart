@@ -15,6 +15,7 @@ import '../../auth/application/auth_providers.dart';
 import '../application/home_controller.dart';
 import 'widgets/profile_header_card.dart';
 import 'widgets/profile_settings_tile.dart';
+import 'widgets/home_skeleton.dart';
 
 class HomeProfileScreen extends ConsumerWidget {
   const HomeProfileScreen({super.key});
@@ -59,111 +60,168 @@ class HomeProfileScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 18),
-          if (profile != null) ...[
-            ProfileHeaderCard(profile: profile),
-            const SizedBox(height: 22),
-          ] else if (state.loading) ...[
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Center(child: CircularProgressIndicator()),
-            ),
-          ],
-
-          ProfileSectionCard(
-            title: l10n.profileSectionPrefs,
-            children: [
-              ProfileSettingsTile(
-                icon: IconsaxPlusLinear.language_circle,
-                title: l10n.profileLanguage,
-                subtitle: _languageLabel(l10n, locale),
-                onTap: () => _pickLanguage(context, ref),
-              ),
-              ProfileSettingsTile(
-                icon: IconsaxPlusLinear.brush_2,
-                title: l10n.homeThemeLabel,
-                subtitle: _themeLabel(l10n, themeMode),
-                onTap: () => _pickTheme(context, ref, themeMode),
-                showDivider: false,
-              ),
+          if (state.loading && profile == null)
+            const HomeProfileSkeleton()
+          else ...[
+            if (profile != null) ...[
+              ProfileHeaderCard(profile: profile),
+              const SizedBox(height: 22),
             ],
-          ),
-          const SizedBox(height: 18),
-
-          ProfileSectionCard(
-            title: l10n.profileSectionFollowUp,
-            children: [
-              ProfileSettingsTile(
-                icon: IconsaxPlusLinear.notification,
-                title: l10n.profileNotifications,
-                subtitle: l10n.profileNotificationsHint,
-                onTap: () => context.push('/home/notifications'),
-              ),
-              ProfileSettingsTile(
-                icon: IconsaxPlusLinear.people,
-                title: l10n.homeShareCodeTitle,
-                subtitle: state.hasPatient
-                    ? l10n.profileAidantsHint
-                    : l10n.profileAidantsLocked,
-                enabled: state.hasPatient,
-                onTap: state.hasPatient
-                    ? () => context.push('/home/aidants')
-                    : null,
-                showDivider: !state.hasPatient,
-              ),
-              if (!state.hasPatient)
+            ProfileSectionCard(
+              title: l10n.profileSectionAccount,
+              children: [
                 ProfileSettingsTile(
-                  icon: IconsaxPlusLinear.health,
-                  title: l10n.homeActivateTitle,
-                  subtitle: l10n.homeActivateBody,
-                  onTap: () => _activateFollowUp(context, ref),
+                  icon: IconsaxPlusLinear.user,
+                  title: l10n.profileAccountTitle,
+                  subtitle: l10n.profileAccountTileHint,
+                  onTap: () => context.push('/home/profile/account'),
                   showDivider: false,
                 ),
-            ],
-          ),
-          const SizedBox(height: 18),
-
-          ProfileSectionCard(
-            title: l10n.profileSectionLegal,
-            children: [
-              ProfileSettingsTile(
-                icon: IconsaxPlusLinear.document_text,
-                title: l10n.profileCgu,
-                subtitle: l10n.profileCguVersion(AppConfig.cguCurrentVersion),
-                onTap: null,
-                enabled: false,
-                trailing: const SizedBox.shrink(),
-                showDivider: false,
-              ),
-            ],
-          ),
-          const SizedBox(height: 28),
-
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: OutlinedButton(
-              onPressed: () => _confirmLogout(context, ref),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.error,
-                side: BorderSide(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .error
-                      .withValues(alpha: 0.45),
+              ],
+            ),
+            const SizedBox(height: 18),
+            ProfileSectionCard(
+              title: l10n.profileSectionPrefs,
+              children: [
+                ProfileSettingsTile(
+                  icon: IconsaxPlusLinear.language_circle,
+                  title: l10n.profileLanguage,
+                  subtitle: _languageLabel(l10n, locale),
+                  onTap: () => _pickLanguage(context, ref),
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(28),
+                ProfileSettingsTile(
+                  icon: IconsaxPlusLinear.brush_2,
+                  title: l10n.homeThemeLabel,
+                  subtitle: _themeLabel(l10n, themeMode),
+                  onTap: () => _pickTheme(context, ref, themeMode),
+                  showDivider: false,
                 ),
-              ),
-              child: Text(
-                l10n.logout,
-                style: const TextStyle(
-                  fontFamily: AppTheme.fontFamily,
-                  fontWeight: FontWeight.w700,
+              ],
+            ),
+            const SizedBox(height: 18),
+            ProfileSectionCard(
+              title: l10n.profileSectionFollowUp,
+              children: [
+                ProfileSettingsTile(
+                  icon: IconsaxPlusLinear.notification,
+                  title: l10n.profileNotifications,
+                  subtitle: l10n.profileNotificationsHint,
+                  onTap: () => context.push('/home/notifications'),
+                ),
+                if (state.hasPatient) ...[
+                  ProfileSettingsTile(
+                    icon: IconsaxPlusLinear.setting_2,
+                    title: l10n.profilePatientSettingsTitle,
+                    subtitle: l10n.profilePatientSettingsTileHint,
+                    onTap: () =>
+                        context.push('/home/profile/patient-settings'),
+                  ),
+                  ProfileSettingsTile(
+                    icon: IconsaxPlusLinear.call,
+                    title: l10n.profileContactsTitle,
+                    subtitle: l10n.profileContactsTileHint,
+                    onTap: () => context.push('/home/profile/contacts'),
+                  ),
+                  ProfileSettingsTile(
+                    icon: IconsaxPlusLinear.microphone_2,
+                    title: l10n.profileVoixTitle,
+                    subtitle: l10n.profileVoixTileHint,
+                    onTap: () => context.push('/home/profile/voix'),
+                  ),
+                  ProfileSettingsTile(
+                    icon: IconsaxPlusLinear.people,
+                    title: l10n.homeShareCodeTitle,
+                    subtitle: l10n.profileAidantsHint,
+                    onTap: () => context.push('/home/aidants'),
+                    showDivider: false,
+                  ),
+                ] else
+                  ProfileSettingsTile(
+                    icon: IconsaxPlusLinear.health,
+                    title: l10n.homeActivateTitle,
+                    subtitle: l10n.homeActivateBody,
+                    onTap: () => _activateFollowUp(context, ref),
+                    showDivider: false,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            ProfileSectionCard(
+              title: l10n.profileSectionAlerts,
+              children: [
+                ProfileSettingsTile(
+                  icon: IconsaxPlusLinear.shield_tick,
+                  title: l10n.profileConsentTitle,
+                  subtitle: l10n.profileConsentTileHint,
+                  onTap: () => context.push('/home/profile/consent'),
+                  showDivider: false,
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            ProfileSectionCard(
+              title: l10n.profileSectionCaregiver,
+              children: [
+                ProfileSettingsTile(
+                  icon: IconsaxPlusLinear.scan_barcode,
+                  title: l10n.homeAccompanyTitle,
+                  subtitle: l10n.profileSyncTileHint,
+                  onTap: () => context.push('/home/sync'),
+                  showDivider: false,
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            ProfileSectionCard(
+              title: l10n.profileSectionLegal,
+              children: [
+                ProfileSettingsTile(
+                  icon: IconsaxPlusLinear.document_text,
+                  title: l10n.profileCgu,
+                  subtitle:
+                      l10n.profileCguVersion(AppConfig.cguCurrentVersion),
+                  onTap: null,
+                  enabled: false,
+                  trailing: const SizedBox.shrink(),
+                ),
+                ProfileSettingsTile(
+                  icon: IconsaxPlusLinear.trash,
+                  title: l10n.profileDeleteTitle,
+                  subtitle: l10n.profileDeleteTileHint,
+                  destructive: true,
+                  onTap: () => context.push('/home/profile/delete'),
+                  showDivider: false,
+                ),
+              ],
+            ),
+            const SizedBox(height: 28),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: OutlinedButton(
+                onPressed: () => _confirmLogout(context, ref),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.error,
+                  side: BorderSide(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .error
+                        .withValues(alpha: 0.45),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                ),
+                child: Text(
+                  l10n.logout,
+                  style: const TextStyle(
+                    fontFamily: AppTheme.fontFamily,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -263,10 +321,17 @@ class HomeProfileScreen extends ConsumerWidget {
       },
     );
     if (chosen == null || chosen == current) return;
+    if (!context.mounted) return;
 
-    await ref
-        .read(localeControllerProvider.notifier)
-        .setLocale(Locale(chosen));
+    try {
+      await ref
+          .read(localeControllerProvider.notifier)
+          .setLocale(Locale(chosen));
+    } catch (_) {
+      if (!context.mounted) return;
+      AppToast.error(context, AppLocalizations.of(context).genericError);
+      return;
+    }
 
     try {
       final updated = await ref
@@ -274,7 +339,7 @@ class HomeProfileScreen extends ConsumerWidget {
           .patchMe(langue: chosen);
       ref.read(homeControllerProvider.notifier).updateProfile(updated);
     } catch (_) {
-      // Langue locale déjà appliquée ; sync API best-effort.
+      // Langue UI déjà appliquée ; sync API best-effort.
     }
   }
 

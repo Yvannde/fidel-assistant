@@ -148,3 +148,216 @@ class HomeDashboardSkeleton extends StatelessWidget {
     );
   }
 }
+
+/// Hub Profil — header + 3 sections de réglages.
+class HomeProfileSkeleton extends StatelessWidget {
+  const HomeProfileSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        PremiumCard(
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+          child: Row(
+            children: const [
+              HomeSkeleton(width: 56, height: 56, radius: 28),
+              SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    HomeSkeleton(width: 140, height: 18),
+                    SizedBox(height: 8),
+                    HomeSkeleton(width: 180, height: 12),
+                    SizedBox(height: 10),
+                    HomeSkeleton(width: 90, height: 22, radius: 20),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 22),
+        for (var s = 0; s < 3; s++) ...[
+          if (s > 0) const SizedBox(height: 18),
+          const HomeSkeleton(width: 100, height: 12),
+          const SizedBox(height: 8),
+          PremiumCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                for (var i = 0; i < 2; i++) ...[
+                  if (i > 0) const Divider(height: 1, indent: 48),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+                    child: Row(
+                      children: [
+                        HomeSkeleton(width: 22, height: 22, radius: 6),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              HomeSkeleton(width: 120, height: 14),
+                              SizedBox(height: 6),
+                              HomeSkeleton(width: 160, height: 11),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Sous-écran réglages — titre implicite + carte de lignes.
+class ProfilePageSkeleton extends StatelessWidget {
+  const ProfilePageSkeleton({super.key, this.rows = 4});
+
+  final int rows;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+      children: [
+        const HomeSkeleton(width: 240, height: 14),
+        const SizedBox(height: 16),
+        PremiumCard(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
+              for (var i = 0; i < rows; i++) ...[
+                if (i > 0) const Divider(height: 1),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 18,
+                  ),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            HomeSkeleton(width: 140, height: 14),
+                            SizedBox(height: 8),
+                            HomeSkeleton(width: 200, height: 11),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      HomeSkeleton(width: 40, height: 24, radius: 12),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Liste (aidants, contacts) — cartes empilées (Column, pas de ListView imbriqué).
+class ProfileListSkeleton extends StatelessWidget {
+  const ProfileListSkeleton({super.key, this.count = 3});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < count; i++) ...[
+          if (i > 0) const SizedBox(height: 8),
+          PremiumCard(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+            child: Row(
+              children: const [
+                HomeSkeleton(width: 40, height: 40, radius: 20),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      HomeSkeleton(width: 120, height: 14),
+                      SizedBox(height: 8),
+                      HomeSkeleton(width: 160, height: 11),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Onglet Soins — hero + cartes.
+class HomeCareSkeleton extends StatelessWidget {
+  const HomeCareSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const HomeSkeleton(width: 100, height: 28),
+        const SizedBox(height: 8),
+        const HomeSkeleton(width: 200, height: 14),
+        const SizedBox(height: 18),
+        const Row(
+          children: [
+            Expanded(child: HomeSkeleton(width: double.infinity, height: 40, radius: 12)),
+            SizedBox(width: 8),
+            Expanded(child: HomeSkeleton(width: double.infinity, height: 40, radius: 12)),
+            SizedBox(width: 8),
+            Expanded(child: HomeSkeleton(width: double.infinity, height: 40, radius: 12)),
+          ],
+        ),
+        const SizedBox(height: 18),
+        PremiumCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              HomeSkeleton(width: 80, height: 12),
+              SizedBox(height: 12),
+              HomeSkeleton(width: 100, height: 36),
+              SizedBox(height: 16),
+              HomeSkeleton(width: double.infinity, height: 120, radius: 12),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        const Row(
+          children: [
+            Expanded(child: HomeSkeleton(width: double.infinity, height: 72, radius: 12)),
+            SizedBox(width: 10),
+            Expanded(child: HomeSkeleton(width: double.infinity, height: 72, radius: 12)),
+          ],
+        ),
+        const SizedBox(height: 22),
+        const HomeSkeleton(width: 90, height: 14),
+        const SizedBox(height: 10),
+        for (var i = 0; i < 3; i++) ...[
+          if (i > 0) const SizedBox(height: 8),
+          const HomeSkeleton(width: double.infinity, height: 56, radius: 12),
+        ],
+      ],
+    );
+  }
+}

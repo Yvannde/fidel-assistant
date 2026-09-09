@@ -11,6 +11,7 @@ import '../../../core/ui/app_toast.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/aidants_controller.dart';
 import 'widgets/home_lottie.dart';
+import 'widgets/home_skeleton.dart';
 
 /// Invitation par code sync — zone centrale type écran WA « scanner ».
 class AidantsInviteScreen extends ConsumerStatefulWidget {
@@ -117,7 +118,16 @@ class _AidantsInviteScreenState extends ConsumerState<AidantsInviteScreen> {
                 ),
                 const SizedBox(height: 20),
                 if (_loading)
-                  const Center(child: CircularProgressIndicator())
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Column(
+                      children: [
+                        HomeSkeleton(width: 180, height: 48, radius: 12),
+                        SizedBox(height: 12),
+                        HomeSkeleton(width: 120, height: 14),
+                      ],
+                    ),
+                  )
                 else if (_error != null)
                   Column(
                     children: [

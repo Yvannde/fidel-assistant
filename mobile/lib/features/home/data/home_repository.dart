@@ -5,6 +5,7 @@ import '../../../core/network/api_exception.dart';
 import '../domain/aidant_models.dart';
 import '../domain/constante_models.dart';
 import '../domain/dashboard_models.dart';
+import '../domain/profile_settings_models.dart';
 
 class HomeRepository {
   HomeRepository({required ApiClient apiClient}) : _api = apiClient;
@@ -20,16 +21,210 @@ class HomeRepository {
     }
   }
 
-  Future<HomeProfile> patchMe({String? langue, String? phone}) async {
+  Future<HomeProfile> patchMe({
+    String? langue,
+    String? phone,
+    String? fuseauHoraire,
+  }) async {
     try {
       final res = await _api.patch<Map<String, dynamic>>(
         '/auth/me',
         data: {
           if (langue != null && langue.isNotEmpty) 'langue': langue,
           if (phone != null) 'phone': phone,
+          if (fuseauHoraire != null && fuseauHoraire.isNotEmpty)
+            'fuseau_horaire': fuseauHoraire,
         },
       );
       return HomeProfile.fromMeJson(res.data ?? {});
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<void> deleteAccount({String? password}) async {
+    try {
+      await _api.delete<Map<String, dynamic>>(
+        '/auth/me',
+        data: {
+          if (password != null && password.isNotEmpty) 'password': password,
+        },
+      );
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<PatientSettings> fetchPatientSettings() async {
+    try {
+      final res = await _api.get<Map<String, dynamic>>('/patients/me');
+      return PatientSettings.fromJson(res.data ?? {});
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<PatientSettings> patchPatientSettings({
+    bool? notificationsAccordees,
+    bool? batterieExemptee,
+    bool? notificationsDiscretes,
+    String? localisation,
+  }) async {
+    try {
+      final res = await _api.patch<Map<String, dynamic>>(
+        '/patients/me',
+        data: {
+          if (notificationsAccordees != null)
+            'notifications_accordees': notificationsAccordees,
+          if (batterieExemptee != null) 'batterie_exemptee': batterieExemptee,
+          if (notificationsDiscretes != null)
+            'notifications_discretes': notificationsDiscretes,
+          if (localisation != null) 'localisation': localisation,
+        },
+      );
+      return PatientSettings.fromJson(res.data ?? {});
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<List<ContactUrgence>> listContactsUrgence() async {
+    try {
+      final res = await _api.get<dynamic>('/patients/me/contacts-urgence');
+      final data = res.data;
+      if (data is! List) return const [];
+      return data
+          .whereType<Map>()
+          .map((e) => ContactUrgence.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<ContactUrgence> addContactUrgence({
+    required String nom,
+    required String telephone,
+    required String relation,
+  }) async {
+    try {
+      final res = await _api.post<Map<String, dynamic>>(
+        '/patients/me/contacts-urgence',
+        data: {
+          'nom': nom,
+          'telephone': telephone,
+          'relation': relation,
+        },
+      );
+      return ContactUrgence.fromJson(res.data ?? {});
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<void> deleteContactUrgence(String id) async {
+    try {
+      await _api.delete<Map<String, dynamic>>(
+        '/patients/me/contacts-urgence/$id',
+      );
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<List<PreferenceConsentement>> listPreferencesConsentement() async {
+    try {
+      final res = await _api.get<dynamic>('/users/me/preferences-consentement');
+      final data = res.data;
+      if (data is! List) return const [];
+      return data
+          .whereType<Map>()
+          .map(
+            (e) => PreferenceConsentement.fromJson(
+              Map<String, dynamic>.from(e),
+            ),
+          )
+          .toList();
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<PreferenceConsentement> patchPreferenceConsentement({
+    required String typeAlerte,
+    required bool toujoursDemander,
+    Map<String, dynamic>? regleAuto,
+  }) async {
+    try {
+      final res = await _api.patch<Map<String, dynamic>>(
+        '/users/me/preferences-consentement/$typeAlerte',
+        data: {
+          'toujours_demander': toujoursDemander,
+          if (regleAuto != null) 'regle_auto': regleAuto,
+        },
+      );
+      return PreferenceConsentement.fromJson(res.data ?? {});
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<VoixRappel> fetchVoixRappel() async {
+    try {
+      final res = await _api.get<Map<String, dynamic>>('/patients/me/voix-rappel');
+      return VoixRappel.fromJson(res.data ?? {});
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<VoixRappel> putVoixRappelSysteme() async {
+    try {
+      final form = FormData.fromMap({'type': 'systeme'});
+      final res = await _api.raw.put<Map<String, dynamic>>(
+        '/patients/me/voix-rappel',
+        data: form,
+        options: Options(
+          // Override BaseOptions application/json — Dio ajoute le boundary.
+          contentType: Headers.multipartFormDataContentType,
+        ),
+      );
+      return VoixRappel.fromJson(res.data ?? {});
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<VoixRappel> putVoixRappelPersonnalisee({
+    required String filename,
+    required List<int> bytes,
+    String? filePath,
+  }) async {
+    try {
+      final MultipartFile fichier;
+      if (bytes.isNotEmpty) {
+        fichier = MultipartFile.fromBytes(bytes, filename: filename);
+      } else if (filePath != null && filePath.isNotEmpty) {
+        fichier = await MultipartFile.fromFile(filePath, filename: filename);
+      } else {
+        throw ApiException(
+          code: 'FICHIER_AUDIO_INVALIDE',
+          message: 'Fichier audio introuvable.',
+          statusCode: 400,
+        );
+      }
+      final form = FormData.fromMap({
+        'type': 'personnalisee',
+        'fichier': fichier,
+      });
+      final res = await _api.raw.put<Map<String, dynamic>>(
+        '/patients/me/voix-rappel',
+        data: form,
+        options: Options(
+          contentType: Headers.multipartFormDataContentType,
+        ),
+      );
+      return VoixRappel.fromJson(res.data ?? {});
     } on DioException catch (e) {
       ApiClient.throwApi(e);
     }

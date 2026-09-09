@@ -18,6 +18,9 @@ import 'l10n/app_localizations.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppConfig.load();
+  // DateFormat (Accueil / Soins) exige les symboles FR+EN avant tout switch.
+  await ensureDateFormatting('fr');
+  await ensureDateFormatting('en');
   final prefs = await SharedPreferences.getInstance();
   final tokens = TokenStorage();
   final restored = await AuthRepository(

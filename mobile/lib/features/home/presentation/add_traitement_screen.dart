@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/premium.dart';
 import '../../../core/ui/app_toast.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../home/application/home_controller.dart';
@@ -12,6 +12,7 @@ import '../../medicaments/data/medicaments_repository.dart';
 import '../../medicaments/presentation/widgets/home_config_shell.dart';
 import '../../onboarding/domain/onboarding_models.dart';
 import '../../onboarding/presentation/widgets/onboarding_option_tile.dart';
+import 'widgets/home_skeleton.dart';
 
 class AddTraitementScreen extends ConsumerStatefulWidget {
   const AddTraitementScreen({super.key});
@@ -128,8 +129,11 @@ class _AddTraitementScreenState extends ConsumerState<AddTraitementScreen> {
     final dateFmt = DateFormat.yMMMMd(locale);
 
     if (_loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return DawnBackdrop(
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: const SafeArea(child: ProfilePageSkeleton(rows: 5)),
+        ),
       );
     }
 

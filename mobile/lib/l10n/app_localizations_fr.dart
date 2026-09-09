@@ -1226,4 +1226,198 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get profileLogoutConfirm =>
       'Tu quitteras ton compte sur cet appareil. Tes données restent en sécurité.';
+
+  @override
+  String get commonSave => 'Enregistrer';
+
+  @override
+  String get commonDelete => 'Supprimer';
+
+  @override
+  String get profileSaved => 'Enregistré';
+
+  @override
+  String get profileSectionAccount => 'Compte';
+
+  @override
+  String get profileAccountTitle => 'Informations du compte';
+
+  @override
+  String get profileAccountTileHint => 'Téléphone, fuseau horaire';
+
+  @override
+  String get profileAccountHint =>
+      'Coordonnées liées à ton compte Fidel — pas de conseil médical ici.';
+
+  @override
+  String get profilePhone => 'Téléphone';
+
+  @override
+  String get profileEmail => 'Email';
+
+  @override
+  String get profileTimezone => 'Fuseau horaire';
+
+  @override
+  String get profilePatientSettingsTitle => 'Réglages du suivi';
+
+  @override
+  String get profilePatientSettingsTileHint =>
+      'Notifications, batterie, mode discret';
+
+  @override
+  String get profilePatientSettingsHint =>
+      'Ces options concernent uniquement ton suivi patient sur cet appareil et ce compte.';
+
+  @override
+  String get profileNotifGranted => 'Notifications autorisées';
+
+  @override
+  String get profileNotifGrantedHint =>
+      'Indique si Fidel peut te rappeler les prises';
+
+  @override
+  String get profileBatteryExempt => 'Batterie non restreinte';
+
+  @override
+  String get profileBatteryExemptHint =>
+      'Évite que le téléphone coupe les rappels la nuit';
+
+  @override
+  String get profileDiscreteNotif => 'Notifications discrètes';
+
+  @override
+  String get profileDiscreteNotifHint =>
+      'Formulations sobres, sans détail sensible visible';
+
+  @override
+  String get profileContactsTitle => 'Contacts d’urgence';
+
+  @override
+  String get profileContactsTileHint => 'Pour le SOS et l’escalade';
+
+  @override
+  String get profileContactsHint =>
+      'Ces personnes peuvent être jointes si tu déclenches un SOS. Tu restes maître du geste.';
+
+  @override
+  String get profileContactsEmpty => 'Aucun contact pour l’instant.';
+
+  @override
+  String get profileContactAdd => 'Ajouter un contact';
+
+  @override
+  String get profileContactName => 'Nom';
+
+  @override
+  String get profileContactRelation => 'Lien (ex. fils, voisin)';
+
+  @override
+  String get profileContactDelete => 'Supprimer le contact';
+
+  @override
+  String profileContactDeleteConfirm(String name) {
+    return 'Retirer $name de tes contacts d’urgence ?';
+  }
+
+  @override
+  String get profileVoixTitle => 'Voix de rappel';
+
+  @override
+  String get profileVoixTileHint => 'Système ou message personnalisé';
+
+  @override
+  String get profileVoixHint =>
+      'Le son du rappel local. Format audio court (mp3, m4a…), max 2 Mo.';
+
+  @override
+  String get profileVoixSystem => 'Voix système';
+
+  @override
+  String get profileVoixSystemHint => 'Notification standard du téléphone';
+
+  @override
+  String get profileVoixCustom => 'Voix personnalisée';
+
+  @override
+  String get profileVoixCustomHint => 'Choisir un fichier audio';
+
+  @override
+  String get profileVoixCustomActive => 'Fichier personnalisé actif';
+
+  @override
+  String get profileVoixPickFailed =>
+      'Impossible de lire ce fichier. Réessaie avec un mp3 ou m4a.';
+
+  @override
+  String get profileVoixTooLarge => 'Fichier trop lourd — maximum 2 Mo.';
+
+  @override
+  String get profileContactsEmptyHint =>
+      'Ajoute au moins une personne de confiance pour le SOS.';
+
+  @override
+  String get profileContactAddHint =>
+      'Nom, numéro et lien — utilisés seulement si tu déclenches un SOS.';
+
+  @override
+  String get profileSectionAlerts => 'Alertes & consentement';
+
+  @override
+  String get profileConsentTitle => 'Préférences d’alerte';
+
+  @override
+  String get profileConsentTileHint =>
+      'Toujours demander avant d’alerter un tiers';
+
+  @override
+  String get profileConsentHint =>
+      'Par défaut, Fidel demande toujours ton accord avant de prévenir quelqu’un. Désactiver « toujours demander » active une règle auto opt-in (ex. 48 h) — jamais pré-cochée.';
+
+  @override
+  String get profileConsentAlwaysAsk => 'Toujours me demander';
+
+  @override
+  String get profileConsentAutoHint => 'Règle auto opt-in (délai 48 h)';
+
+  @override
+  String get profileAlertRappelMed => 'Rappel médicament';
+
+  @override
+  String get profileAlertStock => 'Stock bas';
+
+  @override
+  String get profileAlertConstanteUp => 'Constante en amélioration';
+
+  @override
+  String get profileAlertConstanteDown => 'Constante à surveiller';
+
+  @override
+  String get profileAlertCheckin => 'Absence de check-in';
+
+  @override
+  String get profileAlertDepistage => 'Dépistage recommandé';
+
+  @override
+  String get profileSectionCaregiver => 'Accompagner quelqu’un';
+
+  @override
+  String get profileSyncTileHint => 'Entrer un code pour devenir aidant';
+
+  @override
+  String get profileDeleteTitle => 'Supprimer mon compte';
+
+  @override
+  String get profileDeleteTileHint => 'Désactivation définitive de l’accès';
+
+  @override
+  String get profileDeleteHint =>
+      'Ton compte sera désactivé (soft delete). Tu pourras te reconnecter seulement si le support te réactive.';
+
+  @override
+  String get profileDeleteConfirm =>
+      'Confirmer la suppression de ton compte Fidel ?';
+
+  @override
+  String get profileDeleteAction => 'Supprimer le compte';
 }
