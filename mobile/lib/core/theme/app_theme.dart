@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'app_colors.dart';
+import 'premium.dart';
 
 /// Thème Fidel — Satoshi + bleu primary, light + dark, accessibilité prioritaire.
 class AppTheme {
@@ -70,9 +70,11 @@ class AppTheme {
       ),
       visualDensity: VisualDensity.adaptivePlatformDensity,
       appBarTheme: AppBarTheme(
-        backgroundColor: surface,
+        backgroundColor: isDark ? AppColors.surfaceDark : Premium.canvas(false),
         foregroundColor: onSurface,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         centerTitle: false,
         systemOverlayStyle:
             isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,

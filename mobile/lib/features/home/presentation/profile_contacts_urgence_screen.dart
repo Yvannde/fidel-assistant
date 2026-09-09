@@ -163,8 +163,7 @@ class _ProfileContactsUrgenceScreenState
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          title: Text(l10n.profileContactsTitle),
+                    title: Text(l10n.profileContactsTitle),
           actions: [
             IconButton(
               onPressed: _openAddSheet,

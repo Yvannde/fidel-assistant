@@ -22,8 +22,7 @@ class HomeNotificationsScreen extends ConsumerWidget {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          title: Text(l10n.homeNotifTitle),
+                    title: Text(l10n.homeNotifTitle),
         ),
         body: ListView(
           padding: const EdgeInsets.fromLTRB(22, 8, 22, 32),

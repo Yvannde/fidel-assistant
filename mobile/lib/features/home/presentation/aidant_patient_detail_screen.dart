@@ -83,8 +83,7 @@ class _AidantPatientDetailScreenState
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          title: Text(widget.patient.displayName),
+                    title: Text(widget.patient.displayName),
         ),
         body: RefreshIndicator(
           color: AppColors.primary,

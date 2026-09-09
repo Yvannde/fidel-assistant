@@ -89,8 +89,7 @@ class _ProfilePatientSettingsScreenState
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          title: Text(l10n.profilePatientSettingsTitle),
+                    title: Text(l10n.profilePatientSettingsTitle),
         ),
         body: _loading
             ? const ProfilePageSkeleton(rows: 3)

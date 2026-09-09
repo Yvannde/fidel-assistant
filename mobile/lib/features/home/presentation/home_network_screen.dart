@@ -14,6 +14,7 @@ import '../application/cercle_controller.dart';
 import '../application/home_controller.dart';
 import '../domain/aidant_models.dart';
 import 'widgets/home_skeleton.dart';
+import 'widgets/sticky_tab_header.dart';
 
 class HomeNetworkScreen extends ConsumerStatefulWidget {
   const HomeNetworkScreen({super.key});
@@ -115,37 +116,27 @@ class _HomeNetworkScreenState extends ConsumerState<HomeNetworkScreen> {
     final cercle = ref.watch(cercleControllerProvider);
     final hasPatient = profile?.hasPatientProfile == true;
     final isAidant = profile?.isAidant == true;
-    final padTop = 12 + MediaQuery.paddingOf(context).top;
 
-    return RefreshIndicator(
-      color: AppColors.primary,
-      onRefresh: () => ref.read(cercleControllerProvider.notifier).load(),
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(
-          Premium.screenPad,
-          padTop,
-          Premium.screenPad,
-          Premium.navClearance,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        StickyTabHeader(
+          title: l10n.navPeople,
+          subtitle: l10n.homeNetworkSubtitle,
         ),
-        children: [
-          Text(
-            l10n.navPeople,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.4,
-                ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            l10n.homeNetworkSubtitle,
-            style: TextStyle(
-              fontFamily: AppTheme.fontFamily,
-              color: tokens.textSecondary,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 18),
+        Expanded(
+          child: RefreshIndicator(
+            color: AppColors.primary,
+            onRefresh: () => ref.read(cercleControllerProvider.notifier).load(),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(
+                Premium.screenPad,
+                8,
+                Premium.screenPad,
+                Premium.navClearance,
+              ),
+              children: [
           if (cercle.loading)
             const HomeCareSkeleton()
           else ...[
@@ -302,8 +293,11 @@ class _HomeNetworkScreenState extends ConsumerState<HomeNetworkScreen> {
               ),
             ],
           ],
-        ],
-      ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -219,8 +219,7 @@ class _ProfileVoixScreenState extends ConsumerState<ProfileVoixScreen> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          title: Text(l10n.profileVoixTitle),
+                    title: Text(l10n.profileVoixTitle),
         ),
         body: _loading
             ? const ProfilePageSkeleton(rows: 2)

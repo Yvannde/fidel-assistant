@@ -110,8 +110,7 @@ class _ProfileConsentScreenState extends ConsumerState<ProfileConsentScreen> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          title: Text(l10n.profileConsentTitle),
+                    title: Text(l10n.profileConsentTitle),
         ),
         body: _loading
             ? const ProfilePageSkeleton(rows: 5)

@@ -15,6 +15,7 @@ import 'widgets/care_activity_feed.dart';
 import 'widgets/care_hero_metric.dart';
 import 'widgets/care_progress_cards.dart';
 import 'widgets/home_skeleton.dart';
+import 'widgets/sticky_tab_header.dart';
 import 'widgets/treatment_card.dart';
 
 /// Onglet Soins — hub de suivi dense (hero, courbe, progression, journal).
@@ -29,7 +30,6 @@ class HomeCareScreen extends ConsumerWidget {
     final dash = state.dashboard;
     final traitements = dash?.traitements ?? const <DashboardTraitement>[];
     final prises = dash?.prisesAujourdhui ?? const <PriseDuJour>[];
-    final padTop = 12 + MediaQuery.paddingOf(context).top;
     final now = DateTime.now();
 
     final unconfigured = dash?.firstUnconfigured;
@@ -47,37 +47,26 @@ class HomeCareScreen extends ConsumerWidget {
       checkIn: state.todayCheckIn,
     );
 
-    return RefreshIndicator(
-      color: AppColors.primary,
-      onRefresh: () => ref.read(homeControllerProvider.notifier).load(),
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(
-          Premium.screenPad,
-          padTop,
-          Premium.screenPad,
-          Premium.navClearance,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        StickyTabHeader(
+          title: l10n.navCare,
+          subtitle: l10n.homeCareSubtitle,
         ),
-        children: [
-          Text(
-            l10n.navCare,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.4,
-                ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            l10n.homeCareSubtitle,
-            style: TextStyle(
-              fontFamily: AppTheme.fontFamily,
-              fontSize: 15,
-              height: 1.4,
-              color: tokens.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 18),
-
+        Expanded(
+          child: RefreshIndicator(
+            color: AppColors.primary,
+            onRefresh: () => ref.read(homeControllerProvider.notifier).load(),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(
+                Premium.screenPad,
+                8,
+                Premium.screenPad,
+                Premium.navClearance,
+              ),
+              children: [
           if (state.loading && state.profile == null)
             const HomeCareSkeleton()
           else if (!state.hasPatient)
@@ -199,8 +188,11 @@ class HomeCareScreen extends ConsumerWidget {
               ),
             ],
           ],
-        ],
-      ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -117,8 +117,7 @@ class _ProfileAccountScreenState extends ConsumerState<ProfileAccountScreen> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          title: Text(l10n.profileAccountTitle),
+                    title: Text(l10n.profileAccountTitle),
         ),
         body: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),

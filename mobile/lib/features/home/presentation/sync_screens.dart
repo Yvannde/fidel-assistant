@@ -58,8 +58,7 @@ class _SyncAidantScreenState extends ConsumerState<SyncAidantScreen> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          title: Text(l10n.homeAccompanyTitle),
+                    title: Text(l10n.homeAccompanyTitle),
         ),
         body: Padding(
           padding: const EdgeInsets.fromLTRB(22, 12, 22, 32),
@@ -140,8 +139,7 @@ class _ShareCodeScreenState extends ConsumerState<ShareCodeScreen> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          title: Text(l10n.homeShareCodeTitle),
+                    title: Text(l10n.homeShareCodeTitle),
         ),
         body: Center(
           child: Padding(

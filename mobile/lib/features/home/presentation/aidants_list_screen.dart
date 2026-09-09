@@ -61,7 +61,7 @@ class _AidantsListScreenState extends ConsumerState<AidantsListScreen> {
           backgroundColor: Premium.canvas(tokens.isDark),
           surfaceTintColor: Colors.transparent,
           elevation: 0,
-          scrolledUnderElevation: 0.5,
+          scrolledUnderElevation: 0,
           leading: IconButton(
             icon: const Icon(IconsaxPlusLinear.arrow_left),
             onPressed: () => context.pop(),

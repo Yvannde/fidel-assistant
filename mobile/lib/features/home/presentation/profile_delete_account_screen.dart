@@ -92,8 +92,7 @@ class _ProfileDeleteAccountScreenState
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          title: Text(l10n.profileDeleteTitle),
+                    title: Text(l10n.profileDeleteTitle),
         ),
         body: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),

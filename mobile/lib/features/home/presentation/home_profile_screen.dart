@@ -16,6 +16,7 @@ import '../application/home_controller.dart';
 import 'widgets/profile_header_card.dart';
 import 'widgets/profile_settings_tile.dart';
 import 'widgets/home_skeleton.dart';
+import 'widgets/sticky_tab_header.dart';
 
 class HomeProfileScreen extends ConsumerWidget {
   const HomeProfileScreen({super.key});
@@ -23,43 +24,31 @@ class HomeProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final tokens = ThemeTokens.of(context);
     final state = ref.watch(homeControllerProvider);
     final themeMode = ref.watch(themeControllerProvider);
     final locale = ref.watch(localeControllerProvider);
     final profile = state.profile;
-    final padTop = 12 + MediaQuery.paddingOf(context).top;
 
-    return RefreshIndicator(
-      color: AppColors.primary,
-      onRefresh: () => ref.read(homeControllerProvider.notifier).load(),
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(
-          Premium.screenPad,
-          padTop,
-          Premium.screenPad,
-          Premium.navClearance,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        StickyTabHeader(
+          title: l10n.navYou,
+          subtitle: l10n.profileSubtitle,
         ),
-        children: [
-          Text(
-            l10n.navYou,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.4,
-                ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            l10n.profileSubtitle,
-            style: TextStyle(
-              fontFamily: AppTheme.fontFamily,
-              fontSize: 14,
-              height: 1.4,
-              color: tokens.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 18),
+        Expanded(
+          child: RefreshIndicator(
+            color: AppColors.primary,
+            onRefresh: () => ref.read(homeControllerProvider.notifier).load(),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(
+                Premium.screenPad,
+                8,
+                Premium.screenPad,
+                Premium.navClearance,
+              ),
+              children: [
           if (state.loading && profile == null)
             const HomeProfileSkeleton()
           else ...[
@@ -222,8 +211,11 @@ class HomeProfileScreen extends ConsumerWidget {
               ),
             ),
           ],
-        ],
-      ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
