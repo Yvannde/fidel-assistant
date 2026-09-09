@@ -17,6 +17,7 @@ import '../../features/auth/presentation/register_legal_screen.dart';
 import '../../features/auth/presentation/register_otp_screen.dart';
 import '../../features/auth/presentation/register_password_screen.dart';
 import '../../features/home/presentation/add_traitement_screen.dart';
+import '../../features/home/presentation/aidant_patient_detail_screen.dart';
 import '../../features/home/presentation/aidants_invite_screen.dart';
 import '../../features/home/presentation/aidants_list_screen.dart';
 import '../../features/home/presentation/home_notifications_screen.dart';
@@ -293,6 +294,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           state: state,
           child: const HomeNotificationsScreen(),
         ),
+      ),
+      GoRoute(
+        path: '/home/cercle/patient/:id',
+        pageBuilder: (context, state) {
+          final patient = state.extra as dynamic;
+          return _softPage(
+            state: state,
+            child: AidantPatientDetailScreen(
+              patientId: state.pathParameters['id'] ?? '',
+              patient: patient,
+            ),
+          );
+        },
       ),
       GoRoute(
         path: '/home/profile/account',

@@ -10,6 +10,7 @@ import '../../../core/ui/app_toast.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/home_controller.dart';
 import '../domain/profile_settings_models.dart';
+import 'profile_voix_record_sheet.dart';
 import 'widgets/home_skeleton.dart';
 
 /// Voix de rappel — `GET/PUT /patients/me/voix-rappel`.
@@ -55,6 +56,96 @@ class _ProfileVoixScreenState extends ConsumerState<ProfileVoixScreen> {
     setState(() => _busy = true);
     try {
       final v = await ref.read(homeRepositoryProvider).putVoixRappelSysteme();
+      if (mounted) {
+        setState(() => _voix = v);
+        AppToast.success(context, l10n.profileSaved);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      AppToast.error(
+        context,
+        e is ApiException ? e.message : l10n.genericError,
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _chooseCustomSource() async {
+    final l10n = AppLocalizations.of(context);
+    final tokens = ThemeTokens.of(context);
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        decoration: BoxDecoration(
+          color: tokens.elevated,
+          borderRadius: BorderRadius.circular(Premium.radius),
+          border: Border.all(color: tokens.border),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Text(
+                  l10n.profileVoixChooseTitle,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(
+                  IconsaxPlusLinear.microphone_2,
+                  color: AppColors.primary,
+                ),
+                title: Text(l10n.profileVoixRecord),
+                subtitle: Text(l10n.profileVoixRecordHint),
+                onTap: () => Navigator.pop(ctx, 'record'),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(
+                  IconsaxPlusLinear.document_upload,
+                  color: AppColors.primary,
+                ),
+                title: Text(l10n.profileVoixImport),
+                subtitle: Text(l10n.profileVoixImportHint),
+                onTap: () => Navigator.pop(ctx, 'import'),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (!mounted || choice == null) return;
+    if (choice == 'record') {
+      await _recordCustom();
+    } else {
+      await _pickCustom();
+    }
+  }
+
+  Future<void> _recordCustom() async {
+    final result = await ProfileVoixRecordSheet.show(context);
+    if (result == null || !mounted) return;
+    final l10n = AppLocalizations.of(context);
+    if (result.bytesLength > _maxBytes) {
+      AppToast.error(context, l10n.profileVoixTooLarge);
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      final v = await ref.read(homeRepositoryProvider).putVoixRappelPersonnalisee(
+            filename: result.filename,
+            bytes: const <int>[],
+            filePath: result.path,
+          );
       if (mounted) {
         setState(() => _voix = v);
         AppToast.success(context, l10n.profileSaved);
@@ -176,7 +267,7 @@ class _ProfileVoixScreenState extends ConsumerState<ProfileVoixScreen> {
                           trailing: isCustom
                               ? const Icon(Icons.check, color: AppColors.primary)
                               : null,
-                          onTap: _busy ? null : _pickCustom,
+                          onTap: _busy ? null : _chooseCustomSource,
                         ),
                       ],
                     ),

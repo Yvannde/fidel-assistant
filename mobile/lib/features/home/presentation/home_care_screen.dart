@@ -7,6 +7,7 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/premium.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../medicaments/presentation/widgets/med_stock_sheet.dart';
 import '../application/home_controller.dart';
 import '../domain/dashboard_models.dart';
 import 'widgets/add_constante_sheet.dart';
@@ -182,6 +183,16 @@ class HomeCareScreen extends ConsumerWidget {
                           extra: traitements[i].id,
                         ),
                       ),
+                      if (traitements[i].medicamentsConfigures) ...[
+                        const SizedBox(height: 8),
+                        _CareInlineCta(
+                          label: l10n.homeCareManageStock,
+                          onTap: () => MedStockSheet.show(
+                            context,
+                            traitementId: traitements[i].id,
+                          ),
+                        ),
+                      ],
                     ],
                   ],
                 ),

@@ -15,12 +15,16 @@ class ConfiguredMedicament {
     required this.traitementId,
     required this.nom,
     required this.dosage,
+    this.stockRestant,
+    this.seuilAlerteStock,
   });
 
   final String id;
   final String traitementId;
   final String nom;
   final String dosage;
+  final int? stockRestant;
+  final int? seuilAlerteStock;
 
   factory ConfiguredMedicament.fromJson(Map<String, dynamic> json) {
     return ConfiguredMedicament(
@@ -28,8 +32,37 @@ class ConfiguredMedicament {
       traitementId: json['patient_traitement_id']?.toString() ?? '',
       nom: json['nom'] as String? ?? '',
       dosage: json['dosage'] as String? ?? '',
+      stockRestant: (json['stock_restant'] as num?)?.toInt(),
+      seuilAlerteStock: (json['seuil_alerte_stock'] as num?)?.toInt(),
     );
   }
+
+  ConfiguredMedicament copyWith({
+    int? stockRestant,
+    int? seuilAlerteStock,
+    bool clearStock = false,
+    bool clearSeuil = false,
+  }) {
+    return ConfiguredMedicament(
+      id: id,
+      traitementId: traitementId,
+      nom: nom,
+      dosage: dosage,
+      stockRestant: clearStock ? null : (stockRestant ?? this.stockRestant),
+      seuilAlerteStock:
+          clearSeuil ? null : (seuilAlerteStock ?? this.seuilAlerteStock),
+    );
+  }
+}
+
+class StockUpdateResult {
+  const StockUpdateResult({
+    required this.stockRestant,
+    required this.alerteDeclenchee,
+  });
+
+  final int stockRestant;
+  final bool alerteDeclenchee;
 }
 
 class MedicamentsRepository {
@@ -101,6 +134,8 @@ class MedicamentsRepository {
     String? priseAvecRepas,
     required List<String> heures,
     List<String> jours = const ['tous'],
+    int? stockRestant,
+    int? seuilAlerteStock,
   }) async {
     try {
       await _api.post<Map<String, dynamic>>(
@@ -110,6 +145,8 @@ class MedicamentsRepository {
           'dosage': dosage.trim(),
           'forme': forme,
           if (priseAvecRepas != null) 'prise_avec_repas': priseAvecRepas,
+          if (stockRestant != null) 'stock_restant': stockRestant,
+          if (seuilAlerteStock != null) 'seuil_alerte_stock': seuilAlerteStock,
           'horaires': [
             for (final h in heures)
               {
@@ -118,6 +155,39 @@ class MedicamentsRepository {
               },
           ],
         },
+      );
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<StockUpdateResult> updateStock({
+    required String medicamentId,
+    required int stockRestant,
+  }) async {
+    try {
+      final res = await _api.patch<Map<String, dynamic>>(
+        '/medicaments/$medicamentId/stock',
+        data: {'stock_restant': stockRestant},
+      );
+      final data = res.data ?? {};
+      return StockUpdateResult(
+        stockRestant: (data['stock_restant'] as num?)?.toInt() ?? stockRestant,
+        alerteDeclenchee: data['alerte_declenchee'] as bool? ?? false,
+      );
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<void> updateSeuil({
+    required String medicamentId,
+    required int seuilAlerteStock,
+  }) async {
+    try {
+      await _api.patch<Map<String, dynamic>>(
+        '/medicaments/$medicamentId',
+        data: {'seuil_alerte_stock': seuilAlerteStock},
       );
     } on DioException catch (e) {
       ApiClient.throwApi(e);

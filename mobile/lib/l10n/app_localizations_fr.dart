@@ -411,7 +411,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get navCare => 'Soins';
 
   @override
-  String get navPeople => 'Proches';
+  String get navPeople => 'Cercle';
 
   @override
   String get navYou => 'Profil';
@@ -625,7 +625,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get homeNetworkSubtitle =>
-      'Accompagner un proche, ou inviter quelqu’un à t’aider — toujours avec un accord clair.';
+      'Qui t’aide, qui tu accompagnes, et le SOS — au même endroit.';
 
   @override
   String get homeCareMedsReady => 'Médicaments enregistrés';
@@ -641,6 +641,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get homeCareConfigureMeds => 'Configurer les médicaments';
+
+  @override
+  String get homeCareManageStock => 'Gérer le stock';
 
   @override
   String get homeCareEmptyPatientTitle => 'Active ton suivi';
@@ -1173,6 +1176,45 @@ class AppLocalizationsFr extends AppLocalizations {
       'Tu pourras ajuster plus tard. Fidel ne donne pas de conseil médical — seulement des rappels selon ce que tu configures.';
 
   @override
+  String get medsStockSection => 'Stock (optionnel)';
+
+  @override
+  String get medsStockHint =>
+      'Pour t’alerter avant la rupture. Ajustable plus tard dans Soins.';
+
+  @override
+  String get medsStockLabel => 'Unités restantes';
+
+  @override
+  String get medsStockSeuilLabel => 'Alerter quand ≤';
+
+  @override
+  String get medsStockSeuilHint => 'Défaut 5 si tu indiques un stock';
+
+  @override
+  String get medsStockRecap => 'Stock';
+
+  @override
+  String get medsStockSheetTitle => 'Stock des médicaments';
+
+  @override
+  String get medsStockSheetEmpty =>
+      'Aucun médicament configuré pour ce traitement.';
+
+  @override
+  String get medsStockSave => 'Enregistrer le stock';
+
+  @override
+  String get medsStockSaved => 'Stock mis à jour';
+
+  @override
+  String get medsStockAlertTriggered =>
+      'Stock bas — une alerte a été enregistrée.';
+
+  @override
+  String get medsStockInvalid => 'Indique un nombre entier ≥ 0.';
+
+  @override
   String get profileSubtitle =>
       'Compte, préférences et suivi — tout au même endroit.';
 
@@ -1328,7 +1370,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get profileVoixHint =>
-      'Le son du rappel local. Format audio court (mp3, m4a…), max 2 Mo.';
+      'Le son du rappel local. Enregistre un message court ou importe un fichier (mp3, m4a…), max 2 Mo.';
 
   @override
   String get profileVoixSystem => 'Voix système';
@@ -1340,10 +1382,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get profileVoixCustom => 'Voix personnalisée';
 
   @override
-  String get profileVoixCustomHint => 'Choisir un fichier audio';
+  String get profileVoixCustomHint => 'Enregistrer ou importer un audio';
 
   @override
-  String get profileVoixCustomActive => 'Fichier personnalisé actif';
+  String get profileVoixCustomActive => 'Voix personnalisée active';
 
   @override
   String get profileVoixPickFailed =>
@@ -1351,6 +1393,51 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get profileVoixTooLarge => 'Fichier trop lourd — maximum 2 Mo.';
+
+  @override
+  String get profileVoixChooseTitle => 'Comment ajouter ta voix ?';
+
+  @override
+  String get profileVoixRecord => 'Enregistrer';
+
+  @override
+  String get profileVoixRecordHint => 'Parler au micro (max 60 s)';
+
+  @override
+  String get profileVoixImport => 'Importer un fichier';
+
+  @override
+  String get profileVoixImportHint => 'Choisir un audio déjà sur le téléphone';
+
+  @override
+  String get profileVoixMicDenied =>
+      'Autorise le micro pour enregistrer ta voix de rappel.';
+
+  @override
+  String get profileVoixRecording => 'Enregistrement…';
+
+  @override
+  String get profileVoixRecordReady => 'Appuie pour démarrer';
+
+  @override
+  String get profileVoixStop => 'Arrêter';
+
+  @override
+  String get profileVoixStart => 'Démarrer';
+
+  @override
+  String get profileVoixUseRecording => 'Utiliser cet enregistrement';
+
+  @override
+  String get profileVoixRecordAgain => 'Reprendre';
+
+  @override
+  String get profileVoixRecordFailed => 'Enregistrement impossible. Réessaie.';
+
+  @override
+  String profileVoixSecondsLeft(int seconds) {
+    return '$seconds s restantes';
+  }
 
   @override
   String get profileContactsEmptyHint =>
@@ -1420,4 +1507,91 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get profileDeleteAction => 'Supprimer le compte';
+
+  @override
+  String get cercleMyPatients => 'J’accompagne';
+
+  @override
+  String get cercleMyPatientsEmptyTitle =>
+      'Personne accompagnée pour l’instant';
+
+  @override
+  String get cercleMyPatientsEmptyBody =>
+      'Entre un code Fidel pour rejoindre le suivi d’un proche qui t’a donné son accord.';
+
+  @override
+  String get cercleMyCircle => 'Mon cercle';
+
+  @override
+  String get cercleMyCircleHint =>
+      'Ton réseau de confiance pour le suivi et les situations urgentes.';
+
+  @override
+  String get cercleQuickLinks => 'Liens rapides';
+
+  @override
+  String get cercleLinkSyncHint => 'Entrer un nouveau code de suivi';
+
+  @override
+  String get cercleLinkAidantsHint => 'Gérer les personnes qui t’accompagnent';
+
+  @override
+  String get cercleEmptyTitle => 'Commencer ton cercle';
+
+  @override
+  String get cercleEmptyBody =>
+      'Active ton suivi personnel ou connecte-toi au suivi d’un proche. Les deux capacités peuvent vivre sur le même compte.';
+
+  @override
+  String get cercleSosTitle => 'Déclencher le SOS';
+
+  @override
+  String get cercleAddEmergencyContact => 'Ajouter un contact d’urgence';
+
+  @override
+  String get cercleSosSent => 'SOS déclenché';
+
+  @override
+  String get cercleSosCancel => 'Annuler l’alerte';
+
+  @override
+  String get cercleSosCancelled => 'SOS annulé';
+
+  @override
+  String cercleSosCountdown(int seconds) {
+    return 'Tu peux encore annuler pendant $seconds s.';
+  }
+
+  @override
+  String get cercleDetailAdherence => 'Observance';
+
+  @override
+  String get cercleDetailVitals => 'Constantes';
+
+  @override
+  String cercleAdherenceWindow(String from, String to) {
+    return 'Fenêtre suivie : du $from au $to';
+  }
+
+  @override
+  String get cercleAdherenceRate => 'Taux';
+
+  @override
+  String get cercleAdherenceConfirmed => 'Confirmées';
+
+  @override
+  String get cercleAdherenceMissed => 'Manquées';
+
+  @override
+  String get cercleAdherencePending => 'En attente';
+
+  @override
+  String get cerclePermissionLocked =>
+      'Cette donnée n’est pas partagée avec toi.';
+
+  @override
+  String get cerclePermissionLimited => 'Accès limité';
+
+  @override
+  String get cercleNoVitals => 'Aucune constante partagée pour le moment.';
 }

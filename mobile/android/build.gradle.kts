@@ -16,6 +16,19 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
+
+// file_picker 8.x force compileSdk 34 ; flutter_plugin_android_lifecycle exige ≥ 36.
+// afterEvaluate : après le bloc android {} du plugin (withPlugin serait trop tôt).
+subprojects {
+    afterEvaluate {
+        extensions.findByType(com.android.build.gradle.LibraryExtension::class.java)?.apply {
+            if (compileSdk != null && compileSdk!! < 37) {
+                compileSdk = 37
+            }
+        }
+    }
+}
+
 subprojects {
     project.evaluationDependsOn(":app")
 }

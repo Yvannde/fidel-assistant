@@ -38,6 +38,7 @@ class _SyncAidantScreenState extends ConsumerState<SyncAidantScreen> {
           .joinWithCode(_code.text);
       if (!mounted) return;
       AppToast.success(context, msg.isEmpty ? l10n.homeSyncOk : msg);
+      ref.read(homeTabIndexProvider.notifier).state = 2;
       context.go('/home');
     } catch (e) {
       if (!mounted) return;

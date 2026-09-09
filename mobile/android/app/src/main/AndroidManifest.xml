@@ -7,7 +7,8 @@
     <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
-    <!-- Voix de rappel personnalisée (Android 13+) -->
+    <!-- Voix de rappel personnalisée (enregistrement + import) -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"

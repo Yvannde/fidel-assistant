@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
@@ -14,6 +15,7 @@ import '../data/medicaments_repository.dart';
 import 'widgets/home_config_shell.dart';
 import 'widgets/med_days_selector.dart';
 import 'widgets/med_forme_selector.dart';
+import 'widgets/med_stock_sheet.dart';
 import 'widgets/med_suggestion_card.dart';
 import 'widgets/med_times_editor.dart';
 
@@ -30,6 +32,8 @@ class MedicamentWizardScreen extends ConsumerStatefulWidget {
 class _MedicamentWizardScreenState extends ConsumerState<MedicamentWizardScreen> {
   final _nom = TextEditingController();
   final _dosage = TextEditingController();
+  final _stock = TextEditingController();
+  final _seuil = TextEditingController();
   final _times = <TimeOfDay>[const TimeOfDay(hour: 8, minute: 0)];
   String _forme = 'comprime';
   bool _everyDay = true;
@@ -56,6 +60,8 @@ class _MedicamentWizardScreenState extends ConsumerState<MedicamentWizardScreen>
   void dispose() {
     _nom.dispose();
     _dosage.dispose();
+    _stock.dispose();
+    _seuil.dispose();
     super.dispose();
   }
 
@@ -102,6 +108,8 @@ class _MedicamentWizardScreenState extends ConsumerState<MedicamentWizardScreen>
   void _resetDraft() {
     _nom.clear();
     _dosage.clear();
+    _stock.clear();
+    _seuil.clear();
     _forme = 'comprime';
     _everyDay = true;
     _days = {};
@@ -111,6 +119,32 @@ class _MedicamentWizardScreenState extends ConsumerState<MedicamentWizardScreen>
       ..clear()
       ..add(const TimeOfDay(hour: 8, minute: 0));
     setState(() => _step = 0);
+  }
+
+  (int?, int?) _stockPayload(AppLocalizations l10n) {
+    final stockRaw = _stock.text.trim();
+    final seuilRaw = _seuil.text.trim();
+    if (stockRaw.isEmpty && seuilRaw.isEmpty) return (null, null);
+    if (stockRaw.isEmpty) {
+      AppToast.error(context, l10n.medsStockInvalid);
+      throw StateError('stock_invalid');
+    }
+    final stock = int.tryParse(stockRaw);
+    if (stock == null || stock < 0) {
+      AppToast.error(context, l10n.medsStockInvalid);
+      throw StateError('stock_invalid');
+    }
+    int? seuil;
+    if (seuilRaw.isNotEmpty) {
+      seuil = int.tryParse(seuilRaw);
+      if (seuil == null || seuil < 0) {
+        AppToast.error(context, l10n.medsStockInvalid);
+        throw StateError('stock_invalid');
+      }
+    } else {
+      seuil = 5;
+    }
+    return (stock, seuil);
   }
 
   List<String> _joursPayload() {
@@ -169,6 +203,16 @@ class _MedicamentWizardScreenState extends ConsumerState<MedicamentWizardScreen>
     AppLocalizations l10n, {
     required bool addAnother,
   }) async {
+    late final int? stockRestant;
+    late final int? seuilAlerte;
+    try {
+      final parsed = _stockPayload(l10n);
+      stockRestant = parsed.$1;
+      seuilAlerte = parsed.$2;
+    } catch (_) {
+      return;
+    }
+
     setState(() => _busy = true);
     final savedNom = _nom.text.trim();
     final savedDosage = _dosage.text.trim();
@@ -181,6 +225,8 @@ class _MedicamentWizardScreenState extends ConsumerState<MedicamentWizardScreen>
             priseAvecRepas: _priseAvecRepas,
             heures: _times.map(_fmt).toList(),
             jours: _joursPayload(),
+            stockRestant: stockRestant,
+            seuilAlerteStock: seuilAlerte,
           );
       await ref.read(homeControllerProvider.notifier).load();
       if (!mounted) return;
@@ -192,6 +238,8 @@ class _MedicamentWizardScreenState extends ConsumerState<MedicamentWizardScreen>
             traitementId: widget.traitementId,
             nom: savedNom,
             dosage: savedDosage,
+            stockRestant: stockRestant,
+            seuilAlerteStock: seuilAlerte,
           ),
         ];
       });
@@ -307,6 +355,18 @@ class _MedicamentWizardScreenState extends ConsumerState<MedicamentWizardScreen>
                   height: 1.35,
                 ),
               ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: () => MedStockSheet.show(
+                    context,
+                    traitementId: widget.traitementId,
+                  ),
+                  icon: const Icon(IconsaxPlusLinear.box, size: 18),
+                  label: Text(l10n.homeCareManageStock),
+                ),
+              ),
             ],
           ],
         ),
@@ -401,6 +461,52 @@ class _MedicamentWizardScreenState extends ConsumerState<MedicamentWizardScreen>
               MedFormeSelector(
                 value: _forme,
                 onChanged: (v) => setState(() => _forme = v),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                l10n.medsStockSection,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                l10n.medsStockHint,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: tokens.textSecondary,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _stock,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
+                      decoration: InputDecoration(
+                        labelText: l10n.medsStockLabel,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: _seuil,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
+                      decoration: InputDecoration(
+                        labelText: l10n.medsStockSeuilLabel,
+                        hintText: l10n.medsStockSeuilHint,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -528,6 +634,14 @@ class _MedicamentWizardScreenState extends ConsumerState<MedicamentWizardScreen>
                       label: l10n.medsRepasLabel,
                       value: _repasLabel(l10n),
                     ),
+                    if (_stock.text.trim().isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      _RecapRow(
+                        label: l10n.medsStockRecap,
+                        value:
+                            '${_stock.text.trim()} (≤ ${_seuil.text.trim().isEmpty ? '5' : _seuil.text.trim()})',
+                      ),
+                    ],
                   ],
                 ),
               ),

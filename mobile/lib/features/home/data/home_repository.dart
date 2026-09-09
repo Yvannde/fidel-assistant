@@ -442,4 +442,69 @@ class HomeRepository {
       ApiClient.throwApi(e);
     }
   }
+
+  Future<List<AidantPatient>> listAccompaniedPatients() async {
+    try {
+      final res = await _api.get<dynamic>('/aidants/me/patients');
+      final data = res.data;
+      if (data is! List) return const [];
+      return data
+          .whereType<Map>()
+          .map((e) => AidantPatient.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    } on DioException catch (e) {
+      final parsed = ApiException.fromResponse(
+        e.response?.statusCode,
+        e.response?.data,
+      );
+      if (parsed.code == 'NOT_AN_AIDANT') return const [];
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<AidantObservance> fetchPatientObservance(String patientId) async {
+    try {
+      final res = await _api.get<Map<String, dynamic>>(
+        '/aidants/me/patients/$patientId/observance',
+      );
+      return AidantObservance.fromJson(res.data ?? {});
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<List<Constante>> listAidantConstantes(String patientId) async {
+    try {
+      final res = await _api.get<dynamic>(
+        '/aidants/me/patients/$patientId/constantes',
+      );
+      final data = res.data;
+      if (data is! List) return const [];
+      return data
+          .whereType<Map>()
+          .map((e) => Constante.tryParse(Map<String, dynamic>.from(e)))
+          .whereType<Constante>()
+          .toList();
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<SosTicket> triggerSos() async {
+    try {
+      final res = await _api.post<Map<String, dynamic>>('/patients/me/sos');
+      return SosTicket.fromJson(res.data ?? {});
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<String> cancelSos(String sosId) async {
+    try {
+      final res = await _api.post<Map<String, dynamic>>('/sos/$sosId/annuler');
+      return res.data?['message'] as String? ?? '';
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
 }

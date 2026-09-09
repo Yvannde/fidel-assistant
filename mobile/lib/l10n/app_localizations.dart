@@ -845,7 +845,7 @@ abstract class AppLocalizations {
   /// No description provided for @navPeople.
   ///
   /// In en, this message translates to:
-  /// **'People'**
+  /// **'Circle'**
   String get navPeople;
 
   /// No description provided for @navYou.
@@ -1223,7 +1223,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeNetworkSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Support a relative, or invite someone to help you — always with a clear yes.'**
+  /// **'Who supports you, who you support, and SOS — in one place.'**
   String get homeNetworkSubtitle;
 
   /// No description provided for @homeCareMedsReady.
@@ -1255,6 +1255,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Set up medicines'**
   String get homeCareConfigureMeds;
+
+  /// No description provided for @homeCareManageStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage stock'**
+  String get homeCareManageStock;
 
   /// No description provided for @homeCareEmptyPatientTitle.
   ///
@@ -2180,6 +2186,78 @@ abstract class AppLocalizations {
   /// **'You can adjust later. Fidel doesn’t give medical advice — only reminders based on what you set.'**
   String get medsRecapTrust;
 
+  /// No description provided for @medsStockSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock (optional)'**
+  String get medsStockSection;
+
+  /// No description provided for @medsStockHint.
+  ///
+  /// In en, this message translates to:
+  /// **'So we can warn you before you run out. Adjust later in Care.'**
+  String get medsStockHint;
+
+  /// No description provided for @medsStockLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Units left'**
+  String get medsStockLabel;
+
+  /// No description provided for @medsStockSeuilLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Alert when ≤'**
+  String get medsStockSeuilLabel;
+
+  /// No description provided for @medsStockSeuilHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Defaults to 5 if you set a stock'**
+  String get medsStockSeuilHint;
+
+  /// No description provided for @medsStockRecap.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock'**
+  String get medsStockRecap;
+
+  /// No description provided for @medsStockSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Medicine stock'**
+  String get medsStockSheetTitle;
+
+  /// No description provided for @medsStockSheetEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No medicines configured for this treatment.'**
+  String get medsStockSheetEmpty;
+
+  /// No description provided for @medsStockSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save stock'**
+  String get medsStockSave;
+
+  /// No description provided for @medsStockSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock updated'**
+  String get medsStockSaved;
+
+  /// No description provided for @medsStockAlertTriggered.
+  ///
+  /// In en, this message translates to:
+  /// **'Low stock — an alert was logged.'**
+  String get medsStockAlertTriggered;
+
+  /// No description provided for @medsStockInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a whole number ≥ 0.'**
+  String get medsStockInvalid;
+
   /// No description provided for @profileSubtitle.
   ///
   /// In en, this message translates to:
@@ -2465,7 +2543,7 @@ abstract class AppLocalizations {
   /// No description provided for @profileVoixHint.
   ///
   /// In en, this message translates to:
-  /// **'Sound for the local reminder. Short audio (mp3, m4a…), max 2 MB.'**
+  /// **'Sound for the local reminder. Record a short message or import a file (mp3, m4a…), max 2 MB.'**
   String get profileVoixHint;
 
   /// No description provided for @profileVoixSystem.
@@ -2489,13 +2567,13 @@ abstract class AppLocalizations {
   /// No description provided for @profileVoixCustomHint.
   ///
   /// In en, this message translates to:
-  /// **'Pick an audio file'**
+  /// **'Record or import audio'**
   String get profileVoixCustomHint;
 
   /// No description provided for @profileVoixCustomActive.
   ///
   /// In en, this message translates to:
-  /// **'Custom file active'**
+  /// **'Custom voice active'**
   String get profileVoixCustomActive;
 
   /// No description provided for @profileVoixPickFailed.
@@ -2509,6 +2587,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'File too large — 2 MB max.'**
   String get profileVoixTooLarge;
+
+  /// No description provided for @profileVoixChooseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How do you want to add your voice?'**
+  String get profileVoixChooseTitle;
+
+  /// No description provided for @profileVoixRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Record'**
+  String get profileVoixRecord;
+
+  /// No description provided for @profileVoixRecordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Speak into the mic (max 60 s)'**
+  String get profileVoixRecordHint;
+
+  /// No description provided for @profileVoixImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import a file'**
+  String get profileVoixImport;
+
+  /// No description provided for @profileVoixImportHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick audio already on the phone'**
+  String get profileVoixImportHint;
+
+  /// No description provided for @profileVoixMicDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow the microphone to record your reminder voice.'**
+  String get profileVoixMicDenied;
+
+  /// No description provided for @profileVoixRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording…'**
+  String get profileVoixRecording;
+
+  /// No description provided for @profileVoixRecordReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to start'**
+  String get profileVoixRecordReady;
+
+  /// No description provided for @profileVoixStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get profileVoixStop;
+
+  /// No description provided for @profileVoixStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get profileVoixStart;
+
+  /// No description provided for @profileVoixUseRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this recording'**
+  String get profileVoixUseRecording;
+
+  /// No description provided for @profileVoixRecordAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Record again'**
+  String get profileVoixRecordAgain;
+
+  /// No description provided for @profileVoixRecordFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording failed. Try again.'**
+  String get profileVoixRecordFailed;
+
+  /// No description provided for @profileVoixSecondsLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds} s left'**
+  String profileVoixSecondsLeft(int seconds);
 
   /// No description provided for @profileContactsEmptyHint.
   ///
@@ -2635,6 +2797,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete account'**
   String get profileDeleteAction;
+
+  /// No description provided for @cercleMyPatients.
+  ///
+  /// In en, this message translates to:
+  /// **'People I support'**
+  String get cercleMyPatients;
+
+  /// No description provided for @cercleMyPatientsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No one linked yet'**
+  String get cercleMyPatientsEmptyTitle;
+
+  /// No description provided for @cercleMyPatientsEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a Fidel code to join the follow-up of someone who shared it with you.'**
+  String get cercleMyPatientsEmptyBody;
+
+  /// No description provided for @cercleMyCircle.
+  ///
+  /// In en, this message translates to:
+  /// **'My circle'**
+  String get cercleMyCircle;
+
+  /// No description provided for @cercleMyCircleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your trusted network for follow-up and urgent situations.'**
+  String get cercleMyCircleHint;
+
+  /// No description provided for @cercleQuickLinks.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick links'**
+  String get cercleQuickLinks;
+
+  /// No description provided for @cercleLinkSyncHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter another follow-up code'**
+  String get cercleLinkSyncHint;
+
+  /// No description provided for @cercleLinkAidantsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage people who support you'**
+  String get cercleLinkAidantsHint;
+
+  /// No description provided for @cercleEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start your circle'**
+  String get cercleEmptyTitle;
+
+  /// No description provided for @cercleEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate your personal follow-up or connect to a loved one’s follow-up. Both capabilities can live on the same account.'**
+  String get cercleEmptyBody;
+
+  /// No description provided for @cercleSosTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Trigger SOS'**
+  String get cercleSosTitle;
+
+  /// No description provided for @cercleAddEmergencyContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an emergency contact'**
+  String get cercleAddEmergencyContact;
+
+  /// No description provided for @cercleSosSent.
+  ///
+  /// In en, this message translates to:
+  /// **'SOS triggered'**
+  String get cercleSosSent;
+
+  /// No description provided for @cercleSosCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel alert'**
+  String get cercleSosCancel;
+
+  /// No description provided for @cercleSosCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'SOS cancelled'**
+  String get cercleSosCancelled;
+
+  /// No description provided for @cercleSosCountdown.
+  ///
+  /// In en, this message translates to:
+  /// **'You can still cancel for {seconds}s.'**
+  String cercleSosCountdown(int seconds);
+
+  /// No description provided for @cercleDetailAdherence.
+  ///
+  /// In en, this message translates to:
+  /// **'Adherence'**
+  String get cercleDetailAdherence;
+
+  /// No description provided for @cercleDetailVitals.
+  ///
+  /// In en, this message translates to:
+  /// **'Vitals'**
+  String get cercleDetailVitals;
+
+  /// No description provided for @cercleAdherenceWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Observed window: {from} to {to}'**
+  String cercleAdherenceWindow(String from, String to);
+
+  /// No description provided for @cercleAdherenceRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate'**
+  String get cercleAdherenceRate;
+
+  /// No description provided for @cercleAdherenceConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed'**
+  String get cercleAdherenceConfirmed;
+
+  /// No description provided for @cercleAdherenceMissed.
+  ///
+  /// In en, this message translates to:
+  /// **'Missed'**
+  String get cercleAdherenceMissed;
+
+  /// No description provided for @cercleAdherencePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get cercleAdherencePending;
+
+  /// No description provided for @cerclePermissionLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'This data is not shared with you.'**
+  String get cerclePermissionLocked;
+
+  /// No description provided for @cerclePermissionLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Limited access'**
+  String get cerclePermissionLimited;
+
+  /// No description provided for @cercleNoVitals.
+  ///
+  /// In en, this message translates to:
+  /// **'No vitals shared yet.'**
+  String get cercleNoVitals;
 }
 
 class _AppLocalizationsDelegate
