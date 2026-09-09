@@ -3,11 +3,17 @@ class HomeProfile {
     required this.nomComplet,
     required this.hasPatientProfile,
     required this.isAidant,
+    this.email = '',
+    this.phone,
+    this.langue,
   });
 
   final String nomComplet;
   final bool hasPatientProfile;
   final bool isAidant;
+  final String email;
+  final String? phone;
+  final String? langue;
 
   String get firstName {
     final parts = nomComplet.trim().split(RegExp(r'\s+'));
@@ -17,7 +23,10 @@ class HomeProfile {
   }
 
   String get initial {
-    if (firstName.isEmpty) return 'F';
+    if (firstName.isEmpty) {
+      if (email.isNotEmpty) return email[0].toUpperCase();
+      return 'F';
+    }
     return firstName[0];
   }
 
@@ -28,7 +37,10 @@ class HomeProfile {
         .split(RegExp(r'\s+'))
         .where((p) => p.isNotEmpty)
         .toList();
-    if (parts.isEmpty) return '';
+    if (parts.isEmpty) {
+      if (email.isNotEmpty) return email;
+      return '';
+    }
     String cap(String raw) =>
         raw[0].toUpperCase() + raw.substring(1).toLowerCase();
     if (parts.length == 1) return cap(parts.first);
@@ -40,6 +52,9 @@ class HomeProfile {
       nomComplet: json['nom_complet'] as String? ?? '',
       hasPatientProfile: json['has_patient_profile'] as bool? ?? false,
       isAidant: json['is_aidant'] as bool? ?? false,
+      email: json['email'] as String? ?? '',
+      phone: json['phone'] as String?,
+      langue: json['langue'] as String?,
     );
   }
 }

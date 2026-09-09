@@ -131,7 +131,7 @@
   "navHome": "Accueil",
   "navCare": "Soins",
   "navPeople": "Proches",
-  "navYou": "Toi",
+  "navYou": "Profil",
   "homeHelloMorning": "Bonjour {name}",
   "@homeHelloMorning": {
     "placeholders": { "name": { "type": "String" } }
@@ -429,5 +429,25 @@
   "medsRepasApres": "Après le repas",
   "medsRepasIndifferent": "Indifférent",
   "medsRecapTraitementHint": "Lié à ce traitement",
-  "medsRecapTrust": "Tu pourras ajuster plus tard. Fidel ne donne pas de conseil médical — seulement des rappels selon ce que tu configures."
+  "medsRecapTrust": "Tu pourras ajuster plus tard. Fidel ne donne pas de conseil médical — seulement des rappels selon ce que tu configures.",
+  "profileSubtitle": "Compte, préférences et suivi — tout au même endroit.",
+  "profileFallbackName": "Compte Fidel",
+  "profileChipPatient": "Suivi actif",
+  "profileChipAidant": "Aidant",
+  "profileChipAccount": "Compte",
+  "profileSectionPrefs": "Préférences",
+  "profileLanguage": "Langue",
+  "profileSectionFollowUp": "Suivi & alertes",
+  "profileNotifications": "Notifications",
+  "profileNotificationsHint": "Rappels et alertes",
+  "profileAidantsHint": "Gérer les personnes qui t’aident",
+  "profileAidantsLocked": "Active d’abord ton suivi patient",
+  "profileActivateOk": "Suivi activé",
+  "profileSectionLegal": "Légal",
+  "profileCgu": "Conditions d’utilisation",
+  "profileCguVersion": "Version {version}",
+  "@profileCguVersion": {
+    "placeholders": { "version": { "type": "String" } }
+  },
+  "profileLogoutConfirm": "Tu quitteras ton compte sur cet appareil. Tes données restent en sécurité."
 }

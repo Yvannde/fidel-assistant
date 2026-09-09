@@ -374,6 +374,10 @@ class HomeController extends StateNotifier<HomeUiState> {
     }
   }
 
+  Future<void> updateProfile(HomeProfile profile) async {
+    state = state.copyWith(profile: profile);
+  }
+
   Future<void> confirmPrise(String id) async {
     await _mutatePrise(() => _repo.confirmPrise(id));
   }

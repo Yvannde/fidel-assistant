@@ -20,6 +20,21 @@ class HomeRepository {
     }
   }
 
+  Future<HomeProfile> patchMe({String? langue, String? phone}) async {
+    try {
+      final res = await _api.patch<Map<String, dynamic>>(
+        '/auth/me',
+        data: {
+          if (langue != null && langue.isNotEmpty) 'langue': langue,
+          if (phone != null) 'phone': phone,
+        },
+      );
+      return HomeProfile.fromMeJson(res.data ?? {});
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
   Future<PatientDashboard?> fetchDashboard() async {
     try {
       final res = await _api.get<Map<String, dynamic>>('/patients/me/dashboard');

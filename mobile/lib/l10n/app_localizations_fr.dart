@@ -414,7 +414,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get navPeople => 'Proches';
 
   @override
-  String get navYou => 'Toi';
+  String get navYou => 'Profil';
 
   @override
   String homeHelloMorning(String name) {
@@ -1171,4 +1171,59 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get medsRecapTrust =>
       'Tu pourras ajuster plus tard. Fidel ne donne pas de conseil médical — seulement des rappels selon ce que tu configures.';
+
+  @override
+  String get profileSubtitle =>
+      'Compte, préférences et suivi — tout au même endroit.';
+
+  @override
+  String get profileFallbackName => 'Compte Fidel';
+
+  @override
+  String get profileChipPatient => 'Suivi actif';
+
+  @override
+  String get profileChipAidant => 'Aidant';
+
+  @override
+  String get profileChipAccount => 'Compte';
+
+  @override
+  String get profileSectionPrefs => 'Préférences';
+
+  @override
+  String get profileLanguage => 'Langue';
+
+  @override
+  String get profileSectionFollowUp => 'Suivi & alertes';
+
+  @override
+  String get profileNotifications => 'Notifications';
+
+  @override
+  String get profileNotificationsHint => 'Rappels et alertes';
+
+  @override
+  String get profileAidantsHint => 'Gérer les personnes qui t’aident';
+
+  @override
+  String get profileAidantsLocked => 'Active d’abord ton suivi patient';
+
+  @override
+  String get profileActivateOk => 'Suivi activé';
+
+  @override
+  String get profileSectionLegal => 'Légal';
+
+  @override
+  String get profileCgu => 'Conditions d’utilisation';
+
+  @override
+  String profileCguVersion(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get profileLogoutConfirm =>
+      'Tu quitteras ton compte sur cet appareil. Tes données restent en sécurité.';
 }

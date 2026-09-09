@@ -851,7 +851,7 @@ abstract class AppLocalizations {
   /// No description provided for @navYou.
   ///
   /// In en, this message translates to:
-  /// **'You'**
+  /// **'Profile'**
   String get navYou;
 
   /// No description provided for @homeHelloMorning.
@@ -2179,6 +2179,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You can adjust later. Fidel doesn’t give medical advice — only reminders based on what you set.'**
   String get medsRecapTrust;
+
+  /// No description provided for @profileSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account, preferences and follow-up — all in one place.'**
+  String get profileSubtitle;
+
+  /// No description provided for @profileFallbackName.
+  ///
+  /// In en, this message translates to:
+  /// **'Fidel account'**
+  String get profileFallbackName;
+
+  /// No description provided for @profileChipPatient.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up on'**
+  String get profileChipPatient;
+
+  /// No description provided for @profileChipAidant.
+  ///
+  /// In en, this message translates to:
+  /// **'Caregiver'**
+  String get profileChipAidant;
+
+  /// No description provided for @profileChipAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get profileChipAccount;
+
+  /// No description provided for @profileSectionPrefs.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences'**
+  String get profileSectionPrefs;
+
+  /// No description provided for @profileLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get profileLanguage;
+
+  /// No description provided for @profileSectionFollowUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up & alerts'**
+  String get profileSectionFollowUp;
+
+  /// No description provided for @profileNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get profileNotifications;
+
+  /// No description provided for @profileNotificationsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders and alerts'**
+  String get profileNotificationsHint;
+
+  /// No description provided for @profileAidantsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage people who help you'**
+  String get profileAidantsHint;
+
+  /// No description provided for @profileAidantsLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate your patient follow-up first'**
+  String get profileAidantsLocked;
+
+  /// No description provided for @profileActivateOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up activated'**
+  String get profileActivateOk;
+
+  /// No description provided for @profileSectionLegal.
+  ///
+  /// In en, this message translates to:
+  /// **'Legal'**
+  String get profileSectionLegal;
+
+  /// No description provided for @profileCgu.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of use'**
+  String get profileCgu;
+
+  /// No description provided for @profileCguVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String profileCguVersion(String version);
+
+  /// No description provided for @profileLogoutConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'You’ll sign out on this device. Your data stays safe.'**
+  String get profileLogoutConfirm;
 }
 
 class _AppLocalizationsDelegate

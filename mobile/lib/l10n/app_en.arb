@@ -146,7 +146,7 @@
   "navHome": "Home",
   "navCare": "Care",
   "navPeople": "People",
-  "navYou": "You",
+  "navYou": "Profile",
   "homeHelloMorning": "Good morning {name}",
   "@homeHelloMorning": {
     "placeholders": { "name": { "type": "String" } }
@@ -444,5 +444,25 @@
   "medsRepasApres": "After meals",
   "medsRepasIndifferent": "Doesn’t matter",
   "medsRecapTraitementHint": "Linked to this treatment",
-  "medsRecapTrust": "You can adjust later. Fidel doesn’t give medical advice — only reminders based on what you set."
+  "medsRecapTrust": "You can adjust later. Fidel doesn’t give medical advice — only reminders based on what you set.",
+  "profileSubtitle": "Account, preferences and follow-up — all in one place.",
+  "profileFallbackName": "Fidel account",
+  "profileChipPatient": "Follow-up on",
+  "profileChipAidant": "Caregiver",
+  "profileChipAccount": "Account",
+  "profileSectionPrefs": "Preferences",
+  "profileLanguage": "Language",
+  "profileSectionFollowUp": "Follow-up & alerts",
+  "profileNotifications": "Notifications",
+  "profileNotificationsHint": "Reminders and alerts",
+  "profileAidantsHint": "Manage people who help you",
+  "profileAidantsLocked": "Activate your patient follow-up first",
+  "profileActivateOk": "Follow-up activated",
+  "profileSectionLegal": "Legal",
+  "profileCgu": "Terms of use",
+  "profileCguVersion": "Version {version}",
+  "@profileCguVersion": {
+    "placeholders": { "version": { "type": "String" } }
+  },
+  "profileLogoutConfirm": "You’ll sign out on this device. Your data stays safe."
 }

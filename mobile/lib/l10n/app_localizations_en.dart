@@ -409,7 +409,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navPeople => 'People';
 
   @override
-  String get navYou => 'You';
+  String get navYou => 'Profile';
 
   @override
   String homeHelloMorning(String name) {
@@ -1159,4 +1159,59 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get medsRecapTrust =>
       'You can adjust later. Fidel doesn’t give medical advice — only reminders based on what you set.';
+
+  @override
+  String get profileSubtitle =>
+      'Account, preferences and follow-up — all in one place.';
+
+  @override
+  String get profileFallbackName => 'Fidel account';
+
+  @override
+  String get profileChipPatient => 'Follow-up on';
+
+  @override
+  String get profileChipAidant => 'Caregiver';
+
+  @override
+  String get profileChipAccount => 'Account';
+
+  @override
+  String get profileSectionPrefs => 'Preferences';
+
+  @override
+  String get profileLanguage => 'Language';
+
+  @override
+  String get profileSectionFollowUp => 'Follow-up & alerts';
+
+  @override
+  String get profileNotifications => 'Notifications';
+
+  @override
+  String get profileNotificationsHint => 'Reminders and alerts';
+
+  @override
+  String get profileAidantsHint => 'Manage people who help you';
+
+  @override
+  String get profileAidantsLocked => 'Activate your patient follow-up first';
+
+  @override
+  String get profileActivateOk => 'Follow-up activated';
+
+  @override
+  String get profileSectionLegal => 'Legal';
+
+  @override
+  String get profileCgu => 'Terms of use';
+
+  @override
+  String profileCguVersion(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get profileLogoutConfirm =>
+      'You’ll sign out on this device. Your data stays safe.';
 }
