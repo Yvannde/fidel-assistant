@@ -25,7 +25,11 @@ async def confirmer_prise(
     user: Annotated[User, Depends(get_current_user)],
 ) -> dict:
     return await patient_suivi_service.confirmer_prise(
-        db, user=user, prise_id=prise_id, canal=body.canal
+        db,
+        user=user,
+        prise_id=prise_id,
+        canal=body.canal,
+        client_mutation_id=body.client_mutation_id,
     )
 
 
@@ -37,7 +41,11 @@ async def reporter_prise(
     user: Annotated[User, Depends(get_current_user)],
 ) -> dict:
     return await patient_suivi_service.reporter_prise(
-        db, user=user, prise_id=prise_id, nouvelle_heure=body.nouvelle_heure
+        db,
+        user=user,
+        prise_id=prise_id,
+        nouvelle_heure=body.nouvelle_heure,
+        client_mutation_id=body.client_mutation_id,
     )
 
 

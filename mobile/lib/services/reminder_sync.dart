@@ -8,10 +8,10 @@ import '../features/home/application/home_controller.dart';
 import '../features/home/data/home_repository.dart';
 import '../features/home/domain/dashboard_models.dart';
 import 'alarm_prefs.dart';
-import 'pending_prise_sync_queue.dart';
 import 'reminder_alarm_service.dart';
 import 'reminder_sync_perf.dart';
 import 'scheduled_dose.dart';
+import 'sync_engine.dart';
 
 final reminderAlarmServiceProvider = Provider<ReminderAlarmService>((ref) {
   return ReminderAlarmService(ref.watch(sharedPreferencesProvider));
@@ -19,10 +19,6 @@ final reminderAlarmServiceProvider = Provider<ReminderAlarmService>((ref) {
 
 final alarmPrefsProvider = Provider<AlarmPrefs>((ref) {
   return AlarmPrefs(ref.watch(sharedPreferencesProvider));
-});
-
-final pendingPriseSyncQueueProvider = Provider<PendingPriseSyncQueue>((ref) {
-  return PendingPriseSyncQueue(ref.watch(sharedPreferencesProvider));
 });
 
 const _syncGateKey = 'reminder_sync_gate_v1';
@@ -39,8 +35,7 @@ class ReminderActionDispatcher {
     final priseId = payload['priseId'] as String?;
     final kind = payload['kind'] as String?;
     final alarms = _container.read(reminderAlarmServiceProvider);
-    final queue = _container.read(pendingPriseSyncQueueProvider);
-    final repo = _container.read(homeRepositoryProvider);
+    final engine = _container.read(syncEngineProvider);
     final snoozeMin = _container.read(alarmPrefsProvider).snoozeMinutes;
 
     debugPrint(
@@ -61,10 +56,9 @@ class ReminderActionDispatcher {
     await alarms.cancelPrise(priseId);
 
     if (response.actionId == ReminderAlarmService.actionConfirm) {
-      await queue.enqueueConfirm(priseId: priseId);
+      await engine.enqueueConfirm(priseId: priseId);
       try {
-        await repo.confirmPrise(priseId);
-        await queue.flush(repo);
+        await engine.flush();
       } catch (e) {
         debugPrint('ReminderAction confirm: $e');
       }
@@ -78,10 +72,9 @@ class ReminderActionDispatcher {
 
     if (response.actionId == ReminderAlarmService.actionSnooze) {
       final when = DateTime.now().add(Duration(minutes: snoozeMin));
-      await queue.enqueueReport(priseId: priseId, nouvelleHeure: when);
+      await engine.enqueueReport(priseId: priseId, nouvelleHeure: when);
       try {
-        await repo.reportPrise(priseId, when);
-        await queue.flush(repo);
+        await engine.flush();
       } catch (e) {
         debugPrint('ReminderAction snooze: $e');
       }
@@ -118,13 +111,13 @@ Future<void> syncRemindersFromHome(
   if (!dashboard.notificationsAccordees) return;
 
   final repo = read(homeRepositoryProvider);
-  final queue = read(pendingPriseSyncQueueProvider);
+  final engine = read(syncEngineProvider);
   final alarms = read(reminderAlarmServiceProvider);
   final alarmPrefs = read(alarmPrefsProvider);
   final prefs = read(sharedPreferencesProvider);
 
   try {
-    await queue.flush(repo);
+    await engine.flush();
   } catch (_) {}
 
   final dashFp = ReminderSyncPerf.dashboardPendingFingerprint(

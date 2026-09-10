@@ -33,6 +33,7 @@ Permissions notifs/batterie : seulement si branche suivi perso (option A).
 | API dashboard, traitements, médicaments, horaires, prises + `POST /prises/sync-offline` | **Fait** | Prises pré-générées à la création d’horaire |
 | Aidants, contacts urgence, check-in / SOS, constantes, préférences consentement, voix de rappel, réglages patient | **Fait** | Branche `feat/aidant-management` ; migrations Neon à jour |
 | App Flutter (auth, onboarding, alarmes locales) | **En cours** | Préavis H0−Δ + alarme app H0 + notif marquage H+5 (voir `mobile-flutter`) |
+| Sync offline V2 (outbox, Drift, push/pull) | **Contrat Phase 0** | Voir `offline-sync` ; implémentation Phase 1+ |
 
 **Rappels médicaments** : 100 % **locaux** sur le téléphone (offline, même avion). Timeline par prise : **préavis** (notif H0−Δ, défaut 5 min) → **H0** = alarme applicative Fidel (son insistent + UI) **et** notif en parallèle → **H0+5 min** = notif de marquage (actions). Les notifs ne sont **pas** remplacées par l’alarme : elles s’ajoutent. FastAPI ne sonne pas et ne poll pas les doses. Pas de Celery/Redis en V1. FCM (plus tard) uniquement pour l’aidant, et seulement via `engagement-principle` (`regle_auto` opt-in — jamais d’alerte tiers automatique). Détail garde-fous + réglages in-app : `skills/mobile-flutter/SKILL.md`.
 
@@ -46,7 +47,8 @@ Permissions notifs/batterie : seulement si branche suivi perso (option A).
 | Base Neon | `skills/database-neon/SKILL.md` | Migrations, conventions, usage MCP Neon |
 | Modèle de données | `skills/data-model/SKILL.md` | Entités, champs, relations (contrat) |
 | Contrat API | `skills/api-contract/SKILL.md` | Endpoints méthode/entrée/sortie/erreurs (contrat) |
-| Mobile Flutter | `skills/mobile-flutter/SKILL.md` | Offline-first, préavis / alarme H0 / marquage, Riverpod, UI |
+| Mobile Flutter | `skills/mobile-flutter/SKILL.md` | Alarmes locales, préavis / H0 / marquage, Riverpod, UI |
+| Offline sync | `skills/offline-sync/SKILL.md` | **Contrat** — outbox, SyncEngine, Drift, conflits, hystérésis réseau |
 | Moteur d’engagement | `skills/engagement-principle/SKILL.md` | Notifications, consentement, types d’alerte |
 
 ## Stack (rappel)
@@ -69,8 +71,9 @@ Aucun contact automatique d’un tiers (aidant, médecin, urgence) sans consente
 
 ## Offline-first (rappel)
 
-- Critique (rappels, confirmations de prise) : **côté app** + sync (`POST /prises/sync-offline` — **déjà** côté API).
+- Critique (rappels, confirmations de prise) : **côté app** + sync. Contrat moteur : `skills/offline-sync/SKILL.md`. API actuelle : `POST /prises/sync-offline` ; Sync V2 (push/pull + `client_mutation_id`) documenté dans `api-contract` (implémentation progressive Phase 1+).
 - Auth (inscription, OTP, login, refresh) : **online**. Session locale via JWT sécurisés après login.
+- Sync offline V2 — **contrat Phase 0** figé ; pas de bascule réseau sans hystérésis (connexion instable).
 
 ## Instructions pour l’agent
 
@@ -78,5 +81,6 @@ Aucun contact automatique d’un tiers (aidant, médecin, urgence) sans consente
 - Avant une table / migration : `data-model` + `database-neon`
 - Avant une route API ou un appel Flutter : `api-contract`
 - Avant une notification / alerte : `engagement-principle`
+- Avant file de sync / base locale / pull-push : `offline-sync` + `api-contract` (Sync V2)
 - Ne jamais inventer un endpoint, une entité ou un type d’alerte absents des contrats — les documenter d’abord dans le skill concerné
 - Ne jamais réintroduire un choix de rôle exclusif `patient|aidant` dans l’UI ou l’API

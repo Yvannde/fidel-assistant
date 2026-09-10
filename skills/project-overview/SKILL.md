@@ -75,4 +75,5 @@ Le backend sera déployé sur ce domaine le moment venu. En développement local
 - `data-model/SKILL.md` — modèle de données formel complet (toutes les entités, champs, relations) — contrat à respecter à la lettre
 - `api-contract/SKILL.md` — contrat formel de tous les endpoints API (méthode, entrée, sortie, erreurs) — contrat à respecter à la lettre
 - `mobile-flutter/SKILL.md` — architecture de l'app, offline-first, préavis / alarme H0 / marquage H+5, garde-fous OS
+- `offline-sync/SKILL.md` — contrat SyncEngine (outbox, Drift, conflits, NetworkStatus, roadmap phases)
 - `engagement-principle/SKILL.md` — moteur de notification **serveur** (consentement, aidant, SOS…) — pas l’alarme locale patient

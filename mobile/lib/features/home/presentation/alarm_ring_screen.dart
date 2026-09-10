@@ -12,6 +12,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../services/reminder_alarm_service.dart';
 import '../../../services/reminder_sync.dart';
 import '../../../services/scheduled_dose.dart';
+import '../../../services/sync_engine.dart';
 import '../application/home_controller.dart';
 
 /// Écran plein affiché quand l’alarme H0 sonne.
@@ -87,15 +88,13 @@ class _AlarmRingScreenState extends ConsumerState<AlarmRingScreen> {
     try {
       final alarms = ref.read(reminderAlarmServiceProvider);
       final prefs = ref.read(alarmPrefsProvider);
-      final queue = ref.read(pendingPriseSyncQueueProvider);
-      final repo = ref.read(homeRepositoryProvider);
+      final engine = ref.read(syncEngineProvider);
       final when = DateTime.now().add(Duration(minutes: prefs.snoozeMinutes));
 
       await alarms.cancelPrise(widget.priseId);
-      await queue.enqueueReport(priseId: widget.priseId, nouvelleHeure: when);
+      await engine.enqueueReport(priseId: widget.priseId, nouvelleHeure: when);
       try {
-        await repo.reportPrise(widget.priseId, when);
-        await queue.flush(repo);
+        await engine.flush();
       } catch (_) {}
 
       await alarms.scheduleOneShot(

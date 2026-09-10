@@ -304,8 +304,30 @@ Un médicament peut avoir plusieurs horaires de prise par jour.
 | confirmee_at | timestamp | nullable |
 | canal | enum | `app`, `sms` — pour le fallback du Volet 4 |
 | created_at | timestamp | |
+| updated_at | timestamp | **Sync V2** — requis pour conflits / pull incrémental (Phase 1+ migration) |
+| server_version | int | **Sync V2 (Phase 4)** — entier monotone par ligne ; incrémenté à chaque écriture serveur |
 
 Une ligne `Prise` est générée à chaque échéance prévue par `MedicamentHoraire` (via job planifié ou génération à la volée).
+
+Règles de conflit sync : voir `offline-sync/SKILL.md` (pas de last-write-wins générique).
+
+---
+
+## 11bis. `ClientMutation` — idempotence sync (contrat futur)
+
+> Documenté en Phase 0 ; migration Alembic = **Phase 1** (au plus tôt). Ne pas créer la table avant d’implémenter `client_mutation_id` sur les routes prises.
+
+| Champ | Type | Contraintes / Notes |
+|---|---|---|
+| mutation_id | UUID | **PK** — = `client_mutation_id` envoyé par le mobile |
+| user_id | UUID (FK → User) | auteur de la mutation |
+| entity | string | ex. `prise`, `constante` |
+| entity_id | UUID | id de l’entité cible (nullable si création client-only avant assignation) |
+| op | string | ex. `confirm`, `report` |
+| applied_at | timestamp | moment d’application serveur |
+| result_snapshot | json | nullable — état renvoyé pour rejeu `duplicate` |
+
+Contrainte : `mutation_id` unique globalement. Un second POST avec le même id renvoie le résultat déjà appliqué (idempotent), jamais un second effet métier.
 
 ---
 

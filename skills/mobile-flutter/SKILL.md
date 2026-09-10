@@ -1,6 +1,6 @@
 ---
 name: mobile-flutter
-description: Architecture de l'application mobile Flutter, gestion d'état, mode offline-first, notifications locales + alarme applicative (préavis H0−Δ, alarme H0, marquage H+5), garde-fous OS, réglages alarme in-app, sécurité des tokens, et conventions UI/accessibilité. À consulter par tout agent IA avant d'écrire ou modifier un écran, un provider/state, une intégration API, ou toute logique de rappel/alarme côté app. Lire project-overview/SKILL.md et auth-onboarding/SKILL.md en complément, surtout pour les écrans d'auth/onboarding.
+description: Architecture de l'application mobile Flutter, gestion d'état, mode offline-first (voir aussi offline-sync), notifications locales + alarme applicative (préavis H0−Δ, alarme H0, marquage H+5), garde-fous OS, réglages alarme in-app, sécurité des tokens, et conventions UI/accessibilité. À consulter par tout agent IA avant d'écrire ou modifier un écran, un provider/state, une intégration API, ou toute logique de rappel/alarme côté app. Lire project-overview/SKILL.md, offline-sync/SKILL.md et auth-onboarding/SKILL.md en complément.
 ---
 
 # Mobile — Flutter
@@ -54,9 +54,13 @@ Chaque feature suit le même découpage interne : `presentation/` (écrans, widg
 
 ## Mode offline-first et synchronisation
 
-- Base locale légère (ex : `drift` ou `sqflite`) qui sert de **source de vérité locale** pour les données critiques (traitements, horaires, historique de prises récent), synchronisée avec le backend.
-- Toute action utilisateur critique (confirmer une prise, saisir une constante) s'écrit **d'abord en local**, avec un statut `à_synchroniser`, puis tente l'envoi au serveur. L'UI ne doit jamais bloquer en attendant le réseau pour ce type d'action.
-- Résolution de conflit simple par défaut : dernière valeur écrite gagne (`last-write-wins`), avec horodatage fiable — suffisant pour ce cas d'usage tant qu'on garde un log côté serveur pour audit (cf. `database-neon/SKILL.md`).
+> **Contrat détaillé** : `offline-sync/SKILL.md` (invariants, outbox, NetworkStatus, conflits, roadmap). Ce paragraphe ne fait que le rappel mobile.
+
+- Base locale = **Drift** (source de vérité locale pour traitements, horaires, prises récentes / 48 h). Pas Hive comme store métier relationnel.
+- Toute action critique (confirmer une prise, reporter, saisir une constante en P1) s’écrit **d’abord en local** (`snapshot ⊕ outbox`), puis le `SyncEngine` pousse au serveur. L’UI ne bloque jamais sur le réseau pour ces actions.
+- Résolution de conflit : **matrice par entité** dans `offline-sync` — **pas** de last-write-wins générique.
+- **Phase 1 livrée** : outbox idempotente (`sync_outbox_v1`) + `SyncEngine` single-flight ; remplace `PendingPriseSyncQueue`. Les alarmes locales (préavis / H0 / H+5) restent inchangées.
+- Sync au retour réseau uniquement après **hystérésis** (éviter le flapping sur connexion instable) — détail dans `offline-sync` § NetworkStatus.
 
 ## Notifications et alarmes locales — le cœur du produit
 

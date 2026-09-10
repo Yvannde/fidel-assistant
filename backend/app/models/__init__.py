@@ -16,6 +16,7 @@ from app.models.patient import (
     VoixRappel,
 )
 from app.models.sante import Constante
+from app.models.sync import ClientMutation
 from app.models.user import (
     CguAcceptance,
     ConsentementSante,
@@ -47,6 +48,7 @@ __all__ = [
     "Medicament",
     "MedicamentHoraire",
     "Prise",
+    "ClientMutation",
     "NotificationLog",
     "PreferenceConsentement",
 ]

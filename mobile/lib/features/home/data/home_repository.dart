@@ -284,22 +284,35 @@ class HomeRepository {
     }
   }
 
-  Future<void> confirmPrise(String priseId) async {
+  Future<void> confirmPrise(
+    String priseId, {
+    String? clientMutationId,
+  }) async {
     try {
       await _api.post<Map<String, dynamic>>(
         '/prises/$priseId/confirmer',
-        data: {'canal': 'app'},
+        data: {
+          'canal': 'app',
+          if (clientMutationId != null) 'client_mutation_id': clientMutationId,
+        },
       );
     } on DioException catch (e) {
       ApiClient.throwApi(e);
     }
   }
 
-  Future<void> reportPrise(String priseId, DateTime nouvelleHeure) async {
+  Future<void> reportPrise(
+    String priseId,
+    DateTime nouvelleHeure, {
+    String? clientMutationId,
+  }) async {
     try {
       await _api.post<Map<String, dynamic>>(
         '/prises/$priseId/reporter',
-        data: {'nouvelle_heure': nouvelleHeure.toUtc().toIso8601String()},
+        data: {
+          'nouvelle_heure': nouvelleHeure.toUtc().toIso8601String(),
+          if (clientMutationId != null) 'client_mutation_id': clientMutationId,
+        },
       );
     } on DioException catch (e) {
       ApiClient.throwApi(e);

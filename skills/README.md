@@ -21,7 +21,8 @@ Tout contributeur (humain ou agent IA) les lit **avant** de coder le module conc
 | [database-neon](database-neon/SKILL.md) | Migrations, conventions Neon |
 | [data-model](data-model/SKILL.md) | **Contrat** — entités et champs |
 | [api-contract](api-contract/SKILL.md) | **Contrat** — endpoints |
-| [mobile-flutter](mobile-flutter/SKILL.md) | Offline-first, préavis / alarme H0 / marquage H+5, UI |
+| [mobile-flutter](mobile-flutter/SKILL.md) | Offline-first (alarme), préavis / alarme H0 / marquage H+5, UI |
+| [offline-sync](offline-sync/SKILL.md) | **Contrat** sync offline — outbox, SyncEngine, conflits, NetworkStatus, roadmap |
 | [engagement-principle](engagement-principle/SKILL.md) | Notifications & consentement |
 
 Voir aussi [`.cursor/architecture.md`](../.cursor/architecture.md) et [`docs/`](../docs/).

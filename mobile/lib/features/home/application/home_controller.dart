@@ -6,6 +6,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/network/providers.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../../services/reminder_sync.dart';
+import '../../../services/sync_engine.dart';
 import '../data/home_repository.dart';
 import '../domain/constante_models.dart';
 import '../domain/dashboard_models.dart';
@@ -383,11 +384,15 @@ class HomeController extends StateNotifier<HomeUiState> {
   }
 
   Future<void> confirmPrise(String id) async {
-    await _mutatePrise(() => _repo.confirmPrise(id));
+    final engine = _ref.read(syncEngineProvider);
+    await engine.enqueueConfirm(priseId: id);
+    await _mutatePrise(() => engine.flush());
   }
 
   Future<void> reportPrise(String id, DateTime nouvelleHeure) async {
-    await _mutatePrise(() => _repo.reportPrise(id, nouvelleHeure));
+    final engine = _ref.read(syncEngineProvider);
+    await engine.enqueueReport(priseId: id, nouvelleHeure: nouvelleHeure);
+    await _mutatePrise(() => engine.flush());
   }
 
   Future<void> _mutatePrise(Future<void> Function() action) async {

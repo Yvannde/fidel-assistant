@@ -20,8 +20,9 @@ import 'features/home/data/home_repository.dart';
 import 'features/home/presentation/alarm_ring_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'services/live_alarm_test.dart';
-import 'services/pending_prise_sync_queue.dart';
 import 'services/reminder_sync.dart';
+import 'services/sync_engine.dart';
+import 'services/sync_outbox.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -63,9 +64,13 @@ Future<void> main() async {
   unawaited(maybeRunLiveAlarmTest(alarms));
 
   if (restored != null) {
-    unawaited(
-      PendingPriseSyncQueue(prefs).flush(HomeRepository(apiClient: api)),
+    final outbox = SyncOutbox(prefs);
+    final engine = SyncEngine(
+      outbox: outbox,
+      gatewayFactory: () =>
+          HomeSyncPriseGateway(HomeRepository(apiClient: api)),
     );
+    unawaited(engine.flush());
   }
 
   final router = container.read(appRouterProvider);
