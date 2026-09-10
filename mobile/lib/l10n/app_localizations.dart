@@ -2953,6 +2953,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No vitals shared yet.'**
   String get cercleNoVitals;
+
+  /// No description provided for @reminderNotifTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Medicine reminder'**
+  String get reminderNotifTitle;
+
+  /// No description provided for @reminderNotifTitleDiscreet.
+  ///
+  /// In en, this message translates to:
+  /// **'Fidel'**
+  String get reminderNotifTitleDiscreet;
+
+  /// No description provided for @reminderNotifBodyDiscreet.
+  ///
+  /// In en, this message translates to:
+  /// **'It\'s time for your reminder.'**
+  String get reminderNotifBodyDiscreet;
+
+  /// No description provided for @reminderActionTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'Taken'**
+  String get reminderActionTaken;
+
+  /// No description provided for @reminderActionSnooze.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get reminderActionSnooze;
 }
 
 class _AppLocalizationsDelegate

@@ -576,5 +576,10 @@
   "cercleAdherencePending": "En attente",
   "cerclePermissionLocked": "Cette donnée n’est pas partagée avec toi.",
   "cerclePermissionLimited": "Accès limité",
-  "cercleNoVitals": "Aucune constante partagée pour le moment."
+  "cercleNoVitals": "Aucune constante partagée pour le moment.",
+  "reminderNotifTitle": "Rappel médicament",
+  "reminderNotifTitleDiscreet": "Fidel",
+  "reminderNotifBodyDiscreet": "C’est l’heure de ton rappel.",
+  "reminderActionTaken": "J’ai pris",
+  "reminderActionSnooze": "Plus tard"
 }

@@ -7,6 +7,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/premium.dart';
 import '../../../core/ui/app_toast.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../services/reminder_sync.dart';
 import '../application/home_controller.dart';
 import '../domain/profile_settings_models.dart';
 import 'widgets/home_skeleton.dart';
@@ -62,6 +63,11 @@ class _ProfilePatientSettingsScreenState
             batterieExemptee: batterieExemptee,
             notificationsDiscretes: notificationsDiscretes,
           );
+      if (notificationsDiscretes != null) {
+        await ref
+            .read(reminderAlarmServiceProvider)
+            .setDiscreet(notificationsDiscretes);
+      }
       if (mounted) {
         setState(() => _settings = s);
         AppToast.success(context, l10n.profileSaved);

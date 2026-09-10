@@ -1594,4 +1594,19 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get cercleNoVitals => 'Aucune constante partagée pour le moment.';
+
+  @override
+  String get reminderNotifTitle => 'Rappel médicament';
+
+  @override
+  String get reminderNotifTitleDiscreet => 'Fidel';
+
+  @override
+  String get reminderNotifBodyDiscreet => 'C’est l’heure de ton rappel.';
+
+  @override
+  String get reminderActionTaken => 'J’ai pris';
+
+  @override
+  String get reminderActionSnooze => 'Plus tard';
 }

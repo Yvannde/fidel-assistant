@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/network/providers.dart';
 import '../../auth/application/auth_providers.dart';
+import '../../../services/reminder_sync.dart';
 import '../data/home_repository.dart';
 import '../domain/constante_models.dart';
 import '../domain/dashboard_models.dart';
@@ -198,6 +199,9 @@ class HomeController extends StateNotifier<HomeUiState> {
         clearDayPrises: true,
         clearError: true,
       );
+      if (dashboard != null) {
+        unawaited(syncRemindersFromHome(_ref, dashboard));
+      }
       if (secondary && dashboard != null) {
         unawaited(_loadSecondary());
       }
@@ -396,6 +400,10 @@ class HomeController extends StateNotifier<HomeUiState> {
       }
       final prises = await _repo.listPrises(date: state.day);
       state = state.copyWith(busy: false, dayPrises: prises);
+      final dash = state.dashboard;
+      if (dash != null) {
+        unawaited(syncRemindersFromHome(_ref, dash));
+      }
     } catch (e) {
       state = state.copyWith(
         busy: false,
