@@ -69,7 +69,7 @@ C'est la partie la plus critique techniquement. Deux événements locaux distinc
 
 - `flutter_local_notifications` + mode **alarme exacte** (`AndroidScheduleMode.exactAllowWhileIdle`) — ne pas soumettre les rappels au Doze mode standard
 - Exemption d'**optimisation de batterie** pendant la branche « suivi pour soi » (ou activation patient) — voir `auth-onboarding/SKILL.md`
-- Mode **discret** : texte neutre sur les deux événements ; l'alarme **sonne toujours** (discret ≠ silencieux)
+- Mode **discret** : pas de nom de médicament (confidentialité), mais **heure toujours visible** pour distinguer les prises ; l'alarme **sonne toujours** (discret ≠ silencieux). Mode normal : titre = médicament · dosage, corps = motif + heure prévue.
 - **Voix personnalisée** (itération suivante) : lecture audio au moment de l'alarme H0
 - Replanification locale après `BOOT_COMPLETED` (Android) — sinon les rappels disparaissent après reboot
 - Confirm / snooze annule **alarme H0 et notif H+5** pour cette prise ; snooze replanifie H0' = now+15 min et mark = H0'+5 min

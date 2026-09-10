@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
@@ -41,17 +42,6 @@ class ReminderAlarmService {
   static const _labelConfirmEn = 'Taken';
   static const _labelSnoozeEn = 'Later';
 
-  static const _alarmTitleFr = "C'est l'heure";
-  static const _alarmTitleEn = "It's time";
-  static const _markTitleFr = 'As-tu pris ton médicament ?';
-  static const _markTitleEn = 'Did you take your medicine?';
-  static const _titleDiscreetFr = 'Fidel';
-  static const _titleDiscreetEn = 'Fidel';
-  static const _alarmBodyDiscreetFr = "C'est l'heure de ton rappel.";
-  static const _alarmBodyDiscreetEn = "It's time for your reminder.";
-  static const _markBodyDiscreetFr = 'Peux-tu confirmer ton rappel ?';
-  static const _markBodyDiscreetEn = 'Can you confirm your reminder?';
-
   final SharedPreferences _prefs;
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
@@ -60,6 +50,8 @@ class ReminderAlarmService {
   ReminderNotificationCallback? onResponse;
 
   bool get isReady => _ready;
+
+  bool get _en => (_prefs.getString('fa_locale_code') ?? 'fr') == 'en';
 
   static int alarmNotificationId(String priseId) {
     var hash = 0;
@@ -96,6 +88,63 @@ class ReminderAlarmService {
           cancelNotification: true,
         ),
       ];
+
+  String _formatClock(DateTime when) {
+    final local = when.isUtc ? when.toLocal() : when;
+    return DateFormat.Hm(_en ? 'en' : 'fr').format(local);
+  }
+
+  String _medLabel(ScheduledDose dose) {
+    final nom = dose.medicamentNom.trim();
+    final dosage = dose.dosage.trim();
+    if (nom.isEmpty) return dosage;
+    if (dosage.isEmpty) return nom;
+    return '$nom · $dosage';
+  }
+
+  /// Titre/corps parlants : médicament (ou heure en discret), motif, horaire.
+  ({String title, String body}) _copyFor({
+    required ScheduledDose dose,
+    required bool isAlarm,
+  }) {
+    final clock = _formatClock(dose.heurePrevue);
+    final med = _medLabel(dose);
+
+    if (discreet) {
+      // Pas de nom de médicament, mais l’heure pour distinguer les prises.
+      if (isAlarm) {
+        return (
+          title: 'Fidel · $clock',
+          body: _en
+              ? "It's time for your $clock reminder."
+              : "C'est l'heure de ton rappel de $clock.",
+        );
+      }
+      return (
+        title: _en ? 'Confirm · $clock' : 'Confirmer · $clock',
+        body: _en
+            ? 'Did you complete your $clock reminder?'
+            : 'As-tu bien fait ton rappel de $clock ?',
+      );
+    }
+
+    if (isAlarm) {
+      return (
+        title: med.isEmpty ? (_en ? 'Dose · $clock' : 'Prise · $clock') : med,
+        body: _en
+            ? 'Time to take your dose (scheduled $clock).'
+            : 'C’est l’heure de ta prise (prévue à $clock).',
+      );
+    }
+    return (
+      title: med.isEmpty
+          ? (_en ? 'Confirm dose · $clock' : 'Confirmer · $clock')
+          : med,
+      body: _en
+          ? 'Confirm if you took this dose (scheduled $clock).'
+          : 'Confirme si tu as pris cette dose (prévue à $clock).',
+    );
+  }
 
   Future<void> init({ReminderNotificationCallback? onResponse}) async {
     this.onResponse = onResponse;
@@ -295,15 +344,8 @@ class ReminderAlarmService {
     ScheduledDose dose, {
     required tz.TZDateTime when,
   }) async {
-    final en = (_prefs.getString('fa_locale_code') ?? 'fr') == 'en';
-    final discreetMode = discreet;
     final id = alarmNotificationId(dose.priseId);
-    final title = discreetMode
-        ? (en ? _titleDiscreetEn : _titleDiscreetFr)
-        : (en ? _alarmTitleEn : _alarmTitleFr);
-    final body = discreetMode
-        ? (en ? _alarmBodyDiscreetEn : _alarmBodyDiscreetFr)
-        : '${dose.medicamentNom} · ${dose.dosage}'.trim();
+    final copy = _copyFor(dose: dose, isAlarm: true);
     final payload = jsonEncode({
       'kind': kindAlarm,
       'priseId': dose.priseId,
@@ -314,8 +356,8 @@ class ReminderAlarmService {
     try {
       await _plugin.zonedSchedule(
         id,
-        title,
-        body,
+        copy.title,
+        copy.body,
         when,
         NotificationDetails(
           android: AndroidNotificationDetails(
@@ -351,15 +393,8 @@ class ReminderAlarmService {
     ScheduledDose dose, {
     required tz.TZDateTime when,
   }) async {
-    final en = (_prefs.getString('fa_locale_code') ?? 'fr') == 'en';
-    final discreetMode = discreet;
     final id = markNotificationId(dose.priseId);
-    final title = discreetMode
-        ? (en ? _titleDiscreetEn : _titleDiscreetFr)
-        : (en ? _markTitleEn : _markTitleFr);
-    final body = discreetMode
-        ? (en ? _markBodyDiscreetEn : _markBodyDiscreetFr)
-        : '${dose.medicamentNom} · ${dose.dosage}'.trim();
+    final copy = _copyFor(dose: dose, isAlarm: false);
     final payload = jsonEncode({
       'kind': kindMark,
       'priseId': dose.priseId,
@@ -370,8 +405,8 @@ class ReminderAlarmService {
     try {
       await _plugin.zonedSchedule(
         id,
-        title,
-        body,
+        copy.title,
+        copy.body,
         when,
         NotificationDetails(
           android: AndroidNotificationDetails(
@@ -381,7 +416,7 @@ class ReminderAlarmService {
             importance: Importance.high,
             priority: Priority.high,
             category: AndroidNotificationCategory.reminder,
-            actions: markAndroidActions(en: en),
+            actions: markAndroidActions(en: _en),
           ),
           iOS: const DarwinNotificationDetails(
             categoryIdentifier: iosCategory,

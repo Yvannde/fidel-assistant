@@ -577,11 +577,11 @@
   "cerclePermissionLocked": "Cette donnée n’est pas partagée avec toi.",
   "cerclePermissionLimited": "Accès limité",
   "cercleNoVitals": "Aucune constante partagée pour le moment.",
-  "reminderNotifTitle": "C'est l'heure",
-  "reminderNotifTitleDiscreet": "Fidel",
-  "reminderNotifBodyDiscreet": "C'est l'heure de ton rappel.",
-  "reminderMarkTitle": "As-tu pris ton médicament ?",
-  "reminderMarkBodyDiscreet": "Peux-tu confirmer ton rappel ?",
+  "reminderNotifTitle": "Metformine · 500 mg",
+  "reminderNotifTitleDiscreet": "Fidel · 08:00",
+  "reminderNotifBodyDiscreet": "C'est l'heure de ton rappel de 08:00.",
+  "reminderMarkTitle": "Metformine · 500 mg",
+  "reminderMarkBodyDiscreet": "As-tu bien fait ton rappel de 08:00 ?",
   "reminderActionTaken": "J'ai pris",
   "reminderActionSnooze": "Plus tard"
 }
