@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'app_colors.dart';
+import 'premium.dart';
 
 /// Thème Fidel — Satoshi + bleu primary, light + dark, accessibilité prioritaire.
 class AppTheme {
@@ -47,12 +47,12 @@ class AppTheme {
       headlineMedium: _satoshi(28, FontWeight.w700, onSurface),
       headlineSmall: _satoshi(24, FontWeight.w700, onSurface),
       titleLarge: _satoshi(22, FontWeight.w700, onSurface),
-      titleMedium: _satoshi(16, FontWeight.w600, onSurface),
-      titleSmall: _satoshi(14, FontWeight.w600, onSurface),
+      titleMedium: _satoshi(16, FontWeight.w500, onSurface),
+      titleSmall: _satoshi(14, FontWeight.w500, onSurface),
       bodyLarge: _satoshi(16, FontWeight.w400, onSurface),
       bodyMedium: _satoshi(14, FontWeight.w400, onSurface),
       bodySmall: _satoshi(12, FontWeight.w400, onSurfaceVariant),
-      labelLarge: _satoshi(16, FontWeight.w600, onSurface),
+      labelLarge: _satoshi(16, FontWeight.w500, onSurface),
       labelMedium: _satoshi(12, FontWeight.w500, onSurfaceVariant),
       labelSmall: _satoshi(11, FontWeight.w500, onSurfaceVariant),
     );
@@ -63,16 +63,18 @@ class AppTheme {
       fontFamily: fontFamily,
       colorScheme: scheme,
       scaffoldBackgroundColor: surface,
-      textTheme: baseText,
+      textTheme: baseText.apply(fontFamily: fontFamily),
       primaryTextTheme: baseText.apply(
         bodyColor: AppColors.textOnPrimary,
         displayColor: AppColors.textOnPrimary,
       ),
       visualDensity: VisualDensity.adaptivePlatformDensity,
       appBarTheme: AppBarTheme(
-        backgroundColor: surface,
+        backgroundColor: isDark ? AppColors.surfaceDark : Premium.canvas(false),
         foregroundColor: onSurface,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         centerTitle: false,
         systemOverlayStyle:
             isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
@@ -97,13 +99,13 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
-          textStyle: _satoshi(15, FontWeight.w600, onSurface),
+          textStyle: _satoshi(15, FontWeight.w700, onSurface),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle: _satoshi(14, FontWeight.w600, AppColors.primary),
+          textStyle: _satoshi(14, FontWeight.w500, AppColors.primary),
         ),
       ),
       checkboxTheme: CheckboxThemeData(

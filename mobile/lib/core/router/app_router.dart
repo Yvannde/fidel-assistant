@@ -16,7 +16,20 @@ import '../../features/auth/presentation/register_email_screen.dart';
 import '../../features/auth/presentation/register_legal_screen.dart';
 import '../../features/auth/presentation/register_otp_screen.dart';
 import '../../features/auth/presentation/register_password_screen.dart';
-import '../../features/home/presentation/home_screen.dart';
+import '../../features/home/presentation/add_traitement_screen.dart';
+import '../../features/home/presentation/aidant_patient_detail_screen.dart';
+import '../../features/home/presentation/aidants_invite_screen.dart';
+import '../../features/home/presentation/aidants_list_screen.dart';
+import '../../features/home/presentation/home_notifications_screen.dart';
+import '../../features/home/presentation/home_shell.dart';
+import '../../features/home/presentation/profile_account_screen.dart';
+import '../../features/home/presentation/profile_consent_screen.dart';
+import '../../features/home/presentation/profile_contacts_urgence_screen.dart';
+import '../../features/home/presentation/profile_delete_account_screen.dart';
+import '../../features/home/presentation/profile_patient_settings_screen.dart';
+import '../../features/home/presentation/profile_voix_screen.dart';
+import '../../features/home/presentation/sync_screens.dart';
+import '../../features/medicaments/presentation/medicament_wizard_screen.dart';
 import '../../features/onboarding/presentation/onboarding_besoin_suivi_screen.dart';
 import '../../features/onboarding/presentation/onboarding_gate_screen.dart';
 import '../../features/onboarding/presentation/onboarding_infos_screen.dart';
@@ -32,7 +45,10 @@ class _RouterRefresh extends ChangeNotifier {
 
 final _routerRefreshProvider = Provider<_RouterRefresh>((ref) {
   final refresh = _RouterRefresh();
-  ref.listen<Locale?>(localeControllerProvider, (_, __) => refresh.ping());
+  // Uniquement au 1er choix de langue (null → fr/en), pas à chaque switch Profil.
+  ref.listen<Locale?>(localeControllerProvider, (prev, next) {
+    if (prev == null && next != null) refresh.ping();
+  });
   ref.listen<AuthSession?>(authSessionProvider, (_, __) => refresh.ping());
   ref.onDispose(refresh.dispose);
   return refresh;
@@ -66,6 +82,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       final needsSession = loc == '/home' ||
+          loc.startsWith('/home/') ||
           loc == '/auth/google-legal' ||
           loc.startsWith('/onboarding');
       if (needsSession) {
@@ -77,7 +94,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return routeAfterAuth(session);
       }
 
-      if (loc == '/home' &&
+      if (loc.startsWith('/home') &&
           session != null &&
           session.onboardingStep != 'termine') {
         return '/onboarding';
@@ -226,7 +243,111 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/home',
         pageBuilder: (context, state) => _softPage(
           state: state,
-          child: const HomeScreen(),
+          child: const HomeShell(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/medicaments',
+        pageBuilder: (context, state) {
+          final id = state.extra as String? ?? '';
+          return _softPage(
+            state: state,
+            child: MedicamentWizardScreen(traitementId: id),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/home/traitement',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const AddTraitementScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/sync',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const SyncAidantScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/aidants',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const AidantsListScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/aidants/invite',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const AidantsInviteScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/share-code',
+        redirect: (context, state) => '/home/aidants',
+      ),
+      GoRoute(
+        path: '/home/notifications',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const HomeNotificationsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/cercle/patient/:id',
+        pageBuilder: (context, state) {
+          final patient = state.extra as dynamic;
+          return _softPage(
+            state: state,
+            child: AidantPatientDetailScreen(
+              patientId: state.pathParameters['id'] ?? '',
+              patient: patient,
+            ),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/home/profile/account',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const ProfileAccountScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/profile/patient-settings',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const ProfilePatientSettingsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/profile/contacts',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const ProfileContactsUrgenceScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/profile/voix',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const ProfileVoixScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/profile/consent',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const ProfileConsentScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/profile/delete',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const ProfileDeleteAccountScreen(),
         ),
       ),
     ],

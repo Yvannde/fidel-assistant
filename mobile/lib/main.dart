@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,25 +15,49 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
 import 'features/auth/application/auth_providers.dart';
 import 'features/auth/data/auth_repository.dart';
+import 'features/home/data/home_repository.dart';
 import 'l10n/app_localizations.dart';
+import 'services/pending_prise_sync_queue.dart';
+import 'services/reminder_sync.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppConfig.load();
+  // DateFormat (Accueil / Soins) exige les symboles FR+EN avant tout switch.
+  await ensureDateFormatting('fr');
+  await ensureDateFormatting('en');
   final prefs = await SharedPreferences.getInstance();
   final tokens = TokenStorage();
+  final api = ApiClient(tokenStorage: tokens);
   final restored = await AuthRepository(
-    apiClient: ApiClient(tokenStorage: tokens),
+    apiClient: api,
     tokenStorage: tokens,
   ).restoreSession();
 
+  final container = ProviderContainer(
+    overrides: [
+      sharedPreferencesProvider.overrideWithValue(prefs),
+      tokenStorageProvider.overrideWithValue(tokens),
+      restoredAuthSessionProvider.overrideWithValue(restored),
+    ],
+  );
+
+  final alarms = container.read(reminderAlarmServiceProvider);
+  await alarms.init(
+    onResponse: (response) {
+      unawaited(ReminderActionDispatcher(container).handle(response));
+    },
+  );
+
+  if (restored != null) {
+    unawaited(
+      PendingPriseSyncQueue(prefs).flush(HomeRepository(apiClient: api)),
+    );
+  }
+
   runApp(
-    ProviderScope(
-      overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-        tokenStorageProvider.overrideWithValue(tokens),
-        restoredAuthSessionProvider.overrideWithValue(restored),
-      ],
+    UncontrolledProviderScope(
+      container: container,
       child: const FidelApp(),
     ),
   );
