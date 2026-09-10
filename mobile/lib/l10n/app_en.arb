@@ -592,9 +592,11 @@
   "cerclePermissionLocked": "This data is not shared with you.",
   "cerclePermissionLimited": "Limited access",
   "cercleNoVitals": "No vitals shared yet.",
-  "reminderNotifTitle": "Medicine reminder",
+  "reminderNotifTitle": "It's time",
   "reminderNotifTitleDiscreet": "Fidel",
   "reminderNotifBodyDiscreet": "It's time for your reminder.",
+  "reminderMarkTitle": "Did you take your medicine?",
+  "reminderMarkBodyDiscreet": "Can you confirm your reminder?",
   "reminderActionTaken": "Taken",
   "reminderActionSnooze": "Later"
 }

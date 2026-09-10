@@ -2957,7 +2957,7 @@ abstract class AppLocalizations {
   /// No description provided for @reminderNotifTitle.
   ///
   /// In en, this message translates to:
-  /// **'Medicine reminder'**
+  /// **'It\'s time'**
   String get reminderNotifTitle;
 
   /// No description provided for @reminderNotifTitleDiscreet.
@@ -2971,6 +2971,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'It\'s time for your reminder.'**
   String get reminderNotifBodyDiscreet;
+
+  /// No description provided for @reminderMarkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Did you take your medicine?'**
+  String get reminderMarkTitle;
+
+  /// No description provided for @reminderMarkBodyDiscreet.
+  ///
+  /// In en, this message translates to:
+  /// **'Can you confirm your reminder?'**
+  String get reminderMarkBodyDiscreet;
 
   /// No description provided for @reminderActionTaken.
   ///

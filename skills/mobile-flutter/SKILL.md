@@ -60,12 +60,19 @@ Chaque feature suit le même découpage interne : `presentation/` (écrans, widg
 
 ## Notifications et alarmes locales — le cœur du produit
 
-C'est la partie la plus critique techniquement :
-- `flutter_local_notifications` pour la planification, avec le mode **alarme exacte** (`AndroidScheduleMode.exactAllowWhileIdle` ou équivalent) — les rappels de médicaments ne doivent pas être soumis au Doze mode standard d'Android
-- Demander explicitement l'exemption d'**optimisation de batterie** pendant la branche « suivi pour soi » de l'onboarding (ou à l'activation patient depuis l'accueil) — voir `auth-onboarding/SKILL.md`. Sans ça, certains constructeurs Android tuent les alarmes en arrière-plan.
-- Les notifications de rappel doivent inclure des **actions rapides** ("J'ai pris" / "Pas encore") directement sur la notification (Android `NotificationCompat.Action`, iOS `UNNotificationAction`) pour permettre la confirmation sans ouvrir l'app
-- Support de la **voix personnalisée** : lecture d'un fichier audio (enregistré par un proche) au moment du rappel plutôt qu'un simple son système, via un lecteur audio léger déclenché par la notification
-- Toute planification de rappel doit être **reprogrammée localement** après un redémarrage du téléphone (écouter l'event `BOOT_COMPLETED` sur Android) — sinon les rappels disparaissent après un reboot
+C'est la partie la plus critique techniquement. Deux événements locaux distincts par `Prise` (offline, même avion) :
+
+| Instant | Rôle | Comportement |
+|---|---|---|
+| **H0** (`heure_prevue`) | Alarme / réveil | Canal haute priorité, son + vibration. **Sans** actions de confirmation. Tap → Accueil. |
+| **H0+5 min** | Notification de marquage | Actions **« J'ai pris »** / **« Plus tard »** (confirm / snooze). File offline → `POST /prises/sync-offline` / `reporter`. |
+
+- `flutter_local_notifications` + mode **alarme exacte** (`AndroidScheduleMode.exactAllowWhileIdle`) — ne pas soumettre les rappels au Doze mode standard
+- Exemption d'**optimisation de batterie** pendant la branche « suivi pour soi » (ou activation patient) — voir `auth-onboarding/SKILL.md`
+- Mode **discret** : texte neutre sur les deux événements ; l'alarme **sonne toujours** (discret ≠ silencieux)
+- **Voix personnalisée** (itération suivante) : lecture audio au moment de l'alarme H0
+- Replanification locale après `BOOT_COMPLETED` (Android) — sinon les rappels disparaissent après reboot
+- Confirm / snooze annule **alarme H0 et notif H+5** pour cette prise ; snooze replanifie H0' = now+15 min et mark = H0'+5 min
 
 ## Onboarding et auth (référence)
 

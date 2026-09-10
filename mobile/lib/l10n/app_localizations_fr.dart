@@ -1596,16 +1596,22 @@ class AppLocalizationsFr extends AppLocalizations {
   String get cercleNoVitals => 'Aucune constante partagée pour le moment.';
 
   @override
-  String get reminderNotifTitle => 'Rappel médicament';
+  String get reminderNotifTitle => 'C\'est l\'heure';
 
   @override
   String get reminderNotifTitleDiscreet => 'Fidel';
 
   @override
-  String get reminderNotifBodyDiscreet => 'C’est l’heure de ton rappel.';
+  String get reminderNotifBodyDiscreet => 'C\'est l\'heure de ton rappel.';
 
   @override
-  String get reminderActionTaken => 'J’ai pris';
+  String get reminderMarkTitle => 'As-tu pris ton médicament ?';
+
+  @override
+  String get reminderMarkBodyDiscreet => 'Peux-tu confirmer ton rappel ?';
+
+  @override
+  String get reminderActionTaken => 'J\'ai pris';
 
   @override
   String get reminderActionSnooze => 'Plus tard';

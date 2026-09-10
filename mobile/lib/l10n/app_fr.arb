@@ -577,9 +577,11 @@
   "cerclePermissionLocked": "Cette donnée n’est pas partagée avec toi.",
   "cerclePermissionLimited": "Accès limité",
   "cercleNoVitals": "Aucune constante partagée pour le moment.",
-  "reminderNotifTitle": "Rappel médicament",
+  "reminderNotifTitle": "C'est l'heure",
   "reminderNotifTitleDiscreet": "Fidel",
-  "reminderNotifBodyDiscreet": "C’est l’heure de ton rappel.",
-  "reminderActionTaken": "J’ai pris",
+  "reminderNotifBodyDiscreet": "C'est l'heure de ton rappel.",
+  "reminderMarkTitle": "As-tu pris ton médicament ?",
+  "reminderMarkBodyDiscreet": "Peux-tu confirmer ton rappel ?",
+  "reminderActionTaken": "J'ai pris",
   "reminderActionSnooze": "Plus tard"
 }

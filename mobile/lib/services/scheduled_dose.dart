@@ -1,4 +1,4 @@
-/// Dose planifiée pour une notification locale.
+/// Dose planifiée : alarme H0 + notification de marquage H0+5.
 class ScheduledDose {
   const ScheduledDose({
     required this.priseId,
