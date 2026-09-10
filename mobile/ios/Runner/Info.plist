@@ -74,5 +74,14 @@
 	</dict>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Fidel a besoin du micro pour enregistrer ta voix de rappel personnalisée.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>audio</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.gdelataillade.fetch</string>
+	</array>
 </dict>
 </plist>

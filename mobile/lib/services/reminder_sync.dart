@@ -5,12 +5,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/locale/locale_controller.dart';
 import '../features/home/application/home_controller.dart';
 import '../features/home/domain/dashboard_models.dart';
+import 'alarm_prefs.dart';
 import 'pending_prise_sync_queue.dart';
 import 'reminder_alarm_service.dart';
 import 'scheduled_dose.dart';
 
 final reminderAlarmServiceProvider = Provider<ReminderAlarmService>((ref) {
   return ReminderAlarmService(ref.watch(sharedPreferencesProvider));
+});
+
+final alarmPrefsProvider = Provider<AlarmPrefs>((ref) {
+  return AlarmPrefs(ref.watch(sharedPreferencesProvider));
 });
 
 final pendingPriseSyncQueueProvider = Provider<PendingPriseSyncQueue>((ref) {
@@ -30,6 +35,7 @@ class ReminderActionDispatcher {
     final alarms = _container.read(reminderAlarmServiceProvider);
     final queue = _container.read(pendingPriseSyncQueueProvider);
     final repo = _container.read(homeRepositoryProvider);
+    final snoozeMin = _container.read(alarmPrefsProvider).snoozeMinutes;
 
     debugPrint(
       'ReminderAction: actionId=${response.actionId} kind=$kind '
@@ -46,7 +52,6 @@ class ReminderActionDispatcher {
 
     if (priseId == null || priseId.isEmpty) return;
 
-    // Retire alarme H0 + mark H+5 tout de suite.
     await alarms.cancelPrise(priseId);
 
     if (response.actionId == ReminderAlarmService.actionConfirm) {
@@ -66,7 +71,7 @@ class ReminderActionDispatcher {
     }
 
     if (response.actionId == ReminderAlarmService.actionSnooze) {
-      final when = DateTime.now().add(const Duration(minutes: 15));
+      final when = DateTime.now().add(Duration(minutes: snoozeMin));
       await queue.enqueueReport(priseId: priseId, nouvelleHeure: when);
       try {
         await repo.reportPrise(priseId, when);
@@ -74,7 +79,6 @@ class ReminderActionDispatcher {
       } catch (e) {
         debugPrint('ReminderAction snooze: $e');
       }
-      // H0' = now+15, mark = H0'+5 via scheduleOneShot.
       await alarms.scheduleOneShot(
         ScheduledDose(
           priseId: priseId,
@@ -96,15 +100,17 @@ class ReminderActionDispatcher {
 ///
 /// [dashboard] doit être passé par l’appelant : ne pas relire
 /// [homeControllerProvider] depuis [HomeController] (cycle Riverpod).
+///
+/// Compatible [Ref.read] et [WidgetRef.read].
 Future<void> syncRemindersFromHome(
-  Ref ref,
+  T Function<T>(ProviderListenable<T> provider) read,
   PatientDashboard dashboard,
 ) async {
   if (!dashboard.notificationsAccordees) return;
 
-  final repo = ref.read(homeRepositoryProvider);
-  final queue = ref.read(pendingPriseSyncQueueProvider);
-  final alarms = ref.read(reminderAlarmServiceProvider);
+  final repo = read(homeRepositoryProvider);
+  final queue = read(pendingPriseSyncQueueProvider);
+  final alarms = read(reminderAlarmServiceProvider);
 
   try {
     await queue.flush(repo);
@@ -113,6 +119,21 @@ Future<void> syncRemindersFromHome(
   try {
     final settings = await repo.fetchPatientSettings();
     await alarms.setDiscreet(settings.notificationsDiscretes);
+  } catch (_) {}
+
+  // Cache voix personnalisée pour le ring H0 (best-effort).
+  try {
+    final voix = await repo.fetchVoixRappel();
+    final prefs = read(alarmPrefsProvider);
+    if (voix.isPersonnalisee) {
+      final bytes = await repo.downloadVoixRappelFichier();
+      if (bytes != null && bytes.isNotEmpty) {
+        await prefs.storeCustomVoiceBytes(
+          bytes: bytes,
+          filename: 'voix_rappel.m4a',
+        );
+      }
+    }
   } catch (_) {}
 
   final today = homeDateOnly(DateTime.now());

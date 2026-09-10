@@ -178,6 +178,21 @@ class HomeRepository {
     }
   }
 
+  /// Télécharge le binaire de la voix personnalisée (null si absente / erreur).
+  Future<List<int>?> downloadVoixRappelFichier() async {
+    try {
+      final res = await _api.raw.get<List<int>>(
+        '/patients/me/voix-rappel/fichier',
+        options: Options(responseType: ResponseType.bytes),
+      );
+      final data = res.data;
+      if (data == null || data.isEmpty) return null;
+      return data;
+    } on DioException {
+      return null;
+    }
+  }
+
   Future<VoixRappel> putVoixRappelSysteme() async {
     try {
       final form = FormData.fromMap({'type': 'systeme'});

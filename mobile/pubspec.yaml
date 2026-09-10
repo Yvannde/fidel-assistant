@@ -30,6 +30,7 @@ dependencies:
   path_provider: ^2.1.5
   path: ^1.9.0
   flutter_timezone: ^5.1.0
+  alarm: ^5.12.0
 
 dev_dependencies:
   flutter_test:
@@ -44,6 +45,7 @@ flutter:
     - assets/images/
     - assets/lottie/
     - assets/config/app.json
+    - assets/sounds/fidel_alarm.wav
 
   fonts:
     - family: Satoshi

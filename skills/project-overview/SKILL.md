@@ -65,7 +65,7 @@ Le backend sera déployé sur ce domaine le moment venu. En développement local
 3. Aucune modification de schéma de base de données sans migration versionnée passant par le MCP Neon.
 4. Respecter strictement la règle "Observer → Proposer → Consentement" (voir plus haut) pour tout ce qui touche notifications, alertes, partage de données entre rôles.
 5. Ne jamais coder de conseil médical automatisé (posologie, diagnostic, interaction) sans que ce soit explicitement une donnée validée en amont par un professionnel de santé et fournie comme contenu statique/révisé — jamais généré à la volée sans garde-fou.
-6. Le mode hors-ligne est un prérequis, pas une option : toute fonctionnalité critique (rappels de médicaments notamment) doit fonctionner sans connexion et se synchroniser au retour du réseau.
+6. Le mode hors-ligne est un prérequis, pas une option : toute fonctionnalité critique (rappels / alarme médicament notamment) doit fonctionner sans connexion et se synchroniser au retour du réseau. L’alarme patient est **locale** sur le téléphone (voir `mobile-flutter`), distincte des alertes serveur du moteur d’engagement.
 
 ## Autres fichiers skills du projet
 
@@ -74,5 +74,5 @@ Le backend sera déployé sur ce domaine le moment venu. En développement local
 - `database-neon/SKILL.md` — conventions de nommage, de migration, usage du MCP Neon
 - `data-model/SKILL.md` — modèle de données formel complet (toutes les entités, champs, relations) — contrat à respecter à la lettre
 - `api-contract/SKILL.md` — contrat formel de tous les endpoints API (méthode, entrée, sortie, erreurs) — contrat à respecter à la lettre
-- `mobile-flutter/SKILL.md` — architecture de l'app, gestion d'état, mode offline-first, notifications locales
-- `engagement-principle/SKILL.md` — moteur de notification centralisé qui implémente la règle "Observer → Proposer → Consentement" (Volet 7), registre de tous les types d'alerte
+- `mobile-flutter/SKILL.md` — architecture de l'app, offline-first, préavis / alarme H0 / marquage H+5, garde-fous OS
+- `engagement-principle/SKILL.md` — moteur de notification **serveur** (consentement, aidant, SOS…) — pas l’alarme locale patient

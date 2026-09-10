@@ -137,7 +137,9 @@
   "onboardingPermsTitle": "So reminders actually ring",
   "onboardingPermsSubtitle": "We explain before the phone asks. You can skip — reminders may then be unreliable.",
   "onboardingPermsNotifTitle": "Notifications",
-  "onboardingPermsNotifBody": "So we can remind you to take your medication on time, even when the app is closed.",
+  "onboardingPermsNotifBody": "So we can warn you before a dose and confirm afterwards.",
+  "onboardingPermsExactTitle": "Exact alarms (Android)",
+  "onboardingPermsExactBody": "So the alarm rings on time even when the phone is asleep.",
   "onboardingPermsBatteryTitle": "Battery (Android)",
   "onboardingPermsBatteryBody": "Without an exemption, some phones kill reminders overnight.",
   "onboardingPermsAllow": "Allow reminders",
@@ -497,6 +499,39 @@
   "profileBatteryExemptHint": "Helps keep reminders working overnight",
   "profileDiscreteNotif": "Discreet notifications",
   "profileDiscreteNotifHint": "Sobriety-friendly wording without sensitive detail",
+  "alarmSettingsTitle": "Alarm settings",
+  "alarmSettingsTileHint": "Pre-alert, sound, snooze and permissions",
+  "alarmSettingsHint": "Configure the dose alarm in Fidel. Pre-alert and confirmation notifications stay enabled.",
+  "alarmSettingsPreavis": "Pre-alert",
+  "alarmSettingsPreavisHint": "Notification before dose time",
+  "alarmSettingsSnooze": "Snooze",
+  "alarmSettingsSnoozeHint": "Delay when you choose “Later”",
+  "alarmSettingsMinutes": "{minutes} min",
+  "@alarmSettingsMinutes": {
+    "placeholders": { "minutes": { "type": "int" } }
+  },
+  "alarmSettingsVibrate": "Vibration",
+  "alarmSettingsVibrateHint": "Vibrate during the H0 alarm",
+  "alarmSettingsCustomVoice": "Use my reminder voice",
+  "alarmSettingsCustomVoiceHint": "Otherwise Fidel’s default alarm sound",
+  "alarmSettingsCustomVoiceMissing": "Record a custom voice first.",
+  "alarmSettingsExactTitle": "Exact alarms required",
+  "alarmSettingsExactHint": "Without this permission, Android may delay or block your medication alarms.",
+  "alarmSettingsExactCta": "Allow exact alarms",
+  "alarmRingStop": "Stop",
+  "alarmRingSnooze": "Later",
+  "alarmRingBody": "Time to take your dose (scheduled {clock}).",
+  "@alarmRingBody": {
+    "placeholders": { "clock": { "type": "String" } }
+  },
+  "alarmRingBodyDiscreet": "It's time for your {clock} reminder.",
+  "@alarmRingBodyDiscreet": {
+    "placeholders": { "clock": { "type": "String" } }
+  },
+  "alarmRingTitleFallback": "Dose · {clock}",
+  "@alarmRingTitleFallback": {
+    "placeholders": { "clock": { "type": "String" } }
+  },
   "profileContactsTitle": "Emergency contacts",
   "profileContactsTileHint": "For SOS and escalation",
   "profileContactsHint": "These people may be reached if you trigger SOS. You stay in control of that gesture.",

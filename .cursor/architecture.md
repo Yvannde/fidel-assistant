@@ -32,9 +32,9 @@ Permissions notifs/batterie : seulement si branche suivi perso (option A).
 | Catalogue maladies / protocoles (seed) + schéma 4 couches | **Fait** | Migration `b4e8c1a29f3d` appliquée sur Neon |
 | API dashboard, traitements, médicaments, horaires, prises + `POST /prises/sync-offline` | **Fait** | Prises pré-générées à la création d’horaire |
 | Aidants, contacts urgence, check-in / SOS, constantes, préférences consentement, voix de rappel, réglages patient | **Fait** | Branche `feat/aidant-management` ; migrations Neon à jour |
-| App Flutter (auth, onboarding, alarmes locales) | **En cours** | Dualité H0 alarme + notif marquage H+5 (voir `mobile-flutter`) |
+| App Flutter (auth, onboarding, alarmes locales) | **En cours** | Préavis H0−Δ + alarme app H0 + notif marquage H+5 (voir `mobile-flutter`) |
 
-**Rappels médicaments** : 100 % **locaux** sur le téléphone (offline, même avion). **H0** = alarme de réveil (son) ; **H0+5 min** = notification pour marquer la prise (actions). FastAPI ne sonne pas et ne poll pas les doses. Pas de Celery/Redis en V1. FCM (plus tard) uniquement pour l’aidant, et seulement via `engagement-principle` (`regle_auto` opt-in — jamais d’alerte tiers automatique).
+**Rappels médicaments** : 100 % **locaux** sur le téléphone (offline, même avion). Timeline par prise : **préavis** (notif H0−Δ, défaut 5 min) → **H0** = alarme applicative Fidel (son insistent + UI) **et** notif en parallèle → **H0+5 min** = notif de marquage (actions). Les notifs ne sont **pas** remplacées par l’alarme : elles s’ajoutent. FastAPI ne sonne pas et ne poll pas les doses. Pas de Celery/Redis en V1. FCM (plus tard) uniquement pour l’aidant, et seulement via `engagement-principle` (`regle_auto` opt-in — jamais d’alerte tiers automatique). Détail garde-fous + réglages in-app : `skills/mobile-flutter/SKILL.md`.
 
 ## Index des skills
 
@@ -46,7 +46,7 @@ Permissions notifs/batterie : seulement si branche suivi perso (option A).
 | Base Neon | `skills/database-neon/SKILL.md` | Migrations, conventions, usage MCP Neon |
 | Modèle de données | `skills/data-model/SKILL.md` | Entités, champs, relations (contrat) |
 | Contrat API | `skills/api-contract/SKILL.md` | Endpoints méthode/entrée/sortie/erreurs (contrat) |
-| Mobile Flutter | `skills/mobile-flutter/SKILL.md` | Offline-first, rappels, Riverpod, UI |
+| Mobile Flutter | `skills/mobile-flutter/SKILL.md` | Offline-first, préavis / alarme H0 / marquage, Riverpod, UI |
 | Moteur d’engagement | `skills/engagement-principle/SKILL.md` | Notifications, consentement, types d’alerte |
 
 ## Stack (rappel)

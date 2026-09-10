@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/premium.dart';
 import '../../../core/ui/app_toast.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../services/reminder_sync.dart';
 import '../application/home_controller.dart';
 import '../domain/profile_settings_models.dart';
 import 'profile_voix_record_sheet.dart';
@@ -56,6 +57,9 @@ class _ProfileVoixScreenState extends ConsumerState<ProfileVoixScreen> {
     setState(() => _busy = true);
     try {
       final v = await ref.read(homeRepositoryProvider).putVoixRappelSysteme();
+      try {
+        await ref.read(alarmPrefsProvider).setUseCustomVoice(false);
+      } catch (_) {}
       if (mounted) {
         setState(() => _voix = v);
         AppToast.success(context, l10n.profileSaved);
@@ -146,6 +150,11 @@ class _ProfileVoixScreenState extends ConsumerState<ProfileVoixScreen> {
             bytes: const <int>[],
             filePath: result.path,
           );
+      try {
+        await ref
+            .read(alarmPrefsProvider)
+            .cacheCustomVoiceFile(result.path);
+      } catch (_) {}
       if (mounted) {
         setState(() => _voix = v);
         AppToast.success(context, l10n.profileSaved);
@@ -194,6 +203,16 @@ class _ProfileVoixScreenState extends ConsumerState<ProfileVoixScreen> {
             bytes: bytes ?? const <int>[],
             filePath: path,
           );
+      try {
+        if (bytes != null && bytes.isNotEmpty) {
+          await ref.read(alarmPrefsProvider).cacheCustomVoiceBytes(
+                bytes: bytes,
+                filename: name,
+              );
+        } else if (path != null && path.isNotEmpty) {
+          await ref.read(alarmPrefsProvider).cacheCustomVoiceFile(path);
+        }
+      } catch (_) {}
       if (mounted) {
         setState(() => _voix = v);
         AppToast.success(context, l10n.profileSaved);

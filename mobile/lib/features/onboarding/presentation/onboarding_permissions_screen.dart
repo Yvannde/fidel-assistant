@@ -35,6 +35,7 @@ class _OnboardingPermissionsScreenState
       final notif = await Permission.notification.request();
       notifications = notif.isGranted;
       if (Platform.isAndroid) {
+        await Permission.scheduleExactAlarm.request();
         final batt = await Permission.ignoreBatteryOptimizations.request();
         batterie = batt.isGranted;
       }
@@ -92,12 +93,20 @@ class _OnboardingPermissionsScreenState
             title: l10n.onboardingPermsNotifTitle,
             body: l10n.onboardingPermsNotifBody,
           ),
-          const SizedBox(height: 12),
-          _PermCard(
-            icon: Icons.battery_saver_outlined,
-            title: l10n.onboardingPermsBatteryTitle,
-            body: l10n.onboardingPermsBatteryBody,
-          ),
+          if (Platform.isAndroid) ...[
+            const SizedBox(height: 12),
+            _PermCard(
+              icon: Icons.alarm_outlined,
+              title: l10n.onboardingPermsExactTitle,
+              body: l10n.onboardingPermsExactBody,
+            ),
+            const SizedBox(height: 12),
+            _PermCard(
+              icon: Icons.battery_saver_outlined,
+              title: l10n.onboardingPermsBatteryTitle,
+              body: l10n.onboardingPermsBatteryBody,
+            ),
+          ],
           if (_error != null) ...[
             const SizedBox(height: 14),
             Text(

@@ -150,6 +150,16 @@ class _ProfilePatientSettingsScreenState
                       ],
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  PremiumCard(
+                    padding: EdgeInsets.zero,
+                    child: ListTile(
+                      title: Text(l10n.alarmSettingsTitle),
+                      subtitle: Text(l10n.alarmSettingsTileHint),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.push('/home/profile/alarm-settings'),
+                    ),
+                  ),
                 ],
               ),
       ),

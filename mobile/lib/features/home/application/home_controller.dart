@@ -200,7 +200,7 @@ class HomeController extends StateNotifier<HomeUiState> {
         clearError: true,
       );
       if (dashboard != null) {
-        unawaited(syncRemindersFromHome(_ref, dashboard));
+        unawaited(syncRemindersFromHome(_ref.read, dashboard));
       }
       if (secondary && dashboard != null) {
         unawaited(_loadSecondary());
@@ -402,7 +402,7 @@ class HomeController extends StateNotifier<HomeUiState> {
       state = state.copyWith(busy: false, dayPrises: prises);
       final dash = state.dashboard;
       if (dash != null) {
-        unawaited(syncRemindersFromHome(_ref, dash));
+        unawaited(syncRemindersFromHome(_ref.read, dash));
       }
     } catch (e) {
       state = state.copyWith(

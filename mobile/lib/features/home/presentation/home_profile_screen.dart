@@ -106,6 +106,13 @@ class HomeProfileScreen extends ConsumerWidget {
                         context.push('/home/profile/patient-settings'),
                   ),
                   ProfileSettingsTile(
+                    icon: IconsaxPlusLinear.alarm,
+                    title: l10n.alarmSettingsTitle,
+                    subtitle: l10n.alarmSettingsTileHint,
+                    onTap: () =>
+                        context.push('/home/profile/alarm-settings'),
+                  ),
+                  ProfileSettingsTile(
                     icon: IconsaxPlusLinear.call,
                     title: l10n.profileContactsTitle,
                     subtitle: l10n.profileContactsTileHint,
