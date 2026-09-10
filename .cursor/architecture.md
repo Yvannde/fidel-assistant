@@ -33,7 +33,7 @@ Permissions notifs/batterie : seulement si branche suivi perso (option A).
 | API dashboard, traitements, médicaments, horaires, prises + `POST /prises/sync-offline` | **Fait** | Prises pré-générées à la création d’horaire |
 | Aidants, contacts urgence, check-in / SOS, constantes, préférences consentement, voix de rappel, réglages patient | **Fait** | Branche `feat/aidant-management` ; migrations Neon à jour |
 | App Flutter (auth, onboarding, alarmes locales) | **En cours** | Préavis H0−Δ + alarme app H0 + notif marquage H+5 (voir `mobile-flutter`) |
-| Sync offline V2 (outbox, Drift, push/pull) | **Contrat Phase 0** | Voir `offline-sync` ; implémentation Phase 1+ |
+| Sync offline V2 (outbox, Drift, push/pull) | **Phase 3** | Drift snapshot + projection Accueil ; push/pull = Phase 4 (`offline-sync`) |
 
 **Rappels médicaments** : 100 % **locaux** sur le téléphone (offline, même avion). Timeline par prise : **préavis** (notif H0−Δ, défaut 5 min) → **H0** = alarme applicative Fidel (son insistent + UI) **et** notif en parallèle → **H0+5 min** = notif de marquage (actions). Les notifs ne sont **pas** remplacées par l’alarme : elles s’ajoutent. FastAPI ne sonne pas et ne poll pas les doses. Pas de Celery/Redis en V1. FCM (plus tard) uniquement pour l’aidant, et seulement via `engagement-principle` (`regle_auto` opt-in — jamais d’alerte tiers automatique). Détail garde-fous + réglages in-app : `skills/mobile-flutter/SKILL.md`.
 

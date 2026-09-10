@@ -58,14 +58,14 @@ class ReminderActionDispatcher {
     if (response.actionId == ReminderAlarmService.actionConfirm) {
       await engine.enqueueConfirm(priseId: priseId);
       try {
-        await engine.flush();
+        await engine.flush(force: true);
       } catch (e) {
         debugPrint('ReminderAction confirm: $e');
       }
       try {
         await _container
             .read(homeControllerProvider.notifier)
-            .load(secondary: false);
+            .reloadProjection();
       } catch (_) {}
       return;
     }
@@ -74,7 +74,7 @@ class ReminderActionDispatcher {
       final when = DateTime.now().add(Duration(minutes: snoozeMin));
       await engine.enqueueReport(priseId: priseId, nouvelleHeure: when);
       try {
-        await engine.flush();
+        await engine.flush(force: true);
       } catch (e) {
         debugPrint('ReminderAction snooze: $e');
       }
@@ -89,7 +89,7 @@ class ReminderActionDispatcher {
       try {
         await _container
             .read(homeControllerProvider.notifier)
-            .load(secondary: false);
+            .reloadProjection();
       } catch (_) {}
     }
   }

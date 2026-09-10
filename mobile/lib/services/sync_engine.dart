@@ -4,10 +4,13 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/database/providers.dart';
 import '../core/locale/locale_controller.dart';
 import '../core/network/api_exception.dart';
 import '../core/network/providers.dart';
 import '../features/home/data/home_repository.dart';
+import 'network_status.dart';
+import 'server_clock.dart';
 import 'sync_outbox.dart';
 
 /// Port minimal pour confirm/report (testable sans mocker tout le repo).
@@ -44,21 +47,34 @@ class HomeSyncPriseGateway implements SyncPriseGateway {
   }
 }
 
-/// Moteur de sync outbox — single-flight + FIFO (Phase 1).
+/// Moteur de sync outbox — single-flight + FIFO + gating réseau (Phase 2).
 class SyncEngine {
   SyncEngine({
     required SyncOutbox outbox,
     required SyncPriseGateway Function() gatewayFactory,
+    ServerClock? clock,
+    NetworkStatus? network,
   })  : _outbox = outbox,
-        _gatewayFactory = gatewayFactory;
+        _gatewayFactory = gatewayFactory,
+        _clock = clock,
+        _network = network;
 
   final SyncOutbox _outbox;
   final SyncPriseGateway Function() _gatewayFactory;
+  final ServerClock? _clock;
+  final NetworkStatus? _network;
 
   Future<void>? _inflight;
 
+  DateTime _now() => _clock?.now() ?? DateTime.now().toUtc();
+
   /// Single-flight : les appels concurrents partagent la même passe.
-  Future<void> flush() {
+  ///
+  /// [force] : ignore `canSync` (post-mutation / refresh manuel).
+  Future<void> flush({bool force = false}) {
+    if (!force && _network != null && !_network.canSync) {
+      return Future<void>.value();
+    }
     if (_inflight != null) return _inflight!;
     final c = Completer<void>();
     _inflight = c.future;
@@ -80,13 +96,14 @@ class SyncEngine {
     required String priseId,
     DateTime? confirmeeAt,
   }) async {
+    final ts = confirmeeAt?.toUtc() ?? _now();
     await _outbox.enqueue(
       entity: 'prise',
       entityId: priseId,
       op: 'confirm',
+      clientTs: ts,
       payload: {
-        'confirmee_at':
-            (confirmeeAt ?? DateTime.now()).toUtc().toIso8601String(),
+        'confirmee_at': ts.toIso8601String(),
         'canal': 'app',
       },
     );
@@ -100,6 +117,7 @@ class SyncEngine {
       entity: 'prise',
       entityId: priseId,
       op: 'report',
+      clientTs: _now(),
       payload: {
         'nouvelle_heure': nouvelleHeure.toUtc().toIso8601String(),
       },
@@ -110,6 +128,9 @@ class SyncEngine {
     final ready = await _outbox.listReady();
     if (ready.isEmpty) return;
     final gateway = _gatewayFactory();
+    var anySuccess = false;
+    var anyFail = false;
+    var any5xx = false;
 
     for (final entry in ready) {
       await _outbox.markInflight(entry.mutationId);
@@ -135,7 +156,10 @@ class SyncEngine {
           continue;
         }
         await _outbox.markDone(entry.mutationId);
+        anySuccess = true;
       } catch (e) {
+        anyFail = true;
+        if (_is5xx(e)) any5xx = true;
         if (_isRetryable(e)) {
           await _outbox.markRetry(
             entry.mutationId,
@@ -146,6 +170,22 @@ class SyncEngine {
         }
       }
     }
+
+    final net = _network;
+    if (net == null) return;
+    if (anySuccess && !anyFail) {
+      net.reportSyncSuccess();
+    } else if (anyFail) {
+      net.reportSyncFailure(is5xx: any5xx);
+    }
+  }
+
+  bool _is5xx(Object e) {
+    if (e is DioException) {
+      final code = e.response?.statusCode;
+      return code != null && code >= 500;
+    }
+    return false;
   }
 
   bool _isRetryable(Object e) {
@@ -155,7 +195,6 @@ class SyncEngine {
       return true; // timeout, connection, 5xx
     }
     if (e is ApiException) {
-      // 4xx métier → permanent
       return false;
     }
     return true;
@@ -163,13 +202,18 @@ class SyncEngine {
 }
 
 final syncOutboxProvider = Provider<SyncOutbox>((ref) {
-  return SyncOutbox(ref.watch(sharedPreferencesProvider));
+  return SyncOutbox(
+    ref.watch(appDatabaseProvider),
+    prefs: ref.watch(sharedPreferencesProvider),
+  );
 });
 
 final syncEngineProvider = Provider<SyncEngine>((ref) {
   final outbox = ref.watch(syncOutboxProvider);
   return SyncEngine(
     outbox: outbox,
+    clock: ref.watch(serverClockProvider),
+    network: ref.watch(networkStatusProvider),
     gatewayFactory: () => HomeSyncPriseGateway(
       HomeRepository(apiClient: ref.read(apiClientProvider)),
     ),

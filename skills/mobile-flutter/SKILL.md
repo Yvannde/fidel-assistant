@@ -59,7 +59,7 @@ Chaque feature suit le même découpage interne : `presentation/` (écrans, widg
 - Base locale = **Drift** (source de vérité locale pour traitements, horaires, prises récentes / 48 h). Pas Hive comme store métier relationnel.
 - Toute action critique (confirmer une prise, reporter, saisir une constante en P1) s’écrit **d’abord en local** (`snapshot ⊕ outbox`), puis le `SyncEngine` pousse au serveur. L’UI ne bloque jamais sur le réseau pour ces actions.
 - Résolution de conflit : **matrice par entité** dans `offline-sync` — **pas** de last-write-wins générique.
-- **Phase 1 livrée** : outbox idempotente (`sync_outbox_v1`) + `SyncEngine` single-flight ; remplace `PendingPriseSyncQueue`. Les alarmes locales (préavis / H0 / H+5) restent inchangées.
+- **Phase 3 livrée** : Drift snapshot P0 + projection Accueil (`snapshot ⊕ outbox`) ; outbox migrée depuis SharedPreferences. Les alarmes locales (préavis / H0 / H+5) et caches `reminder_*` restent inchangés.
 - Sync au retour réseau uniquement après **hystérésis** (éviter le flapping sur connexion instable) — détail dans `offline-sync` § NetworkStatus.
 
 ## Notifications et alarmes locales — le cœur du produit

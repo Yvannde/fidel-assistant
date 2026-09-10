@@ -4,6 +4,8 @@ import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+import '../core/database/app_database.dart';
+
 /// Entrée outbox conforme au contrat `offline-sync`.
 class SyncOutboxEntry {
   SyncOutboxEntry({
@@ -95,34 +97,54 @@ enum SyncOutboxState {
   }
 }
 
-/// Outbox SharedPreferences (Phase 1 — Drift en Phase 3).
+/// Outbox Drift (Phase 3) — migration one-shot depuis SharedPreferences.
 class SyncOutbox {
-  SyncOutbox(this._prefs);
+  SyncOutbox(
+    this._db, {
+    SharedPreferences? prefs,
+  }) : _prefs = prefs;
 
-  static const key = 'sync_outbox_v1';
+  static const prefsKey = 'sync_outbox_v1';
   static const legacyKey = 'pending_prise_sync_v1';
   static const _uuid = Uuid();
 
-  final SharedPreferences _prefs;
+  final AppDatabase _db;
+  final SharedPreferences? _prefs;
   bool _migrated = false;
 
   Future<void> ensureMigrated() async {
     if (_migrated) return;
     _migrated = true;
-    final legacy = _prefs.getString(legacyKey);
-    if (legacy == null || legacy.isEmpty) return;
-    if ((_prefs.getString(key) ?? '').isNotEmpty) {
-      await _prefs.remove(legacyKey);
-      return;
+    final prefs = _prefs;
+    if (prefs == null) return;
+
+    // Prefs outbox v1 → Drift
+    final raw = prefs.getString(prefsKey);
+    if (raw != null && raw.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is List) {
+          for (final item in decoded) {
+            if (item is! Map) continue;
+            await _db.insertOutboxEntry(
+              SyncOutboxEntry.fromJson(Map<String, dynamic>.from(item)),
+            );
+          }
+        }
+      } catch (_) {}
+      await prefs.remove(prefsKey);
     }
+
+    // Legacy pending_prise_sync_v1 → Drift
+    final legacy = prefs.getString(legacyKey);
+    if (legacy == null || legacy.isEmpty) return;
     try {
       final decoded = jsonDecode(legacy);
       if (decoded is! List) {
-        await _prefs.remove(legacyKey);
+        await prefs.remove(legacyKey);
         return;
       }
       final now = DateTime.now().toUtc();
-      final entries = <SyncOutboxEntry>[];
       for (final item in decoded) {
         if (item is! Map) continue;
         final map = Map<String, dynamic>.from(item);
@@ -130,7 +152,7 @@ class SyncOutbox {
         final priseId = map['priseId'] as String?;
         if (priseId == null || priseId.isEmpty) continue;
         if (type == 'confirm') {
-          entries.add(
+          await _db.insertOutboxEntry(
             SyncOutboxEntry(
               mutationId: _uuid.v4(),
               entity: 'prise',
@@ -144,47 +166,22 @@ class SyncOutbox {
             ),
           );
         } else if (type == 'report') {
-          final raw = map['nouvelleHeure'] as String?;
-          if (raw == null) continue;
-          entries.add(
+          final rawHeure = map['nouvelleHeure'] as String?;
+          if (rawHeure == null) continue;
+          await _db.insertOutboxEntry(
             SyncOutboxEntry(
               mutationId: _uuid.v4(),
               entity: 'prise',
               entityId: priseId,
               op: 'report',
-              payload: {'nouvelle_heure': raw},
+              payload: {'nouvelle_heure': rawHeure},
               clientTs: now,
             ),
           );
         }
       }
-      await _writeAll(entries);
-    } catch (_) {
-      // ignore corrupt legacy
-    }
-    await _prefs.remove(legacyKey);
-  }
-
-  List<SyncOutboxEntry> _readAll() {
-    final raw = _prefs.getString(key);
-    if (raw == null || raw.isEmpty) return [];
-    try {
-      final decoded = jsonDecode(raw);
-      if (decoded is! List) return [];
-      return decoded
-          .whereType<Map>()
-          .map((e) => SyncOutboxEntry.fromJson(Map<String, dynamic>.from(e)))
-          .toList();
-    } catch (_) {
-      return [];
-    }
-  }
-
-  Future<void> _writeAll(List<SyncOutboxEntry> entries) async {
-    await _prefs.setString(
-      key,
-      jsonEncode(entries.map((e) => e.toJson()).toList()),
-    );
+    } catch (_) {}
+    await prefs.remove(legacyKey);
   }
 
   Future<SyncOutboxEntry> enqueue({
@@ -204,15 +201,14 @@ class SyncOutbox {
       payload: payload,
       clientTs: (clientTs ?? DateTime.now()).toUtc(),
     );
-    final all = _readAll()..add(entry);
-    await _writeAll(all);
-    return entry;
+    return _db.insertOutboxEntry(entry);
   }
 
   Future<List<SyncOutboxEntry>> listReady({DateTime? now}) async {
     await ensureMigrated();
     final t = (now ?? DateTime.now()).toUtc();
-    return _readAll()
+    final all = await _db.listAllOutbox();
+    return all
         .where(
           (e) =>
               e.state != SyncOutboxState.failedPermanent &&
@@ -221,24 +217,38 @@ class SyncOutbox {
         .toList(growable: false);
   }
 
+  /// Mutations actives pour projection UI (pending + inflight).
+  Future<List<SyncOutboxEntry>> listPendingForProjection() async {
+    await ensureMigrated();
+    return _db.listActiveOutbox();
+  }
+
   Future<void> markInflight(String mutationId) async {
-    await _update(mutationId, (e) => e.copyWith(state: SyncOutboxState.inflight));
+    await ensureMigrated();
+    final all = await _db.listAllOutbox();
+    final idx = all.indexWhere((e) => e.mutationId == mutationId);
+    if (idx < 0) return;
+    await _db.updateOutboxEntry(
+      all[idx].copyWith(state: SyncOutboxState.inflight),
+    );
   }
 
   Future<void> markDone(String mutationId) async {
     await ensureMigrated();
-    final all = _readAll()..removeWhere((e) => e.mutationId == mutationId);
-    await _writeAll(all);
+    await _db.deleteOutboxEntry(mutationId);
   }
 
   Future<void> markRetry(String mutationId, {required int attempts}) async {
+    await ensureMigrated();
     final delaySec = min(300, pow(2, attempts).toInt());
-    final jitter = Random().nextDouble() * 0.6 - 0.3; // ±30%
+    final jitter = Random().nextDouble() * 0.6 - 0.3;
     final seconds = max(1, (delaySec * (1 + jitter)).round());
     final next = DateTime.now().toUtc().add(Duration(seconds: seconds));
-    await _update(
-      mutationId,
-      (e) => e.copyWith(
+    final all = await _db.listAllOutbox();
+    final idx = all.indexWhere((e) => e.mutationId == mutationId);
+    if (idx < 0) return;
+    await _db.updateOutboxEntry(
+      all[idx].copyWith(
         attempts: attempts,
         nextAttemptAt: next,
         state: SyncOutboxState.pending,
@@ -247,21 +257,12 @@ class SyncOutbox {
   }
 
   Future<void> markPermanent(String mutationId) async {
-    await _update(
-      mutationId,
-      (e) => e.copyWith(state: SyncOutboxState.failedPermanent),
-    );
-  }
-
-  Future<void> _update(
-    String mutationId,
-    SyncOutboxEntry Function(SyncOutboxEntry) fn,
-  ) async {
     await ensureMigrated();
-    final all = _readAll();
+    final all = await _db.listAllOutbox();
     final idx = all.indexWhere((e) => e.mutationId == mutationId);
     if (idx < 0) return;
-    all[idx] = fn(all[idx]);
-    await _writeAll(all);
+    await _db.updateOutboxEntry(
+      all[idx].copyWith(state: SyncOutboxState.failedPermanent),
+    );
   }
 }

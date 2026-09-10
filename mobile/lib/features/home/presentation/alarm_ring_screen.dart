@@ -94,7 +94,7 @@ class _AlarmRingScreenState extends ConsumerState<AlarmRingScreen> {
       await alarms.cancelPrise(widget.priseId);
       await engine.enqueueReport(priseId: widget.priseId, nouvelleHeure: when);
       try {
-        await engine.flush();
+        await engine.flush(force: true);
       } catch (_) {}
 
       await alarms.scheduleOneShot(
@@ -106,7 +106,7 @@ class _AlarmRingScreenState extends ConsumerState<AlarmRingScreen> {
         ),
       );
       try {
-        await ref.read(homeControllerProvider.notifier).load(secondary: false);
+        await ref.read(homeControllerProvider.notifier).reloadProjection();
       } catch (_) {}
 
       if (!mounted) return;

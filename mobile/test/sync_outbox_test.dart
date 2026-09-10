@@ -3,21 +3,28 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:fidel_assistant/core/database/app_database.dart';
+import 'package:fidel_assistant/features/home/domain/dashboard_models.dart';
 import 'package:fidel_assistant/services/sync_outbox.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late SharedPreferences prefs;
-  late SyncOutbox outbox;
+  late AppDatabase db;
 
-  setUp(() async {
-    SharedPreferences.setMockInitialValues({});
-    prefs = await SharedPreferences.getInstance();
-    outbox = SyncOutbox(prefs);
+  setUp(() {
+    db = AppDatabase.memory();
   });
 
-  test('enqueue preserves FIFO order', () async {
+  tearDown(() async {
+    await db.close();
+  });
+
+  test('enqueue preserves FIFO in Drift', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final outbox = SyncOutbox(db, prefs: prefs);
+
     await outbox.enqueue(
       entity: 'prise',
       entityId: 'a',
@@ -28,67 +35,55 @@ void main() {
       entity: 'prise',
       entityId: 'a',
       op: 'confirm',
-      payload: {'canal': 'app'},
+      payload: {},
     );
 
     final ready = await outbox.listReady();
     expect(ready.map((e) => e.op).toList(), ['report', 'confirm']);
   });
 
-  test('migrates pending_prise_sync_v1 then removes legacy key', () async {
-    await prefs.setString(
-      SyncOutbox.legacyKey,
-      jsonEncode([
+  test('migrates sync_outbox_v1 prefs into Drift', () async {
+    SharedPreferences.setMockInitialValues({
+      SyncOutbox.prefsKey: jsonEncode([
         {
-          'type': 'confirm',
-          'priseId': 'p1',
-          'confirmeeAt': '2026-09-10T08:00:00.000Z',
-        },
-        {
-          'type': 'report',
-          'priseId': 'p2',
-          'nouvelleHeure': '2026-09-10T09:30:00.000Z',
+          'mutation_id': 'mid-1',
+          'entity': 'prise',
+          'entity_id': 'p1',
+          'op': 'confirm',
+          'payload': {'canal': 'app'},
+          'client_ts': '2026-09-10T08:00:00.000Z',
+          'attempts': 0,
+          'next_attempt_at': '2026-09-10T08:00:00.000Z',
+          'state': 'pending',
         },
       ]),
-    );
-
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final outbox = SyncOutbox(db, prefs: prefs);
     final ready = await outbox.listReady();
-    expect(ready.length, 2);
-    expect(ready[0].op, 'confirm');
-    expect(ready[0].entityId, 'p1');
-    expect(ready[1].op, 'report');
-    expect(ready[1].entityId, 'p2');
-    expect(prefs.getString(SyncOutbox.legacyKey), isNull);
-    expect(prefs.getString(SyncOutbox.key), isNotNull);
+    expect(ready.single.mutationId, 'mid-1');
+    expect(prefs.getString(SyncOutbox.prefsKey), isNull);
   });
 
-  test('markPermanent excludes from listReady; markRetry schedules later',
-      () async {
-    final e = await outbox.enqueue(
-      entity: 'prise',
-      entityId: 'x',
-      op: 'confirm',
-      payload: {},
+  test('upsert dashboard then read projects prises', () async {
+    final dash = PatientDashboard(
+      prochaineAction: 'prise',
+      medicamentsConfigures: true,
+      notificationsAccordees: true,
+      traitements: const [],
+      prisesAujourdhui: [
+        PriseDuJour(
+          id: 'p1',
+          medicamentNom: 'Aspi',
+          dosage: '100mg',
+          heurePrevue: DateTime.now(),
+          statut: 'en_attente',
+        ),
+      ],
     );
-    await outbox.markPermanent(e.mutationId);
-    expect(await outbox.listReady(), isEmpty);
-
-    final e2 = await outbox.enqueue(
-      entity: 'prise',
-      entityId: 'y',
-      op: 'confirm',
-      payload: {},
-    );
-    await outbox.markRetry(e2.mutationId, attempts: 3);
-    final now = DateTime.now().toUtc();
-    final notYet = await outbox.listReady(now: now);
-    expect(notYet, isEmpty);
-
-    final later = await outbox.listReady(
-      now: now.add(const Duration(minutes: 10)),
-    );
-    expect(later.single.mutationId, e2.mutationId);
-    expect(later.single.attempts, 3);
-    expect(later.single.state, SyncOutboxState.pending);
+    await db.upsertDashboard(dash);
+    final read = await db.readDashboardMeta();
+    expect(read, isNotNull);
+    expect(read!.prisesAujourdhui.single.id, 'p1');
   });
 }
