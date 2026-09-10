@@ -45,7 +45,7 @@ flutter:
     - assets/images/
     - assets/lottie/
     - assets/config/app.json
-    - assets/sounds/fidel_alarm.wav
+    - assets/sounds/
 
   fonts:
     - family: Satoshi

@@ -1393,6 +1393,93 @@ class AppLocalizationsFr extends AppLocalizations {
   String get alarmSettingsExactCta => 'Autoriser les alarmes exactes';
 
   @override
+  String get alarmHealthTitle => 'Santé des alarmes';
+
+  @override
+  String get alarmHealthTileHint => 'Permissions et réglages constructeur';
+
+  @override
+  String get alarmHealthHint =>
+      'Vérifie que le téléphone laisse Fidel sonner à l’heure — surtout sur Xiaomi, Samsung, Tecno et marques similaires.';
+
+  @override
+  String get alarmHealthRefresh => 'Actualiser';
+
+  @override
+  String get alarmHealthAllOk => 'Tout est en ordre pour les alarmes';
+
+  @override
+  String get alarmHealthNeedsAttention =>
+      'Certains réglages bloquent encore les alarmes';
+
+  @override
+  String get alarmHealthNotifTitle => 'Notifications';
+
+  @override
+  String get alarmHealthNotifHint => 'Préavis, bandeau H0 et marquage H+5';
+
+  @override
+  String get alarmHealthExactTitle => 'Alarmes exactes';
+
+  @override
+  String get alarmHealthExactHint =>
+      'Déclenchement à l’heure prévue, même en Doze';
+
+  @override
+  String get alarmHealthBatteryTitle => 'Batterie non restreinte';
+
+  @override
+  String get alarmHealthBatteryHint =>
+      'Évite que l’OS tue Fidel en arrière-plan';
+
+  @override
+  String get alarmHealthFsiTitle => 'Plein écran (verrouillage)';
+
+  @override
+  String get alarmHealthFsiHint =>
+      'Afficher l’alarme par-dessus l’écran verrouillé';
+
+  @override
+  String get alarmHealthFixCta => 'Corriger';
+
+  @override
+  String get alarmHealthOemTitle => 'Réglages constructeur';
+
+  @override
+  String get alarmHealthOemCta => 'Ouvrir le réglage auto-démarrage';
+
+  @override
+  String get alarmHealthOemXiaomi =>
+      'Sur Xiaomi / Redmi / POCO : autorise l’auto-démarrage et mets Fidel en « Sans restriction » dans Batterie.';
+
+  @override
+  String get alarmHealthOemHuawei =>
+      'Sur Huawei / Honor : autorise le démarrage automatique et la mise en arrière-plan manuelle pour Fidel.';
+
+  @override
+  String get alarmHealthOemSamsung =>
+      'Sur Samsung : dans Batterie, désactive l’optimisation pour Fidel et autorise l’activité en arrière-plan.';
+
+  @override
+  String get alarmHealthOemOppo =>
+      'Sur Oppo / Realme / OnePlus : autorise le démarrage automatique et retire Fidel des apps mises en veille.';
+
+  @override
+  String get alarmHealthOemVivo =>
+      'Sur Vivo / iQOO : autorise le démarrage en arrière-plan et l’auto-démarrage pour Fidel.';
+
+  @override
+  String get alarmHealthOemTranssion =>
+      'Sur Tecno / Infinix / Itel : autorise l’auto-démarrage et l’activité en arrière-plan pour Fidel.';
+
+  @override
+  String get alarmHealthOemGeneric =>
+      'Sur certains téléphones, active l’auto-démarrage / activité en arrière-plan pour Fidel dans les réglages constructeur.';
+
+  @override
+  String get alarmHealthAppDetailsCta => 'Ouvrir la fiche de l’app';
+
+  @override
   String get alarmRingStop => 'Arrêter';
 
   @override

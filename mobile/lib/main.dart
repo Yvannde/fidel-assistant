@@ -53,6 +53,13 @@ Future<void> main() async {
       unawaited(ReminderActionDispatcher(container).handle(response));
     },
   );
+  // Réarme H0 / préavis / mark depuis le cache local (reboot / kill),
+  // sans attendre le load home ni le réseau.
+  try {
+    await alarms.restoreFromLocalCache();
+  } catch (e, st) {
+    debugPrint('main: restoreFromLocalCache failed: $e\n$st');
+  }
   unawaited(maybeRunLiveAlarmTest(alarms));
 
   if (restored != null) {

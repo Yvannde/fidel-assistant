@@ -16,6 +16,7 @@ import '../core/storage/token_storage.dart';
 import '../features/home/data/home_repository.dart';
 import 'alarm_prefs.dart';
 import 'pending_prise_sync_queue.dart';
+import 'reminder_sync_perf.dart';
 import 'scheduled_dose.dart';
 
 typedef ReminderNotificationCallback = void Function(NotificationResponse);
@@ -39,6 +40,8 @@ class ReminderAlarmService {
   static const iosCategory = 'fidel_prise';
   static const _idsKey = 'reminder_notif_ids_v3';
   static const _alarmPkgIdsKey = 'reminder_alarm_pkg_ids_v1';
+  static const _snapshotKey = 'reminder_dose_snapshot_v1';
+  static const _doseCacheKey = 'reminder_doses_cache_v1';
   static const discreetPrefsKey = 'notifications_discretes';
 
   static const _labelConfirmFr = "J'ai pris";
@@ -285,6 +288,7 @@ class ReminderAlarmService {
   }
 
   Future<void> cancelAllTracked() async {
+    final ringingIds = _currentRingingIds();
     final ids = _trackedIds();
     for (final id in ids) {
       await _plugin.cancel(id);
@@ -293,48 +297,174 @@ class ReminderAlarmService {
 
     final alarmIds = _trackedAlarmPkgIds();
     for (final id in alarmIds) {
+      if (ScheduledDose.shouldProtectRingingAlarm(
+        alarmId: id,
+        ringingIds: ringingIds,
+      )) {
+        continue;
+      }
       try {
         await Alarm.stop(id);
       } catch (e) {
         debugPrint('ReminderAlarmService: Alarm.stop($id) failed: $e');
       }
     }
-    await _prefs.setString(_alarmPkgIdsKey, '[]');
+    // Conserve les ids encore en train de sonner.
+    final kept = alarmIds
+        .where(
+          (id) => ScheduledDose.shouldProtectRingingAlarm(
+            alarmId: id,
+            ringingIds: ringingIds,
+          ),
+        )
+        .toList();
+    await _prefs.setString(_alarmPkgIdsKey, jsonEncode(kept));
+    await _prefs.setString(_snapshotKey, '{}');
+    await _prefs.setString(_doseCacheKey, '[]');
   }
 
-  /// Remplace préavis / alarmes / marks pour [doses] pending.
-  Future<void> rescheduleAll(List<ScheduledDose> doses) async {
+  /// Cold start / après reboot : réarme depuis le cache local **sans** API home.
+  ///
+  /// [force] contourne le early-return fingerprint pour replanifier même si
+  /// les signatures n’ont pas changé (AlarmManager / FLN peuvent avoir été
+  /// perdus alors que le snapshot prefs est intact).
+  Future<void> restoreFromLocalCache() async {
+    if (!_ready) return;
+    final cached = _loadDoseCache();
+    if (cached.isEmpty) {
+      debugPrint('ReminderAlarmService: restoreFromLocalCache empty');
+      return;
+    }
+    final now = DateTime.now();
+    final future = ReminderSyncPerf.filterHorizon(cached, now);
+    debugPrint(
+      'ReminderAlarmService: restoreFromLocalCache '
+      '${future.length}/${cached.length} doses '
+      '(horizon=${ReminderSyncPerf.scheduleHorizon.inHours}h)',
+    );
+    await rescheduleAll(future, force: true);
+  }
+
+  /// Reschedule différentiel : ne touche que les prises ajoutées / modifiées /
+  /// retirées, et ne stoppe jamais une alarme en cours de sonnerie.
+  ///
+  /// [force] : réarme toutes les doses non-ringing (boot / cold start).
+  Future<void> rescheduleAll(
+    List<ScheduledDose> doses, {
+    bool force = false,
+  }) async {
     if (!_ready) return;
     await ensureNotificationPermission();
     await ensureExactAlarmPermission();
-    await cancelAllTracked();
 
-    final now = tz.TZDateTime.now(tz.local);
-    final scheduledIds = <int>[];
-    final alarmPkgIds = <int>[];
-    var preavisCount = 0;
-    var alarmCount = 0;
-    var markCount = 0;
+    final audioKey = await alarmPrefs.resolveAudioPath();
+    final preavisMin = alarmPrefs.preavisMinutes;
+    final isDiscreet = discreet;
 
-    for (final dose in doses) {
-      final added = await _scheduleTriple(
-        dose,
-        now: now,
-        track: scheduledIds,
-        trackAlarms: alarmPkgIds,
+    final desiredSigs = <String, String>{};
+    final desired = <String, ScheduledDose>{};
+    for (final d in doses) {
+      desired[d.priseId] = d;
+      desiredSigs[d.priseId] = ScheduledDose.signature(
+        dose: d,
+        preavisMinutes: preavisMin,
+        discreet: isDiscreet,
+        audioKey: audioKey,
       );
-      preavisCount += added.preavis;
-      alarmCount += added.alarms;
-      markCount += added.marks;
     }
 
-    await _prefs.setString(_idsKey, jsonEncode(scheduledIds));
-    await _prefs.setString(_alarmPkgIdsKey, jsonEncode(alarmPkgIds));
+    // Toujours rafraîchir le cache doses (même si on skip la replanif).
+    await _saveDoseCache(desired.values.toList());
+
+    final previous = _loadSnapshot();
+    if (!force &&
+        ScheduledDose.globalFingerprint(previous) ==
+            ScheduledDose.globalFingerprint(desiredSigs)) {
+      debugPrint(
+        'ReminderAlarmService: rescheduleAll skip (unchanged, '
+        '${desiredSigs.length} doses)',
+      );
+      return;
+    }
+
+    final ringingIds = _currentRingingIds();
+    final ids = _trackedIds();
+    final alarmIds = _trackedAlarmPkgIds();
+    final now = tz.TZDateTime.now(tz.local);
+
+    var removed = 0;
+    var updated = 0;
+    var skipped = 0;
+    var protectedRinging = 0;
+
+    // Retraits.
+    for (final priseId in previous.keys.toList()) {
+      if (desired.containsKey(priseId)) continue;
+      final alarmId = alarmNotificationId(priseId);
+      if (ScheduledDose.shouldProtectRingingAlarm(
+        alarmId: alarmId,
+        ringingIds: ringingIds,
+      )) {
+        await _cancelFlnOnly(priseId, ids);
+        protectedRinging++;
+      } else {
+        await _cancelPriseLocal(
+          priseId,
+          ids,
+          alarmIds,
+          stopAlarm: true,
+        );
+        removed++;
+      }
+    }
+
+    // Ajouts / mises à jour.
+    for (final entry in desired.entries) {
+      final priseId = entry.key;
+      final dose = entry.value;
+      final sig = desiredSigs[priseId]!;
+      final alarmId = alarmNotificationId(priseId);
+      final preavisId = preavisNotificationId(priseId);
+      final markId = markNotificationId(priseId);
+      final unchanged = previous[priseId] == sig;
+      final stillTracked = alarmIds.contains(alarmId) ||
+          ids.contains(preavisId) ||
+          ids.contains(markId);
+
+      if (!force && unchanged && stillTracked) {
+        skipped++;
+        continue;
+      }
+
+      if (ScheduledDose.shouldProtectRingingAlarm(
+        alarmId: alarmId,
+        ringingIds: ringingIds,
+      )) {
+        // Ne pas re-set / stop H0 pendant le ring.
+        if (!alarmIds.contains(alarmId)) alarmIds.add(alarmId);
+        protectedRinging++;
+        continue;
+      }
+
+      await _cancelPriseLocal(priseId, ids, alarmIds, stopAlarm: true);
+      await _scheduleTriple(
+        dose,
+        now: now,
+        track: ids,
+        trackAlarms: alarmIds,
+      );
+      updated++;
+    }
+
+    await _prefs.setString(_idsKey, jsonEncode(ids));
+    await _prefs.setString(_alarmPkgIdsKey, jsonEncode(alarmIds));
+    await _saveSnapshot(desiredSigs);
+
     debugPrint(
-      'ReminderAlarmService: scheduled preavis=$preavisCount '
-      'alarms=$alarmCount marks=$markCount '
-      'ids=${scheduledIds.length}/${doses.length} '
-      '(tz=${tz.local.name}, now=$now, Δ=${alarmPrefs.preavisMinutes})',
+      'ReminderAlarmService: rescheduleAll diff '
+      'force=$force desired=${desired.length} updated=$updated '
+      'removed=$removed skipped=$skipped protectRing=$protectedRinging '
+      '(tz=${tz.local.name}, now=$now, Δ=$preavisMin)',
     );
   }
 
@@ -345,7 +475,7 @@ class ReminderAlarmService {
     final now = tz.TZDateTime.now(tz.local);
     final ids = _trackedIds();
     final alarmIds = _trackedAlarmPkgIds();
-    await _cancelPriseLocal(dose.priseId, ids, alarmIds);
+    await _cancelPriseLocal(dose.priseId, ids, alarmIds, stopAlarm: true);
 
     await _scheduleTriple(
       dose,
@@ -355,21 +485,53 @@ class ReminderAlarmService {
     );
     await _prefs.setString(_idsKey, jsonEncode(ids));
     await _prefs.setString(_alarmPkgIdsKey, jsonEncode(alarmIds));
+
+    final snap = _loadSnapshot();
+    snap[dose.priseId] = ScheduledDose.signature(
+      dose: dose,
+      preavisMinutes: alarmPrefs.preavisMinutes,
+      discreet: discreet,
+      audioKey: await alarmPrefs.resolveAudioPath(),
+    );
+    await _saveSnapshot(snap);
+    final cache = _loadDoseCache();
+    final next = [
+      for (final d in cache)
+        if (d.priseId != dose.priseId) d,
+      dose,
+    ];
+    await _saveDoseCache(next);
   }
 
   Future<void> cancelPrise(String priseId) async {
     final ids = _trackedIds();
     final alarmIds = _trackedAlarmPkgIds();
-    await _cancelPriseLocal(priseId, ids, alarmIds);
+    await _cancelPriseLocal(priseId, ids, alarmIds, stopAlarm: true);
     await _prefs.setString(_idsKey, jsonEncode(ids));
     await _prefs.setString(_alarmPkgIdsKey, jsonEncode(alarmIds));
+    final snap = _loadSnapshot()..remove(priseId);
+    await _saveSnapshot(snap);
+    await _saveDoseCache(
+      _loadDoseCache().where((d) => d.priseId != priseId).toList(),
+    );
+  }
+
+  Future<void> _cancelFlnOnly(String priseId, List<int> ids) async {
+    final markId = markNotificationId(priseId);
+    final preavisId = preavisNotificationId(priseId);
+    await _plugin.cancel(preavisId);
+    await _plugin.cancel(markId);
+    ids
+      ..remove(preavisId)
+      ..remove(markId);
   }
 
   Future<void> _cancelPriseLocal(
     String priseId,
     List<int> ids,
-    List<int> alarmIds,
-  ) async {
+    List<int> alarmIds, {
+    required bool stopAlarm,
+  }) async {
     final alarmId = alarmNotificationId(priseId);
     final markId = markNotificationId(priseId);
     final preavisId = preavisNotificationId(priseId);
@@ -380,11 +542,46 @@ class ReminderAlarmService {
       ..remove(markId)
       ..remove(alarmId);
     alarmIds.remove(alarmId);
-    try {
-      await Alarm.stop(alarmId);
-    } catch (e) {
-      debugPrint('ReminderAlarmService: Alarm.stop($alarmId) failed: $e');
+    if (stopAlarm) {
+      try {
+        await Alarm.stop(alarmId);
+      } catch (e) {
+        debugPrint('ReminderAlarmService: Alarm.stop($alarmId) failed: $e');
+      }
     }
+  }
+
+  Set<int> _currentRingingIds() {
+    try {
+      return Alarm.ringing.value.alarms.map((a) => a.id).toSet();
+    } catch (_) {
+      return {};
+    }
+  }
+
+  Map<String, String> _loadSnapshot() {
+    final raw = _prefs.getString(_snapshotKey);
+    if (raw == null || raw.isEmpty) return {};
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return {};
+      return decoded.map(
+        (k, v) => MapEntry(k.toString(), v?.toString() ?? ''),
+      );
+    } catch (_) {
+      return {};
+    }
+  }
+
+  Future<void> _saveSnapshot(Map<String, String> snapshot) async {
+    await _prefs.setString(_snapshotKey, jsonEncode(snapshot));
+  }
+
+  List<ScheduledDose> _loadDoseCache() =>
+      ScheduledDose.decodeList(_prefs.getString(_doseCacheKey));
+
+  Future<void> _saveDoseCache(List<ScheduledDose> doses) async {
+    await _prefs.setString(_doseCacheKey, ScheduledDose.encodeList(doses));
   }
 
   /// Annule préavis + alarme package + mark (isolate background).

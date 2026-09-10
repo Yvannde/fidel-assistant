@@ -44,7 +44,7 @@ class _ProfileAlarmSettingsScreenState
     try {
       final dash = ref.read(homeControllerProvider).dashboard;
       if (dash != null) {
-        await syncRemindersFromHome(ref.read, dash);
+        await syncRemindersFromHome(ref.read, dash, force: true);
       }
       if (mounted) {
         AppToast.success(context, AppLocalizations.of(context).profileSaved);
@@ -218,6 +218,16 @@ class _ProfileAlarmSettingsScreenState
                 ),
               ),
             ],
+            const SizedBox(height: 16),
+            PremiumCard(
+              padding: EdgeInsets.zero,
+              child: ListTile(
+                title: Text(l10n.alarmHealthTitle),
+                subtitle: Text(l10n.alarmHealthTileHint),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/home/profile/alarm-health'),
+              ),
+            ),
           ],
         ),
       ),
