@@ -2957,20 +2957,32 @@ abstract class AppLocalizations {
   /// No description provided for @reminderNotifTitle.
   ///
   /// In en, this message translates to:
-  /// **'Medicine reminder'**
+  /// **'Metformin · 500 mg'**
   String get reminderNotifTitle;
 
   /// No description provided for @reminderNotifTitleDiscreet.
   ///
   /// In en, this message translates to:
-  /// **'Fidel'**
+  /// **'Fidel · 08:00'**
   String get reminderNotifTitleDiscreet;
 
   /// No description provided for @reminderNotifBodyDiscreet.
   ///
   /// In en, this message translates to:
-  /// **'It\'s time for your reminder.'**
+  /// **'It\'s time for your 08:00 reminder.'**
   String get reminderNotifBodyDiscreet;
+
+  /// No description provided for @reminderMarkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Metformin · 500 mg'**
+  String get reminderMarkTitle;
+
+  /// No description provided for @reminderMarkBodyDiscreet.
+  ///
+  /// In en, this message translates to:
+  /// **'Did you complete your 08:00 reminder?'**
+  String get reminderMarkBodyDiscreet;
 
   /// No description provided for @reminderActionTaken.
   ///

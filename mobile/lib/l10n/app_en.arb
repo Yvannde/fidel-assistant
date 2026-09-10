@@ -592,9 +592,11 @@
   "cerclePermissionLocked": "This data is not shared with you.",
   "cerclePermissionLimited": "Limited access",
   "cercleNoVitals": "No vitals shared yet.",
-  "reminderNotifTitle": "Medicine reminder",
-  "reminderNotifTitleDiscreet": "Fidel",
-  "reminderNotifBodyDiscreet": "It's time for your reminder.",
+  "reminderNotifTitle": "Metformin · 500 mg",
+  "reminderNotifTitleDiscreet": "Fidel · 08:00",
+  "reminderNotifBodyDiscreet": "It's time for your 08:00 reminder.",
+  "reminderMarkTitle": "Metformin · 500 mg",
+  "reminderMarkBodyDiscreet": "Did you complete your 08:00 reminder?",
   "reminderActionTaken": "Taken",
   "reminderActionSnooze": "Later"
 }

@@ -1580,13 +1580,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cercleNoVitals => 'No vitals shared yet.';
 
   @override
-  String get reminderNotifTitle => 'Medicine reminder';
+  String get reminderNotifTitle => 'Metformin · 500 mg';
 
   @override
-  String get reminderNotifTitleDiscreet => 'Fidel';
+  String get reminderNotifTitleDiscreet => 'Fidel · 08:00';
 
   @override
-  String get reminderNotifBodyDiscreet => 'It\'s time for your reminder.';
+  String get reminderNotifBodyDiscreet => 'It\'s time for your 08:00 reminder.';
+
+  @override
+  String get reminderMarkTitle => 'Metformin · 500 mg';
+
+  @override
+  String get reminderMarkBodyDiscreet =>
+      'Did you complete your 08:00 reminder?';
 
   @override
   String get reminderActionTaken => 'Taken';

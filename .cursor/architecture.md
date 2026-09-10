@@ -32,9 +32,9 @@ Permissions notifs/batterie : seulement si branche suivi perso (option A).
 | Catalogue maladies / protocoles (seed) + schéma 4 couches | **Fait** | Migration `b4e8c1a29f3d` appliquée sur Neon |
 | API dashboard, traitements, médicaments, horaires, prises + `POST /prises/sync-offline` | **Fait** | Prises pré-générées à la création d’horaire |
 | Aidants, contacts urgence, check-in / SOS, constantes, préférences consentement, voix de rappel, réglages patient | **Fait** | Branche `feat/aidant-management` ; migrations Neon à jour |
-| App Flutter (auth, onboarding, alarmes locales) | **À faire** | **Prochain chantier** |
+| App Flutter (auth, onboarding, alarmes locales) | **En cours** | Dualité H0 alarme + notif marquage H+5 (voir `mobile-flutter`) |
 
-**Rappels médicaments** : 100 % **notification locale** sur le téléphone (offline, même avion). FastAPI ne sonne pas et ne poll pas les doses. Pas de Celery/Redis en V1. FCM (plus tard) uniquement pour l’aidant, et seulement via `engagement-principle` (`regle_auto` opt-in — jamais d’alerte tiers automatique).
+**Rappels médicaments** : 100 % **locaux** sur le téléphone (offline, même avion). **H0** = alarme de réveil (son) ; **H0+5 min** = notification pour marquer la prise (actions). FastAPI ne sonne pas et ne poll pas les doses. Pas de Celery/Redis en V1. FCM (plus tard) uniquement pour l’aidant, et seulement via `engagement-principle` (`regle_auto` opt-in — jamais d’alerte tiers automatique).
 
 ## Index des skills
 

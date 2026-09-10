@@ -26,12 +26,13 @@ class ReminderActionDispatcher {
   Future<void> handle(NotificationResponse response) async {
     final payload = parseReminderPayload(response.payload);
     final priseId = payload['priseId'] as String?;
+    final kind = payload['kind'] as String?;
     final alarms = _container.read(reminderAlarmServiceProvider);
     final queue = _container.read(pendingPriseSyncQueueProvider);
     final repo = _container.read(homeRepositoryProvider);
 
     debugPrint(
-      'ReminderAction: actionId=${response.actionId} '
+      'ReminderAction: actionId=${response.actionId} kind=$kind '
       'type=${response.notificationResponseType} priseId=$priseId',
     );
 
@@ -45,7 +46,7 @@ class ReminderActionDispatcher {
 
     if (priseId == null || priseId.isEmpty) return;
 
-    // Retire la notif tout de suite (même si l’API échoue).
+    // Retire alarme H0 + mark H+5 tout de suite.
     await alarms.cancelPrise(priseId);
 
     if (response.actionId == ReminderAlarmService.actionConfirm) {
@@ -73,6 +74,7 @@ class ReminderActionDispatcher {
       } catch (e) {
         debugPrint('ReminderAction snooze: $e');
       }
+      // H0' = now+15, mark = H0'+5 via scheduleOneShot.
       await alarms.scheduleOneShot(
         ScheduledDose(
           priseId: priseId,
