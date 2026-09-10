@@ -381,7 +381,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingPermsNotifBody =>
-      'So we can remind you to take your medication on time, even when the app is closed.';
+      'So we can warn you before a dose and confirm afterwards.';
+
+  @override
+  String get onboardingPermsExactTitle => 'Exact alarms (Android)';
+
+  @override
+  String get onboardingPermsExactBody =>
+      'So the alarm rings on time even when the phone is asleep.';
 
   @override
   String get onboardingPermsBatteryTitle => 'Battery (Android)';
@@ -1318,6 +1325,81 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get profileDiscreteNotifHint =>
       'Sobriety-friendly wording without sensitive detail';
+
+  @override
+  String get alarmSettingsTitle => 'Alarm settings';
+
+  @override
+  String get alarmSettingsTileHint =>
+      'Pre-alert, sound, snooze and permissions';
+
+  @override
+  String get alarmSettingsHint =>
+      'Configure the dose alarm in Fidel. Pre-alert and confirmation notifications stay enabled.';
+
+  @override
+  String get alarmSettingsPreavis => 'Pre-alert';
+
+  @override
+  String get alarmSettingsPreavisHint => 'Notification before dose time';
+
+  @override
+  String get alarmSettingsSnooze => 'Snooze';
+
+  @override
+  String get alarmSettingsSnoozeHint => 'Delay when you choose “Later”';
+
+  @override
+  String alarmSettingsMinutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get alarmSettingsVibrate => 'Vibration';
+
+  @override
+  String get alarmSettingsVibrateHint => 'Vibrate during the H0 alarm';
+
+  @override
+  String get alarmSettingsCustomVoice => 'Use my reminder voice';
+
+  @override
+  String get alarmSettingsCustomVoiceHint =>
+      'Otherwise Fidel’s default alarm sound';
+
+  @override
+  String get alarmSettingsCustomVoiceMissing => 'Record a custom voice first.';
+
+  @override
+  String get alarmSettingsExactTitle => 'Exact alarms required';
+
+  @override
+  String get alarmSettingsExactHint =>
+      'Without this permission, Android may delay or block your medication alarms.';
+
+  @override
+  String get alarmSettingsExactCta => 'Allow exact alarms';
+
+  @override
+  String get alarmRingStop => 'Stop';
+
+  @override
+  String get alarmRingSnooze => 'Later';
+
+  @override
+  String alarmRingBody(String clock) {
+    return 'Time to take your dose (scheduled $clock).';
+  }
+
+  @override
+  String alarmRingBodyDiscreet(String clock) {
+    return 'It\'s time for your $clock reminder.';
+  }
+
+  @override
+  String alarmRingTitleFallback(String clock) {
+    return 'Dose · $clock';
+  }
 
   @override
   String get profileContactsTitle => 'Emergency contacts';

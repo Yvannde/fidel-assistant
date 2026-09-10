@@ -122,7 +122,9 @@
   "onboardingPermsTitle": "Pour que les rappels sonnent vraiment",
   "onboardingPermsSubtitle": "On t’explique avant la demande du téléphone. Tu peux aussi continuer sans — à tes risques.",
   "onboardingPermsNotifTitle": "Notifications",
-  "onboardingPermsNotifBody": "Pour te rappeler de prendre tes médicaments au bon moment, même si l’app est fermée.",
+  "onboardingPermsNotifBody": "Pour te prévenir avant la prise, et pour confirmer après.",
+  "onboardingPermsExactTitle": "Alarmes exactes (Android)",
+  "onboardingPermsExactBody": "Pour que l’alarme sonne à l’heure prévue, même si le téléphone est en veille.",
   "onboardingPermsBatteryTitle": "Batterie (Android)",
   "onboardingPermsBatteryBody": "Sans exemption, certains téléphones coupent les rappels pendant la nuit.",
   "onboardingPermsAllow": "Autoriser les rappels",
@@ -482,6 +484,39 @@
   "profileBatteryExemptHint": "Évite que le téléphone coupe les rappels la nuit",
   "profileDiscreteNotif": "Notifications discrètes",
   "profileDiscreteNotifHint": "Formulations sobres, sans détail sensible visible",
+  "alarmSettingsTitle": "Réglages alarme",
+  "alarmSettingsTileHint": "Préavis, son, snooze et permissions",
+  "alarmSettingsHint": "Configure l’alarme de prise directement dans Fidel. Les notifications de préavis et de confirmation restent actives.",
+  "alarmSettingsPreavis": "Préavis",
+  "alarmSettingsPreavisHint": "Notification avant l’heure de prise",
+  "alarmSettingsSnooze": "Reporter (snooze)",
+  "alarmSettingsSnoozeHint": "Délai quand tu choisis « Plus tard »",
+  "alarmSettingsMinutes": "{minutes} min",
+  "@alarmSettingsMinutes": {
+    "placeholders": { "minutes": { "type": "int" } }
+  },
+  "alarmSettingsVibrate": "Vibration",
+  "alarmSettingsVibrateHint": "Vibrer pendant l’alarme H0",
+  "alarmSettingsCustomVoice": "Utiliser ma voix de rappel",
+  "alarmSettingsCustomVoiceHint": "Sinon, le son Fidel par défaut",
+  "alarmSettingsCustomVoiceMissing": "Enregistre d’abord une voix personnalisée.",
+  "alarmSettingsExactTitle": "Alarmes exactes requises",
+  "alarmSettingsExactHint": "Sans cette autorisation, Android peut retarder ou bloquer tes alarmes de médicaments.",
+  "alarmSettingsExactCta": "Autoriser les alarmes exactes",
+  "alarmRingStop": "Arrêter",
+  "alarmRingSnooze": "Plus tard",
+  "alarmRingBody": "C’est l’heure de ta prise (prévue à {clock}).",
+  "@alarmRingBody": {
+    "placeholders": { "clock": { "type": "String" } }
+  },
+  "alarmRingBodyDiscreet": "C’est l’heure de ton rappel de {clock}.",
+  "@alarmRingBodyDiscreet": {
+    "placeholders": { "clock": { "type": "String" } }
+  },
+  "alarmRingTitleFallback": "Prise · {clock}",
+  "@alarmRingTitleFallback": {
+    "placeholders": { "clock": { "type": "String" } }
+  },
   "profileContactsTitle": "Contacts d’urgence",
   "profileContactsTileHint": "Pour le SOS et l’escalade",
   "profileContactsHint": "Ces personnes peuvent être jointes si tu déclenches un SOS. Tu restes maître du geste.",

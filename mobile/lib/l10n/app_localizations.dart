@@ -797,8 +797,20 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingPermsNotifBody.
   ///
   /// In en, this message translates to:
-  /// **'So we can remind you to take your medication on time, even when the app is closed.'**
+  /// **'So we can warn you before a dose and confirm afterwards.'**
   String get onboardingPermsNotifBody;
+
+  /// No description provided for @onboardingPermsExactTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Exact alarms (Android)'**
+  String get onboardingPermsExactTitle;
+
+  /// No description provided for @onboardingPermsExactBody.
+  ///
+  /// In en, this message translates to:
+  /// **'So the alarm rings on time even when the phone is asleep.'**
+  String get onboardingPermsExactBody;
 
   /// No description provided for @onboardingPermsBatteryTitle.
   ///
@@ -2473,6 +2485,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sobriety-friendly wording without sensitive detail'**
   String get profileDiscreteNotifHint;
+
+  /// No description provided for @alarmSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Alarm settings'**
+  String get alarmSettingsTitle;
+
+  /// No description provided for @alarmSettingsTileHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Pre-alert, sound, snooze and permissions'**
+  String get alarmSettingsTileHint;
+
+  /// No description provided for @alarmSettingsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure the dose alarm in Fidel. Pre-alert and confirmation notifications stay enabled.'**
+  String get alarmSettingsHint;
+
+  /// No description provided for @alarmSettingsPreavis.
+  ///
+  /// In en, this message translates to:
+  /// **'Pre-alert'**
+  String get alarmSettingsPreavis;
+
+  /// No description provided for @alarmSettingsPreavisHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification before dose time'**
+  String get alarmSettingsPreavisHint;
+
+  /// No description provided for @alarmSettingsSnooze.
+  ///
+  /// In en, this message translates to:
+  /// **'Snooze'**
+  String get alarmSettingsSnooze;
+
+  /// No description provided for @alarmSettingsSnoozeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Delay when you choose “Later”'**
+  String get alarmSettingsSnoozeHint;
+
+  /// No description provided for @alarmSettingsMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String alarmSettingsMinutes(int minutes);
+
+  /// No description provided for @alarmSettingsVibrate.
+  ///
+  /// In en, this message translates to:
+  /// **'Vibration'**
+  String get alarmSettingsVibrate;
+
+  /// No description provided for @alarmSettingsVibrateHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Vibrate during the H0 alarm'**
+  String get alarmSettingsVibrateHint;
+
+  /// No description provided for @alarmSettingsCustomVoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Use my reminder voice'**
+  String get alarmSettingsCustomVoice;
+
+  /// No description provided for @alarmSettingsCustomVoiceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Otherwise Fidel’s default alarm sound'**
+  String get alarmSettingsCustomVoiceHint;
+
+  /// No description provided for @alarmSettingsCustomVoiceMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Record a custom voice first.'**
+  String get alarmSettingsCustomVoiceMissing;
+
+  /// No description provided for @alarmSettingsExactTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Exact alarms required'**
+  String get alarmSettingsExactTitle;
+
+  /// No description provided for @alarmSettingsExactHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Without this permission, Android may delay or block your medication alarms.'**
+  String get alarmSettingsExactHint;
+
+  /// No description provided for @alarmSettingsExactCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow exact alarms'**
+  String get alarmSettingsExactCta;
+
+  /// No description provided for @alarmRingStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get alarmRingStop;
+
+  /// No description provided for @alarmRingSnooze.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get alarmRingSnooze;
+
+  /// No description provided for @alarmRingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Time to take your dose (scheduled {clock}).'**
+  String alarmRingBody(String clock);
+
+  /// No description provided for @alarmRingBodyDiscreet.
+  ///
+  /// In en, this message translates to:
+  /// **'It\'s time for your {clock} reminder.'**
+  String alarmRingBodyDiscreet(String clock);
+
+  /// No description provided for @alarmRingTitleFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Dose · {clock}'**
+  String alarmRingTitleFallback(String clock);
 
   /// No description provided for @profileContactsTitle.
   ///

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:alarm/alarm.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
@@ -13,20 +14,22 @@ import 'package:timezone/timezone.dart' as tz;
 import '../core/network/api_client.dart';
 import '../core/storage/token_storage.dart';
 import '../features/home/data/home_repository.dart';
+import 'alarm_prefs.dart';
 import 'pending_prise_sync_queue.dart';
 import 'scheduled_dose.dart';
 
 typedef ReminderNotificationCallback = void Function(NotificationResponse);
 
-/// Rappels médicaments — alarme H0 + notification de marquage H0+5.
+/// Rappels médicaments — préavis H0−Δ + alarme package H0 + marquage H0+5.
 class ReminderAlarmService {
   ReminderAlarmService(this._prefs);
 
-  static const alarmChannelId = 'fidel_med_alarms';
-  static const alarmChannelName = 'Alarmes médicaments';
+  static const preavisChannelId = 'fidel_med_preavis';
+  static const preavisChannelName = 'Préavis médicaments';
   static const markChannelId = 'fidel_med_mark';
   static const markChannelName = 'Confirmation de prise';
 
+  static const kindPreavis = 'preavis';
   static const kindAlarm = 'alarm';
   static const kindMark = 'mark';
   static const markDelay = Duration(minutes: 5);
@@ -34,17 +37,22 @@ class ReminderAlarmService {
   static const actionConfirm = 'prise_confirm';
   static const actionSnooze = 'prise_snooze';
   static const iosCategory = 'fidel_prise';
-  static const _idsKey = 'reminder_notif_ids_v2';
+  static const _idsKey = 'reminder_notif_ids_v3';
+  static const _alarmPkgIdsKey = 'reminder_alarm_pkg_ids_v1';
   static const discreetPrefsKey = 'notifications_discretes';
 
   static const _labelConfirmFr = "J'ai pris";
   static const _labelSnoozeFr = 'Plus tard';
   static const _labelConfirmEn = 'Taken';
   static const _labelSnoozeEn = 'Later';
+  static const _labelStopFr = 'Arrêter';
+  static const _labelStopEn = 'Stop';
 
   final SharedPreferences _prefs;
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
+
+  late final AlarmPrefs alarmPrefs = AlarmPrefs(_prefs);
 
   bool _ready = false;
   ReminderNotificationCallback? onResponse;
@@ -65,6 +73,22 @@ class ReminderAlarmService {
     final alarm = alarmNotificationId(priseId);
     final mark = 0x7fffffff & (alarm ^ 0x5f5f5f5f);
     return mark == 0 || mark == alarm ? (alarm == 1 ? 2 : 1) : mark;
+  }
+
+  static int preavisNotificationId(String priseId) {
+    final alarm = alarmNotificationId(priseId);
+    var preavis = 0x7fffffff & (alarm ^ 0x11111111);
+    if (preavis == 0 || preavis == alarm) {
+      preavis = alarm == 1 ? 3 : 1;
+    }
+    final mark = markNotificationId(priseId);
+    if (preavis == mark) {
+      preavis = 0x7fffffff & (preavis ^ 0x22222222);
+      if (preavis == 0 || preavis == alarm || preavis == mark) {
+        preavis = alarm == 1 ? 4 : (alarm == 2 ? 4 : 2);
+      }
+    }
+    return preavis;
   }
 
   /// @deprecated Prefer [alarmNotificationId] / [markNotificationId].
@@ -102,17 +126,34 @@ class ReminderAlarmService {
     return '$nom · $dosage';
   }
 
-  /// Titre/corps parlants : médicament (ou heure en discret), motif, horaire.
   ({String title, String body}) _copyFor({
     required ScheduledDose dose,
-    required bool isAlarm,
+    required String kind,
   }) {
     final clock = _formatClock(dose.heurePrevue);
     final med = _medLabel(dose);
+    final delta = alarmPrefs.preavisMinutes;
 
-    if (discreet) {
-      // Pas de nom de médicament, mais l’heure pour distinguer les prises.
-      if (isAlarm) {
+    if (kind == kindPreavis) {
+      if (discreet) {
+        return (
+          title: _en ? 'Soon · $clock' : 'Bientôt · $clock',
+          body: _en
+              ? 'Reminder in $delta min ($clock).'
+              : 'Rappel dans $delta min ($clock).',
+        );
+      }
+      final label = med.isEmpty ? clock : med;
+      return (
+        title: _en ? 'In $delta min' : 'Dans $delta min',
+        body: _en
+            ? '$label — dose at $clock.'
+            : '$label — prise à $clock.',
+      );
+    }
+
+    if (kind == kindAlarm) {
+      if (discreet) {
         return (
           title: 'Fidel · $clock',
           body: _en
@@ -121,19 +162,20 @@ class ReminderAlarmService {
         );
       }
       return (
-        title: _en ? 'Confirm · $clock' : 'Confirmer · $clock',
-        body: _en
-            ? 'Did you complete your $clock reminder?'
-            : 'As-tu bien fait ton rappel de $clock ?',
-      );
-    }
-
-    if (isAlarm) {
-      return (
         title: med.isEmpty ? (_en ? 'Dose · $clock' : 'Prise · $clock') : med,
         body: _en
             ? 'Time to take your dose (scheduled $clock).'
             : 'C’est l’heure de ta prise (prévue à $clock).',
+      );
+    }
+
+    // mark
+    if (discreet) {
+      return (
+        title: _en ? 'Confirm · $clock' : 'Confirmer · $clock',
+        body: _en
+            ? 'Did you complete your $clock reminder?'
+            : 'As-tu bien fait ton rappel de $clock ?',
       );
     }
     return (
@@ -182,10 +224,10 @@ class ReminderAlarmService {
         AndroidFlutterLocalNotificationsPlugin>();
     await android?.createNotificationChannel(
       const AndroidNotificationChannel(
-        alarmChannelId,
-        alarmChannelName,
-        description: 'Réveil à l’heure de prise Fidel',
-        importance: Importance.max,
+        preavisChannelId,
+        preavisChannelName,
+        description: 'Avertissement avant l’heure de prise',
+        importance: Importance.high,
         playSound: true,
         enableVibration: true,
       ),
@@ -237,15 +279,30 @@ class ReminderAlarmService {
     return next.isGranted;
   }
 
+  Future<bool> hasExactAlarmPermission() async {
+    if (!Platform.isAndroid) return true;
+    return Permission.scheduleExactAlarm.isGranted;
+  }
+
   Future<void> cancelAllTracked() async {
     final ids = _trackedIds();
     for (final id in ids) {
       await _plugin.cancel(id);
     }
     await _prefs.setString(_idsKey, '[]');
+
+    final alarmIds = _trackedAlarmPkgIds();
+    for (final id in alarmIds) {
+      try {
+        await Alarm.stop(id);
+      } catch (e) {
+        debugPrint('ReminderAlarmService: Alarm.stop($id) failed: $e');
+      }
+    }
+    await _prefs.setString(_alarmPkgIdsKey, '[]');
   }
 
-  /// Remplace toutes les alarmes / marks Fidel pour [doses] pending.
+  /// Remplace préavis / alarmes / marks pour [doses] pending.
   Future<void> rescheduleAll(List<ScheduledDose> doses) async {
     if (!_ready) return;
     await ensureNotificationPermission();
@@ -254,77 +311,121 @@ class ReminderAlarmService {
 
     final now = tz.TZDateTime.now(tz.local);
     final scheduledIds = <int>[];
+    final alarmPkgIds = <int>[];
+    var preavisCount = 0;
     var alarmCount = 0;
     var markCount = 0;
 
     for (final dose in doses) {
-      final added = await _scheduleDual(dose, now: now, track: scheduledIds);
+      final added = await _scheduleTriple(
+        dose,
+        now: now,
+        track: scheduledIds,
+        trackAlarms: alarmPkgIds,
+      );
+      preavisCount += added.preavis;
       alarmCount += added.alarms;
       markCount += added.marks;
     }
 
     await _prefs.setString(_idsKey, jsonEncode(scheduledIds));
+    await _prefs.setString(_alarmPkgIdsKey, jsonEncode(alarmPkgIds));
     debugPrint(
-      'ReminderAlarmService: scheduled alarms=$alarmCount marks=$markCount '
+      'ReminderAlarmService: scheduled preavis=$preavisCount '
+      'alarms=$alarmCount marks=$markCount '
       'ids=${scheduledIds.length}/${doses.length} '
-      '(tz=${tz.local.name}, now=$now)',
+      '(tz=${tz.local.name}, now=$now, Δ=${alarmPrefs.preavisMinutes})',
     );
   }
 
-  /// Snooze : alarme à [dose.heurePrevue], mark à +5 min.
+  /// Snooze : H0' = [dose.heurePrevue], préavis = H0'−Δ, mark = H0'+5.
   Future<void> scheduleOneShot(ScheduledDose dose) async {
     if (!_ready) return;
     await ensureExactAlarmPermission();
     final now = tz.TZDateTime.now(tz.local);
     final ids = _trackedIds();
-    // Remplace d’éventuelles notifs déjà trackées pour cette prise.
-    final alarmId = alarmNotificationId(dose.priseId);
-    final markId = markNotificationId(dose.priseId);
-    await _plugin.cancel(alarmId);
-    await _plugin.cancel(markId);
-    ids.remove(alarmId);
-    ids.remove(markId);
+    final alarmIds = _trackedAlarmPkgIds();
+    await _cancelPriseLocal(dose.priseId, ids, alarmIds);
 
-    await _scheduleDual(dose, now: now, track: ids);
+    await _scheduleTriple(
+      dose,
+      now: now,
+      track: ids,
+      trackAlarms: alarmIds,
+    );
     await _prefs.setString(_idsKey, jsonEncode(ids));
+    await _prefs.setString(_alarmPkgIdsKey, jsonEncode(alarmIds));
   }
 
   Future<void> cancelPrise(String priseId) async {
-    final alarmId = alarmNotificationId(priseId);
-    final markId = markNotificationId(priseId);
-    await _plugin.cancel(alarmId);
-    await _plugin.cancel(markId);
-    final ids = _trackedIds()
-      ..remove(alarmId)
-      ..remove(markId);
+    final ids = _trackedIds();
+    final alarmIds = _trackedAlarmPkgIds();
+    await _cancelPriseLocal(priseId, ids, alarmIds);
     await _prefs.setString(_idsKey, jsonEncode(ids));
+    await _prefs.setString(_alarmPkgIdsKey, jsonEncode(alarmIds));
   }
 
-  /// Annule les deux notifs d’une prise (isolate background inclus).
+  Future<void> _cancelPriseLocal(
+    String priseId,
+    List<int> ids,
+    List<int> alarmIds,
+  ) async {
+    final alarmId = alarmNotificationId(priseId);
+    final markId = markNotificationId(priseId);
+    final preavisId = preavisNotificationId(priseId);
+    await _plugin.cancel(preavisId);
+    await _plugin.cancel(markId);
+    ids
+      ..remove(preavisId)
+      ..remove(markId)
+      ..remove(alarmId);
+    alarmIds.remove(alarmId);
+    try {
+      await Alarm.stop(alarmId);
+    } catch (e) {
+      debugPrint('ReminderAlarmService: Alarm.stop($alarmId) failed: $e');
+    }
+  }
+
+  /// Annule préavis + alarme package + mark (isolate background).
   static Future<void> cancelBothForPrise(String priseId) async {
     final plugin = FlutterLocalNotificationsPlugin();
-    await plugin.cancel(alarmNotificationId(priseId));
+    await plugin.cancel(preavisNotificationId(priseId));
     await plugin.cancel(markNotificationId(priseId));
+    try {
+      await Alarm.stop(alarmNotificationId(priseId));
+    } catch (_) {}
   }
 
   static Future<void> cancelNotificationId(int id) async {
     await FlutterLocalNotificationsPlugin().cancel(id);
   }
 
-  Future<({int alarms, int marks})> _scheduleDual(
+  Future<({int preavis, int alarms, int marks})> _scheduleTriple(
     ScheduledDose dose, {
     required tz.TZDateTime now,
     required List<int> track,
+    required List<int> trackAlarms,
   }) async {
     final h0 = tz.TZDateTime.from(dose.heurePrevue.toLocal(), tz.local);
+    final preavisAt = h0.subtract(Duration(minutes: alarmPrefs.preavisMinutes));
     final markAt = h0.add(markDelay);
+    var preavis = 0;
     var alarms = 0;
     var marks = 0;
 
-    if (h0.isAfter(now)) {
-      final ok = await _scheduleAlarm(dose, when: h0);
+    if (preavisAt.isAfter(now) && preavisAt.isBefore(h0)) {
+      final ok = await _schedulePreavis(dose, when: preavisAt);
       if (ok) {
-        track.add(alarmNotificationId(dose.priseId));
+        track.add(preavisNotificationId(dose.priseId));
+        preavis = 1;
+      }
+    }
+
+    if (h0.isAfter(now)) {
+      final ok = await _scheduleAlarmRing(dose, when: h0);
+      if (ok) {
+        trackAlarms.add(alarmNotificationId(dose.priseId));
         alarms = 1;
       }
     }
@@ -337,17 +438,17 @@ class ReminderAlarmService {
       }
     }
 
-    return (alarms: alarms, marks: marks);
+    return (preavis: preavis, alarms: alarms, marks: marks);
   }
 
-  Future<bool> _scheduleAlarm(
+  Future<bool> _schedulePreavis(
     ScheduledDose dose, {
     required tz.TZDateTime when,
   }) async {
-    final id = alarmNotificationId(dose.priseId);
-    final copy = _copyFor(dose: dose, isAlarm: true);
+    final id = preavisNotificationId(dose.priseId);
+    final copy = _copyFor(dose: dose, kind: kindPreavis);
     final payload = jsonEncode({
-      'kind': kindAlarm,
+      'kind': kindPreavis,
       'priseId': dose.priseId,
       'medicamentNom': dose.medicamentNom,
       'dosage': dose.dosage,
@@ -361,15 +462,14 @@ class ReminderAlarmService {
         when,
         NotificationDetails(
           android: AndroidNotificationDetails(
-            alarmChannelId,
-            alarmChannelName,
-            channelDescription: 'Réveil à l’heure de prise Fidel',
-            importance: Importance.max,
-            priority: Priority.max,
-            category: AndroidNotificationCategory.alarm,
+            preavisChannelId,
+            preavisChannelName,
+            channelDescription: 'Avertissement avant l’heure de prise',
+            importance: Importance.high,
+            priority: Priority.high,
+            category: AndroidNotificationCategory.reminder,
             playSound: true,
             enableVibration: true,
-            fullScreenIntent: true,
           ),
           iOS: const DarwinNotificationDetails(
             presentAlert: true,
@@ -384,7 +484,51 @@ class ReminderAlarmService {
       );
       return true;
     } catch (e, st) {
-      debugPrint('ReminderAlarmService: alarm schedule failed $id: $e\n$st');
+      debugPrint('ReminderAlarmService: preavis schedule failed $id: $e\n$st');
+      return false;
+    }
+  }
+
+  Future<bool> _scheduleAlarmRing(
+    ScheduledDose dose, {
+    required tz.TZDateTime when,
+  }) async {
+    final id = alarmNotificationId(dose.priseId);
+    final copy = _copyFor(dose: dose, kind: kindAlarm);
+    final audioPath = await alarmPrefs.resolveAudioPath();
+    final payload = jsonEncode({
+      'kind': kindAlarm,
+      'priseId': dose.priseId,
+      'medicamentNom': dose.medicamentNom,
+      'dosage': dose.dosage,
+      'heurePrevue': dose.heurePrevue.toIso8601String(),
+    });
+
+    try {
+      final settings = AlarmSettings(
+        id: id,
+        dateTime: when.toLocal(),
+        assetAudioPath: audioPath,
+        loopAudio: true,
+        vibrate: alarmPrefs.vibrate,
+        warningNotificationOnKill: Platform.isIOS,
+        androidFullScreenIntent: true,
+        volumeSettings: VolumeSettings.fade(
+          fadeDuration: const Duration(seconds: 4),
+          volume: 0.95,
+          volumeEnforced: true,
+        ),
+        notificationSettings: NotificationSettings(
+          title: copy.title,
+          body: copy.body,
+          stopButton: _en ? _labelStopEn : _labelStopFr,
+        ),
+        payload: payload,
+      );
+      await Alarm.set(alarmSettings: settings);
+      return true;
+    } catch (e, st) {
+      debugPrint('ReminderAlarmService: Alarm.set failed $id: $e\n$st');
       return false;
     }
   }
@@ -394,7 +538,7 @@ class ReminderAlarmService {
     required tz.TZDateTime when,
   }) async {
     final id = markNotificationId(dose.priseId);
-    final copy = _copyFor(dose: dose, isAlarm: false);
+    final copy = _copyFor(dose: dose, kind: kindMark);
     final payload = jsonEncode({
       'kind': kindMark,
       'priseId': dose.priseId,
@@ -437,8 +581,32 @@ class ReminderAlarmService {
   }
 
   List<int> _trackedIds() {
-    final raw = _prefs.getString(_idsKey);
-    if (raw == null || raw.isEmpty) return [];
+    return _decodeIdList(_prefs.getString(_idsKey));
+  }
+
+  List<int> _trackedAlarmPkgIds() {
+    return _decodeIdList(_prefs.getString(_alarmPkgIdsKey));
+  }
+
+  List<int> _decodeIdList(String? raw) {
+    if (raw == null || raw.isEmpty) {
+      // Migration depuis v2 : nettoyer d’anciennes notifs FLN H0.
+      if (raw == null) {
+        final legacy = _prefs.getString('reminder_notif_ids_v2');
+        if (legacy != null) {
+          try {
+            final decoded = jsonDecode(legacy);
+            if (decoded is List) {
+              for (final e in decoded) {
+                _plugin.cancel((e as num).toInt());
+              }
+            }
+          } catch (_) {}
+          _prefs.remove('reminder_notif_ids_v2');
+        }
+      }
+      return [];
+    }
     try {
       final decoded = jsonDecode(raw);
       if (decoded is! List) return [];
@@ -468,12 +636,12 @@ Future<void> reminderBackgroundHandler(NotificationResponse response) async {
     if (priseId == null || priseId.isEmpty) return;
 
     final action = response.actionId;
-    // Tap alarme / mark sans action : rien à sync.
     if (action == null || action.isEmpty) return;
 
     await ReminderAlarmService.cancelBothForPrise(priseId);
 
     final prefs = await SharedPreferences.getInstance();
+    final alarmPrefs = AlarmPrefs(prefs);
     final queue = PendingPriseSyncQueue(prefs);
     final repo =
         HomeRepository(apiClient: ApiClient(tokenStorage: TokenStorage()));
@@ -489,7 +657,8 @@ Future<void> reminderBackgroundHandler(NotificationResponse response) async {
       return;
     }
     if (action == ReminderAlarmService.actionSnooze) {
-      final when = DateTime.now().add(const Duration(minutes: 15));
+      final when =
+          DateTime.now().add(Duration(minutes: alarmPrefs.snoozeMinutes));
       await queue.enqueueReport(priseId: priseId, nouvelleHeure: when);
       try {
         await repo.reportPrise(priseId, when);

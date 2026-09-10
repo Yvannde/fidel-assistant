@@ -1,6 +1,6 @@
 ---
 name: mobile-flutter
-description: Architecture de l'application mobile Flutter, gestion d'état, mode offline-first, notifications locales/rappels fiables, sécurité du stockage des tokens, et conventions UI/accessibilité. À consulter par tout agent IA avant d'écrire ou modifier un écran, un provider/state, une intégration API, ou toute logique de notification côté app. Lire project-overview/SKILL.md et auth-onboarding/SKILL.md en complément, surtout pour les écrans d'auth/onboarding.
+description: Architecture de l'application mobile Flutter, gestion d'état, mode offline-first, notifications locales + alarme applicative (préavis H0−Δ, alarme H0, marquage H+5), garde-fous OS, réglages alarme in-app, sécurité des tokens, et conventions UI/accessibilité. À consulter par tout agent IA avant d'écrire ou modifier un écran, un provider/state, une intégration API, ou toute logique de rappel/alarme côté app. Lire project-overview/SKILL.md et auth-onboarding/SKILL.md en complément, surtout pour les écrans d'auth/onboarding.
 ---
 
 # Mobile — Flutter
@@ -60,19 +60,56 @@ Chaque feature suit le même découpage interne : `presentation/` (écrans, widg
 
 ## Notifications et alarmes locales — le cœur du produit
 
-C'est la partie la plus critique techniquement. Deux événements locaux distincts par `Prise` (offline, même avion) :
+C'est la partie la plus critique techniquement. **Tout est local** (offline, même avion) : FastAPI ne sonne pas et ne poll pas les doses. Les notifications push serveur (FCM, plus tard) restent réservées à l’aidant / engagement — **ne pas confondre** avec l’alarme patient.
 
-| Instant | Rôle | Comportement |
-|---|---|---|
-| **H0** (`heure_prevue`) | Alarme / réveil | Canal haute priorité, son + vibration. **Sans** actions de confirmation. Tap → Accueil. |
-| **H0+5 min** | Notification de marquage | Actions **« J'ai pris »** / **« Plus tard »** (confirm / snooze). File offline → `POST /prises/sync-offline` / `reporter`. |
+### Trois moments distincts par `Prise`
 
-- `flutter_local_notifications` + mode **alarme exacte** (`AndroidScheduleMode.exactAllowWhileIdle`) — ne pas soumettre les rappels au Doze mode standard
-- Exemption d'**optimisation de batterie** pendant la branche « suivi pour soi » (ou activation patient) — voir `auth-onboarding/SKILL.md`
-- Mode **discret** : pas de nom de médicament (confidentialité), mais **heure toujours visible** pour distinguer les prises ; l'alarme **sonne toujours** (discret ≠ silencieux). Mode normal : titre = médicament · dosage, corps = motif + heure prévue.
-- **Voix personnalisée** (itération suivante) : lecture audio au moment de l'alarme H0
-- Replanification locale après `BOOT_COMPLETED` (Android) — sinon les rappels disparaissent après reboot
-- Confirm / snooze annule **alarme H0 et notif H+5** pour cette prise ; snooze replanifie H0' = now+15 min et mark = H0'+5 min
+Les **notifications** (préavis + marquage + bandeau H0) et l’**alarme applicative** (H0) se **complètent** : on n’enlève pas le système de notifs pour « remplacer » par une alarme.
+
+| Instant | Canal | Rôle | Comportement |
+|---|---|---|---|
+| **H0 − Δ** (préavis) | Notif locale | Avertir avant la prise | Texte du type « dans Δ min, prise… ». **Pas** d’alarme sonore. Δ configurable dans l’app (**défaut 5 min** ; options typiques 2 / 5 / 10). |
+| **H0** (`heure_prevue`) | **Alarme app** + notif locale | Réveil effectif | L’alarme **lancée par Fidel** (écran plein / Activity, son en boucle jusqu’à action utilisateur) **et** une notification en parallèle. **Sans** boutons « J’ai pris » sur ce moment (le marquage vient à H+5). |
+| **H0 + 5 min** | Notif locale (marquage) | Confirmer la prise | Actions **« J’ai pris »** / **« Plus tard »** (confirm / snooze). File offline → `POST /prises/sync-offline` / `reporter`. |
+
+> Une notif canal « alarm » **ne suffit pas** : H0 doit être une **expérience alarme** (son insistent, UI Fidel, pas un simple bandeau type messagerie).
+
+### Planification technique
+
+- `flutter_local_notifications` pour **préavis**, **bandeau H0** et **marquage H+5**
+- Mode **alarme exacte** (`AndroidScheduleMode.exactAllowWhileIdle`) — ne pas soumettre au Doze standard
+- Alarme H0 : mécanisme natif dédié (ex. `AlarmManager` / Activity plein écran / service audio) en plus de la notif — le détail d’implémentation peut évoluer, le contrat produit ci-dessus non
+- Replanification locale après `BOOT_COMPLETED` (Android) — sinon tout disparaît après reboot
+- Confirm / snooze annule **préavis restant + alarme H0 + notif H+5** pour cette prise ; snooze replanifie H0' = now+15 min, préavis = H0'−Δ, mark = H0'+5 min
+
+### Garde-fous (l’OS ne doit pas étouffer l’alarme)
+
+Objectif produit : l’alarme sonne **écran éteint, app tuée, Doze, batterie faible** (pas téléphone **éteint / batterie à 0 %** — impossible). Pendant onboarding suivi perso / activation patient (voir `auth-onboarding/SKILL.md`), parcours explicatif puis demandes :
+
+| Permission / réglage | Pourquoi |
+|---|---|
+| Notifications | Préavis, bandeau H0, marquage |
+| Alarmes exactes (`SCHEDULE_EXACT_ALARM` / `USE_EXACT_ALARM`) | Déclenchement à l’heure prévue |
+| Exemption optimisation batterie | OEM / Doze qui tuent les wakeups |
+| Full-screen intent / overlay si requis | Afficher l’UI alarme par-dessus l’écran de verrouillage |
+| Reboot receivers | Replanifier après redémarrage |
+
+Ne jamais « silence » l’alarme via le seul mode **discret** (voir ci-dessous).
+
+### Réglages alarme **dans l’app** (pas seulement réglages système)
+
+L’utilisateur configure dans Fidel (écran Réglages / Alarmes), au minimum V1 :
+
+- Son de l’alarme (son système Fidel **ou** voix de rappel déjà prévue API — `voix-rappel`)
+- Volume / vibration (comportement type horloge : alarme audible même si le média est bas — dans les limites OS)
+- Délai de **préavis** Δ (défaut 5 min)
+- Snooze (durée, défaut 15 min — cohérent avec le flux actuel)
+
+### Mode discret et copie
+
+- Mode **discret** : pas de nom de médicament (confidentialité), **heure toujours visible** ; l’alarme **sonne toujours** (discret ≠ silencieux)
+- Mode normal : titre = médicament · dosage, corps = motif + heure prévue
+- **Voix personnalisée** : lue au moment de l’**alarme H0** (pas sur le préavis)
 
 ## Onboarding et auth (référence)
 
@@ -110,3 +147,4 @@ En production, `AppConfig.apiBaseUrl` pointe vers `https://educampro.edu.cm`.
 - Tests unitaires sur les providers/state (Riverpod se prête bien aux tests sans UI)
 - Tests de widget sur les écrans critiques (confirmation de prise, onboarding)
 - Test manuel obligatoire sur un appareil Android réel avec optimisation batterie activée avant toute mise en production d'une fonctionnalité touchant aux rappels — un simulateur ne reproduit pas fidèlement le comportement de Doze mode
+- Vérifier manuellement la **chaîne complète** : préavis → alarme H0 (son + UI Fidel, pas seulement bandeau) → notif marquage H+5 ; et après reboot / app tuée

@@ -74,6 +74,8 @@ Chaque `type_alerte` est déclaré une seule fois, avec son comportement par dé
 | type_alerte | Déclencheur | Ton par défaut | Proposition faite | Tiers potentiel |
 |---|---|---|---|---|
 | `rappel_medicament` | Échéance d'une `Prise` | neutre → insistant selon palier (Volet 1) | Confirmation de prise, puis proposition de prévenir un contact après 2h sans réponse | Aidant / contact d'urgence |
+
+> **Patient — alarme & notifs locales** : le préavis (H0−Δ), l’alarme applicative H0 et la notif de marquage H+5 sont **planifiés et joués sur le téléphone** (`mobile-flutter/SKILL.md`). Ce n’est **pas** un envoi via `NotificationEngine` / FCM. Le moteur ci-dessus sert aux alertes **serveur** (aidant, consentement, SOS, etc.). Ne pas router l’alarme patient par le backend.
 | `stock_medicament_bas` | `stock_restant` ≤ `seuil_alerte_stock` | informatif | Proposer de trouver une pharmacie (lien Volet 4) | — |
 | `constante_amelioration` | Analyse tendance positive (Volet 2) | positif | Aucune (juste encouragement), option de partager quand même | Médecin / agent de santé (optionnel) |
 | `constante_degradation` | Analyse tendance négative (Volet 2) | à surveiller / préoccupant | Proposer de partager un résumé avec le professionnel choisi | Médecin / agent de santé |

@@ -1,6 +1,8 @@
 import Flutter
 import UIKit
+import UserNotifications
 import flutter_local_notifications
+import alarm
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
@@ -14,6 +16,7 @@ import flutter_local_notifications
     if #available(iOS 10.0, *) {
       UNUserNotificationCenter.current().delegate = self as UNUserNotificationCenterDelegate
     }
+    SwiftAlarmPlugin.registerBackgroundTasks()
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 

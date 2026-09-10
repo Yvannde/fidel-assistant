@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:alarm/alarm.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,7 +17,9 @@ import 'core/theme/theme_controller.dart';
 import 'features/auth/application/auth_providers.dart';
 import 'features/auth/data/auth_repository.dart';
 import 'features/home/data/home_repository.dart';
+import 'features/home/presentation/alarm_ring_screen.dart';
 import 'l10n/app_localizations.dart';
+import 'services/live_alarm_test.dart';
 import 'services/pending_prise_sync_queue.dart';
 import 'services/reminder_sync.dart';
 
@@ -34,6 +37,8 @@ Future<void> main() async {
     tokenStorage: tokens,
   ).restoreSession();
 
+  await Alarm.init();
+
   final container = ProviderContainer(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
@@ -48,12 +53,16 @@ Future<void> main() async {
       unawaited(ReminderActionDispatcher(container).handle(response));
     },
   );
+  unawaited(maybeRunLiveAlarmTest(alarms));
 
   if (restored != null) {
     unawaited(
       PendingPriseSyncQueue(prefs).flush(HomeRepository(apiClient: api)),
     );
   }
+
+  final router = container.read(appRouterProvider);
+  bindAlarmRingingNavigation(router);
 
   runApp(
     UncontrolledProviderScope(

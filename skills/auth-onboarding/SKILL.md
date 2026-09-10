@@ -95,7 +95,7 @@ Question (formulation recommandée) : **« Tu veux un suivi pour toi ? »** (plu
 | **Non** | `POST /onboarding/besoin-suivi` `{ actif: false }` puis `POST /onboarding/complete` → `termine` → **Home** |
 | **Oui** | `POST /onboarding/besoin-suivi` `{ actif: true }` → crée/assure le profil `Patient` → enchaîne les étapes patient (C, D) |
 
-Permissions notifications / batterie : **uniquement** si branche Oui (option A) — demandées au moment où elles ont un sens. Si Non, elles seront demandées plus tard à l’activation du suivi ou à la première action aidant qui en a besoin.
+Permissions notifications / batterie / alarmes exactes : **uniquement** si branche Oui (option A) — demandées au moment où elles ont un sens. Si Non, elles seront demandées plus tard à l’activation du suivi ou à la première action aidant qui en a besoin.
 
 ### Étape C — Traitement (`patient_traitement`) — si suivi pour soi
 - « Es-tu actuellement en traitement ? » Oui / Non
@@ -105,8 +105,13 @@ Permissions notifications / batterie : **uniquement** si branche Oui (option A) 
 → `POST /onboarding/patient/traitement` → `patient_permissions`
 
 ### Étape D — Permissions device (`patient_permissions`) — si suivi pour soi
-- Notifications + exemption optimisation batterie (Android)
-- Écran explicatif **avant** la popup système
+Permissions nécessaires pour que **préavis + alarme H0 + notif marquage** fonctionnent malgré Doze / OEM (détail : `mobile-flutter/SKILL.md`) :
+
+- Notifications
+- Alarmes exactes (Android)
+- Exemption optimisation batterie (Android)
+- Full-screen / affichage alarme sur écran verrouillé si requis par la plateforme
+- Écran explicatif **avant** chaque popup système (pourquoi Fidel en a besoin pour ne pas rater une prise)
 
 → `POST /onboarding/patient/permissions` → `POST /onboarding/complete` → `termine` → **Home**
 
