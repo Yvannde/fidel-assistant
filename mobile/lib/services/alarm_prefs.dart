@@ -10,7 +10,13 @@ class AlarmPrefs {
 
   final SharedPreferences _prefs;
 
-  static const defaultAssetAudio = 'assets/sounds/fidel_alarm.wav';
+  static const defaultAssetAudio =
+      'assets/sounds/3dabrar-funny-alarm-317531.mp3';
+  /// Sons embarqués futurs : l’utilisateur choisira dans une bibliothèque.
+  /// Pour l’instant un seul défaut (ci-dessus).
+  static const bundledAlarmSounds = <String>[
+    defaultAssetAudio,
+  ];
   static const customVoiceRelativePath = 'sounds/voix_rappel';
 
   static const _kPreavis = 'fa_alarm_preavis_minutes';
