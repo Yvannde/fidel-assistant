@@ -2582,6 +2582,156 @@ abstract class AppLocalizations {
   /// **'Allow exact alarms'**
   String get alarmSettingsExactCta;
 
+  /// No description provided for @alarmHealthTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Alarm health'**
+  String get alarmHealthTitle;
+
+  /// No description provided for @alarmHealthTileHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Permissions and OEM settings'**
+  String get alarmHealthTileHint;
+
+  /// No description provided for @alarmHealthHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Make sure your phone lets Fidel ring on time — especially on Xiaomi, Samsung, Tecno and similar brands.'**
+  String get alarmHealthHint;
+
+  /// No description provided for @alarmHealthRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get alarmHealthRefresh;
+
+  /// No description provided for @alarmHealthAllOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything looks good for alarms'**
+  String get alarmHealthAllOk;
+
+  /// No description provided for @alarmHealthNeedsAttention.
+  ///
+  /// In en, this message translates to:
+  /// **'Some settings still block alarms'**
+  String get alarmHealthNeedsAttention;
+
+  /// No description provided for @alarmHealthNotifTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get alarmHealthNotifTitle;
+
+  /// No description provided for @alarmHealthNotifHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Pre-alert, H0 banner and H+5 confirmation'**
+  String get alarmHealthNotifHint;
+
+  /// No description provided for @alarmHealthExactTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Exact alarms'**
+  String get alarmHealthExactTitle;
+
+  /// No description provided for @alarmHealthExactHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Fire at the scheduled time, even in Doze'**
+  String get alarmHealthExactHint;
+
+  /// No description provided for @alarmHealthBatteryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unrestricted battery'**
+  String get alarmHealthBatteryTitle;
+
+  /// No description provided for @alarmHealthBatteryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Stops the OS from killing Fidel in the background'**
+  String get alarmHealthBatteryHint;
+
+  /// No description provided for @alarmHealthFsiTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Full-screen (lock screen)'**
+  String get alarmHealthFsiTitle;
+
+  /// No description provided for @alarmHealthFsiHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the alarm over the lock screen'**
+  String get alarmHealthFsiHint;
+
+  /// No description provided for @alarmHealthFixCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Fix'**
+  String get alarmHealthFixCta;
+
+  /// No description provided for @alarmHealthOemTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manufacturer settings'**
+  String get alarmHealthOemTitle;
+
+  /// No description provided for @alarmHealthOemCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Open autostart settings'**
+  String get alarmHealthOemCta;
+
+  /// No description provided for @alarmHealthOemXiaomi.
+  ///
+  /// In en, this message translates to:
+  /// **'On Xiaomi / Redmi / POCO: allow autostart and set Fidel to “No restrictions” in Battery.'**
+  String get alarmHealthOemXiaomi;
+
+  /// No description provided for @alarmHealthOemHuawei.
+  ///
+  /// In en, this message translates to:
+  /// **'On Huawei / Honor: allow autostart and manual background activity for Fidel.'**
+  String get alarmHealthOemHuawei;
+
+  /// No description provided for @alarmHealthOemSamsung.
+  ///
+  /// In en, this message translates to:
+  /// **'On Samsung: in Battery, turn off optimization for Fidel and allow background activity.'**
+  String get alarmHealthOemSamsung;
+
+  /// No description provided for @alarmHealthOemOppo.
+  ///
+  /// In en, this message translates to:
+  /// **'On Oppo / Realme / OnePlus: allow autostart and remove Fidel from sleeping apps.'**
+  String get alarmHealthOemOppo;
+
+  /// No description provided for @alarmHealthOemVivo.
+  ///
+  /// In en, this message translates to:
+  /// **'On Vivo / iQOO: allow background start and autostart for Fidel.'**
+  String get alarmHealthOemVivo;
+
+  /// No description provided for @alarmHealthOemTranssion.
+  ///
+  /// In en, this message translates to:
+  /// **'On Tecno / Infinix / Itel: allow autostart and background activity for Fidel.'**
+  String get alarmHealthOemTranssion;
+
+  /// No description provided for @alarmHealthOemGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'On some phones, enable autostart / background activity for Fidel in manufacturer settings.'**
+  String get alarmHealthOemGeneric;
+
+  /// No description provided for @alarmHealthAppDetailsCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Open app details'**
+  String get alarmHealthAppDetailsCta;
+
   /// No description provided for @alarmRingStop.
   ///
   /// In en, this message translates to:

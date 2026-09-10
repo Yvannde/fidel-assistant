@@ -23,6 +23,7 @@ import '../../features/home/presentation/aidants_list_screen.dart';
 import '../../features/home/presentation/home_notifications_screen.dart';
 import '../../features/home/presentation/home_shell.dart';
 import '../../features/home/presentation/profile_account_screen.dart';
+import '../../features/home/presentation/alarm_health_screen.dart';
 import '../../features/home/presentation/profile_alarm_settings_screen.dart';
 import '../../features/home/presentation/profile_consent_screen.dart';
 import '../../features/home/presentation/profile_contacts_urgence_screen.dart';
@@ -346,6 +347,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => _softPage(
           state: state,
           child: const ProfileAlarmSettingsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/profile/alarm-health',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const AlarmHealthScreen(),
         ),
       ),
       GoRoute(

@@ -153,11 +153,24 @@ class _ProfilePatientSettingsScreenState
                   const SizedBox(height: 16),
                   PremiumCard(
                     padding: EdgeInsets.zero,
-                    child: ListTile(
-                      title: Text(l10n.alarmSettingsTitle),
-                      subtitle: Text(l10n.alarmSettingsTileHint),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => context.push('/home/profile/alarm-settings'),
+                    child: Column(
+                      children: [
+                        ListTile(
+                          title: Text(l10n.alarmSettingsTitle),
+                          subtitle: Text(l10n.alarmSettingsTileHint),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () =>
+                              context.push('/home/profile/alarm-settings'),
+                        ),
+                        const Divider(height: 1),
+                        ListTile(
+                          title: Text(l10n.alarmHealthTitle),
+                          subtitle: Text(l10n.alarmHealthTileHint),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () =>
+                              context.push('/home/profile/alarm-health'),
+                        ),
+                      ],
                     ),
                   ),
                 ],

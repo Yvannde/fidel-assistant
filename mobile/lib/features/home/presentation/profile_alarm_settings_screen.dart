@@ -218,6 +218,16 @@ class _ProfileAlarmSettingsScreenState
                 ),
               ),
             ],
+            const SizedBox(height: 16),
+            PremiumCard(
+              padding: EdgeInsets.zero,
+              child: ListTile(
+                title: Text(l10n.alarmHealthTitle),
+                subtitle: Text(l10n.alarmHealthTileHint),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/home/profile/alarm-health'),
+              ),
+            ),
           ],
         ),
       ),

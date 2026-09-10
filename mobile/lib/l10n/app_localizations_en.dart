@@ -1381,6 +1381,91 @@ class AppLocalizationsEn extends AppLocalizations {
   String get alarmSettingsExactCta => 'Allow exact alarms';
 
   @override
+  String get alarmHealthTitle => 'Alarm health';
+
+  @override
+  String get alarmHealthTileHint => 'Permissions and OEM settings';
+
+  @override
+  String get alarmHealthHint =>
+      'Make sure your phone lets Fidel ring on time — especially on Xiaomi, Samsung, Tecno and similar brands.';
+
+  @override
+  String get alarmHealthRefresh => 'Refresh';
+
+  @override
+  String get alarmHealthAllOk => 'Everything looks good for alarms';
+
+  @override
+  String get alarmHealthNeedsAttention => 'Some settings still block alarms';
+
+  @override
+  String get alarmHealthNotifTitle => 'Notifications';
+
+  @override
+  String get alarmHealthNotifHint =>
+      'Pre-alert, H0 banner and H+5 confirmation';
+
+  @override
+  String get alarmHealthExactTitle => 'Exact alarms';
+
+  @override
+  String get alarmHealthExactHint => 'Fire at the scheduled time, even in Doze';
+
+  @override
+  String get alarmHealthBatteryTitle => 'Unrestricted battery';
+
+  @override
+  String get alarmHealthBatteryHint =>
+      'Stops the OS from killing Fidel in the background';
+
+  @override
+  String get alarmHealthFsiTitle => 'Full-screen (lock screen)';
+
+  @override
+  String get alarmHealthFsiHint => 'Show the alarm over the lock screen';
+
+  @override
+  String get alarmHealthFixCta => 'Fix';
+
+  @override
+  String get alarmHealthOemTitle => 'Manufacturer settings';
+
+  @override
+  String get alarmHealthOemCta => 'Open autostart settings';
+
+  @override
+  String get alarmHealthOemXiaomi =>
+      'On Xiaomi / Redmi / POCO: allow autostart and set Fidel to “No restrictions” in Battery.';
+
+  @override
+  String get alarmHealthOemHuawei =>
+      'On Huawei / Honor: allow autostart and manual background activity for Fidel.';
+
+  @override
+  String get alarmHealthOemSamsung =>
+      'On Samsung: in Battery, turn off optimization for Fidel and allow background activity.';
+
+  @override
+  String get alarmHealthOemOppo =>
+      'On Oppo / Realme / OnePlus: allow autostart and remove Fidel from sleeping apps.';
+
+  @override
+  String get alarmHealthOemVivo =>
+      'On Vivo / iQOO: allow background start and autostart for Fidel.';
+
+  @override
+  String get alarmHealthOemTranssion =>
+      'On Tecno / Infinix / Itel: allow autostart and background activity for Fidel.';
+
+  @override
+  String get alarmHealthOemGeneric =>
+      'On some phones, enable autostart / background activity for Fidel in manufacturer settings.';
+
+  @override
+  String get alarmHealthAppDetailsCta => 'Open app details';
+
+  @override
   String get alarmRingStop => 'Stop';
 
   @override
