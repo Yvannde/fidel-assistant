@@ -81,6 +81,7 @@ Les **notifications** (préavis + marquage + bandeau H0) et l’**alarme applica
 - Alarme H0 : mécanisme natif dédié (ex. `AlarmManager` / Activity plein écran / service audio) en plus de la notif — le détail d’implémentation peut évoluer, le contrat produit ci-dessus non
 - **Reschedule différentiel** : à chaque sync home, ne replanifier que les prises ajoutées / modifiées / retirées (snapshot local). **Ne jamais** `Alarm.stop` / re-set une alarme **en cours de sonnerie** — le ring UI / Arrêter gère la fin.
 - **Cache local + restore au démarrage** : les doses planifiées sont persistées (`reminder_doses_cache_v1`). Au cold start / après reboot, `restoreFromLocalCache()` (dans `main.dart`, après `Alarm.init`) réarme préavis + H0 + mark **sans attendre** le load Accueil ni le réseau. Les receivers `BOOT_COMPLETED` (package `alarm` + FLN) restent en place ; le restore Flutter couvre le cas où l’utilisateur rouvre l’app.
+- **Perf / batterie** : horizon de planification **48 h** (`ReminderSyncPerf`) ; skip de `syncRemindersFromHome` si fingerprint dashboard+prefs inchangé ; ne re-télécharger la voix personnalisée que si meta (`id` / url) a changé ou fichier local absent.
 - Confirm / snooze annule **préavis restant + alarme H0 + notif H+5** pour cette prise ; snooze replanifie H0' = now+snooze prefs, préavis = H0'−Δ, mark = H0'+5 min
 
 ### Garde-fous (l’OS ne doit pas étouffer l’alarme)

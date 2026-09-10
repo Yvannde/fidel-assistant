@@ -44,7 +44,7 @@ class _ProfileAlarmSettingsScreenState
     try {
       final dash = ref.read(homeControllerProvider).dashboard;
       if (dash != null) {
-        await syncRemindersFromHome(ref.read, dash);
+        await syncRemindersFromHome(ref.read, dash, force: true);
       }
       if (mounted) {
         AppToast.success(context, AppLocalizations.of(context).profileSaved);

@@ -16,6 +16,7 @@ import '../core/storage/token_storage.dart';
 import '../features/home/data/home_repository.dart';
 import 'alarm_prefs.dart';
 import 'pending_prise_sync_queue.dart';
+import 'reminder_sync_perf.dart';
 import 'scheduled_dose.dart';
 
 typedef ReminderNotificationCallback = void Function(NotificationResponse);
@@ -334,13 +335,12 @@ class ReminderAlarmService {
       debugPrint('ReminderAlarmService: restoreFromLocalCache empty');
       return;
     }
-    final horizon = DateTime.now().subtract(markDelay);
-    final future = cached
-        .where((d) => d.heurePrevue.isAfter(horizon))
-        .toList(growable: false);
+    final now = DateTime.now();
+    final future = ReminderSyncPerf.filterHorizon(cached, now);
     debugPrint(
       'ReminderAlarmService: restoreFromLocalCache '
-      '${future.length}/${cached.length} doses',
+      '${future.length}/${cached.length} doses '
+      '(horizon=${ReminderSyncPerf.scheduleHorizon.inHours}h)',
     );
     await rescheduleAll(future, force: true);
   }
