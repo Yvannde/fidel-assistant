@@ -57,3 +57,31 @@ class DashboardSnapshots extends Table {
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
+
+/// Constantes de santé (append-only, Phase 5).
+@DataClassName('ConstanteSnapshot')
+class ConstanteSnapshots extends Table {
+  TextColumn get id => text()();
+  TextColumn get typeCode => text()();
+  TextColumn get valeurJson => text()();
+  TextColumn get unite => text()();
+  DateTimeColumn get mesureAt => dateTime()();
+  TextColumn get source => text().withDefault(const Constant('manuel'))();
+  DateTimeColumn get createdAt => dateTime().nullable()();
+  IntColumn get serverVersion => integer().withDefault(const Constant(1))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Check-in quotidien (1 / jour, Phase 5).
+@DataClassName('CheckInSnapshot')
+class CheckInSnapshots extends Table {
+  TextColumn get id => text()();
+  TextColumn get dateKey => text()(); // YYYY-MM-DD
+  TextColumn get statut => text()();
+  DateTimeColumn get createdAt => dateTime().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}

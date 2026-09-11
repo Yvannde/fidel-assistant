@@ -15,6 +15,7 @@ class ConstanteIn(BaseModel):
     unite: str = Field(min_length=1, max_length=32)
     mesure_at: datetime
     source: str = Field(pattern="^(manuel|objet_connecte)$", default="manuel")
+    client_mutation_id: UUID | None = None
 
 
 class ConstanteOut(BaseModel):

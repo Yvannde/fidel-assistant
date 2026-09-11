@@ -41,6 +41,23 @@ class _FakeGateway implements SyncPriseGateway {
     if (gate != null) await gate!.future;
     log.add('report:$priseId:${clientMutationId ?? ''}');
   }
+
+  @override
+  Future<void> createConstante({
+    required String type,
+    required Object valeur,
+    required String unite,
+    required DateTime mesureAt,
+    String source = 'manuel',
+    String? clientMutationId,
+  }) async {
+    log.add('constante:$type:${clientMutationId ?? ''}');
+  }
+
+  @override
+  Future<void> createCheckIn(String statut, {String? clientMutationId}) async {
+    log.add('checkin:$statut:${clientMutationId ?? ''}');
+  }
 }
 
 void main() {

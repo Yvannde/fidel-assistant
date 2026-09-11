@@ -25,9 +25,6 @@ final alarmPrefsProvider = Provider<AlarmPrefs>((ref) {
 const _syncGateKey = 'reminder_sync_gate_v1';
 const _voixMetaPrefsKey = 'reminder_voix_meta_v1';
 
-const _syncGateKey = 'reminder_sync_gate_v1';
-const _voixMetaPrefsKey = 'reminder_voix_meta_v1';
-
 /// Traite une réponse notif (foreground) : confirm / snooze / tap.
 class ReminderActionDispatcher {
   ReminderActionDispatcher(this._container);

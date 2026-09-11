@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 
+import '../../features/home/domain/constante_models.dart';
 import '../../features/home/domain/dashboard_models.dart';
 import '../../services/sync_outbox.dart';
 import 'connection.dart';
@@ -15,6 +16,8 @@ part 'app_database.g.dart';
     TraitementMirrors,
     SyncOutboxEntries,
     DashboardSnapshots,
+    ConstanteSnapshots,
+    CheckInSnapshots,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -24,7 +27,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.memory() : super(openMemoryConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -32,6 +35,10 @@ class AppDatabase extends _$AppDatabase {
         onUpgrade: (m, from, to) async {
           if (from < 2) {
             await m.addColumn(priseSnapshots, priseSnapshots.serverVersion);
+          }
+          if (from < 3) {
+            await m.createTable(constanteSnapshots);
+            await m.createTable(checkInSnapshots);
           }
         },
       );
@@ -328,8 +335,171 @@ class AppDatabase extends _$AppDatabase {
         await _mergePriseEntity(raw);
       } else if (type == 'traitement') {
         await _mergeTraitementEntity(raw);
+      } else if (type == 'constante') {
+        await _mergeConstanteEntity(raw);
+      } else if (type == 'check_in') {
+        await _mergeCheckInEntity(raw);
       }
     }
+  }
+
+  Future<void> upsertConstanteLocal({
+    required String id,
+    required String typeCode,
+    required Object valeur,
+    required String unite,
+    required DateTime mesureAt,
+    String source = 'manuel',
+  }) async {
+    await into(constanteSnapshots).insert(
+      ConstanteSnapshotsCompanion.insert(
+        id: id,
+        typeCode: typeCode,
+        valeurJson: jsonEncode(valeur),
+        unite: unite,
+        mesureAt: mesureAt.toUtc(),
+        source: Value(source),
+        createdAt: Value(DateTime.now().toUtc()),
+        serverVersion: const Value(1),
+      ),
+      mode: InsertMode.insertOrReplace,
+    );
+  }
+
+  Future<List<Constante>> listConstantesSince(DateTime depuis) async {
+    final rows = await (select(constanteSnapshots)
+          ..where((t) => t.mesureAt.isBiggerOrEqualValue(depuis.toUtc()))
+          ..orderBy([(t) => OrderingTerm.desc(t.mesureAt)]))
+        .get();
+    return rows.map(_constanteFromRow).whereType<Constante>().toList();
+  }
+
+  Future<void> replaceConstantes(List<Constante> items) async {
+    await delete(constanteSnapshots).go();
+    for (final c in items) {
+      final valeur = c.diastolique != null
+          ? '${c.systolique.toInt()}/${c.diastolique!.toInt()}'
+          : c.systolique;
+      await into(constanteSnapshots).insert(
+        ConstanteSnapshotsCompanion.insert(
+          id: c.id,
+          typeCode: c.type.code,
+          valeurJson: jsonEncode(valeur),
+          unite: c.unite,
+          mesureAt: c.mesureAt.toUtc(),
+          createdAt: Value(c.mesureAt.toUtc()),
+        ),
+        mode: InsertMode.insertOrReplace,
+      );
+    }
+  }
+
+  Future<void> upsertCheckInLocal({
+    required String id,
+    required DateTime date,
+    required String statut,
+  }) async {
+    final local = date.toLocal();
+    final dateKey =
+        '${local.year.toString().padLeft(4, '0')}-'
+        '${local.month.toString().padLeft(2, '0')}-'
+        '${local.day.toString().padLeft(2, '0')}';
+    // One row per day — remove other ids for same dateKey
+    await (delete(checkInSnapshots)..where((t) => t.dateKey.equals(dateKey))).go();
+    await into(checkInSnapshots).insert(
+      CheckInSnapshotsCompanion.insert(
+        id: id,
+        dateKey: dateKey,
+        statut: statut,
+        createdAt: Value(DateTime.now().toUtc()),
+      ),
+      mode: InsertMode.insertOrReplace,
+    );
+  }
+
+  Future<CheckInEntry?> getCheckInForDateKey(String dateKey) async {
+    final row = await (select(checkInSnapshots)
+          ..where((t) => t.dateKey.equals(dateKey)))
+        .getSingleOrNull();
+    if (row == null) return null;
+    return CheckInEntry(
+      date: DateTime.parse(row.dateKey),
+      statut: row.statut,
+    );
+  }
+
+  Future<void> _mergeConstanteEntity(Map<String, dynamic> raw) async {
+    final id = raw['id'] as String?;
+    if (id == null || id.isEmpty) return;
+    if (await hasPendingOutboxForEntity(id)) return;
+
+    final code = (raw['type_constante'] ?? raw['constante_type'])?.toString();
+    if (code == null || code.isEmpty) return;
+
+    final mesureRaw = raw['mesure_at'] as String?;
+    final mesure = mesureRaw != null
+        ? DateTime.parse(mesureRaw).toUtc()
+        : DateTime.now().toUtc();
+    final createdRaw = raw['created_at'] ?? raw['updated_at'];
+    final created = createdRaw is String
+        ? DateTime.parse(createdRaw).toUtc()
+        : mesure;
+
+    await into(constanteSnapshots).insert(
+      ConstanteSnapshotsCompanion.insert(
+        id: id,
+        typeCode: code,
+        valeurJson: jsonEncode(raw['valeur']),
+        unite: (raw['unite'] as String?) ?? '',
+        mesureAt: mesure,
+        source: Value((raw['source'] as String?) ?? 'manuel'),
+        createdAt: Value(created),
+        serverVersion: Value((raw['server_version'] as num?)?.toInt() ?? 1),
+      ),
+      mode: InsertMode.insertOrReplace,
+    );
+  }
+
+  Future<void> _mergeCheckInEntity(Map<String, dynamic> raw) async {
+    final id = raw['id'] as String?;
+    if (id == null || id.isEmpty) return;
+    final dateRaw = raw['date']?.toString();
+    if (dateRaw == null || dateRaw.isEmpty) return;
+    final dateKey = dateRaw.length >= 10 ? dateRaw.substring(0, 10) : dateRaw;
+    if (await hasPendingOutboxForEntity(dateKey) ||
+        await hasPendingOutboxForEntity(id)) {
+      return;
+    }
+    final createdRaw = raw['created_at'] ?? raw['updated_at'];
+    final created = createdRaw is String
+        ? DateTime.parse(createdRaw).toUtc()
+        : DateTime.now().toUtc();
+    await (delete(checkInSnapshots)..where((t) => t.dateKey.equals(dateKey))).go();
+    await into(checkInSnapshots).insert(
+      CheckInSnapshotsCompanion.insert(
+        id: id,
+        dateKey: dateKey,
+        statut: (raw['statut'] as String?) ?? 'ca_va',
+        createdAt: Value(created),
+      ),
+      mode: InsertMode.insertOrReplace,
+    );
+  }
+
+  Constante? _constanteFromRow(ConstanteSnapshot row) {
+    Object? valeur;
+    try {
+      valeur = jsonDecode(row.valeurJson);
+    } catch (_) {
+      valeur = row.valeurJson;
+    }
+    return Constante.tryParse({
+      'id': row.id,
+      'type': row.typeCode,
+      'unite': row.unite,
+      'mesure_at': row.mesureAt.toIso8601String(),
+      'valeur': valeur,
+    });
   }
 
   Future<void> _mergePriseEntity(Map<String, dynamic> raw) async {

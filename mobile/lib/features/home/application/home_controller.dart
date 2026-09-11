@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/database/providers.dart';
@@ -283,14 +284,29 @@ class HomeController extends StateNotifier<HomeUiState> {
   static const _constantesWindow = Duration(days: 30);
 
   Future<void> _loadConstantes() async {
+    final depuis = DateTime.now().subtract(_constantesWindow);
     try {
-      final values = await _repo.listConstantes(
-        depuis: DateTime.now().subtract(_constantesWindow),
-      );
+      final local = await _db.listConstantesSince(depuis);
+      if (mounted && local.isNotEmpty) {
+        state = state.copyWith(constantes: local, constantesKnown: true);
+      }
+    } catch (_) {}
+    try {
+      final values = await _repo.listConstantes(depuis: depuis);
       if (!mounted) return;
+      await _db.replaceConstantes(values);
       state = state.copyWith(constantes: values, constantesKnown: true);
     } catch (_) {
-      // Le suivi des constantes est secondaire : on masque la carte.
+      if (!mounted) return;
+      if (!state.constantesKnown) {
+        try {
+          final local = await _db.listConstantesSince(depuis);
+          state = state.copyWith(
+            constantes: local,
+            constantesKnown: local.isNotEmpty,
+          );
+        } catch (_) {}
+      }
     }
   }
 
@@ -302,15 +318,36 @@ class HomeController extends StateNotifier<HomeUiState> {
   }) async {
     state = state.copyWith(busy: true, clearError: true);
     try {
-      final created = await _repo.createConstante(
-        type: type,
-        valeur: valeur,
-        unite: unite,
-        mesureAt: mesureAt,
+      final clientId = const Uuid().v4();
+      await _db.transaction(() async {
+        await _db.upsertConstanteLocal(
+          id: clientId,
+          typeCode: type.code,
+          valeur: valeur,
+          unite: unite,
+          mesureAt: mesureAt,
+        );
+        await _engine.enqueueCreateConstante(
+          clientId: clientId,
+          type: type.code,
+          valeur: valeur,
+          unite: unite,
+          mesureAt: mesureAt,
+        );
+      });
+      final local = await _db.listConstantesSince(
+        DateTime.now().subtract(_constantesWindow),
       );
-      state = state.copyWith(busy: false);
-      await _loadConstantes();
-      return created;
+      state = state.copyWith(
+        busy: false,
+        constantes: local,
+        constantesKnown: true,
+      );
+      unawaited(_engine.flush(force: true));
+      return const ConstanteCreated(
+        tendance: 'stable',
+        message: 'Mesure enregistrée. Elle sera synchronisée dès que possible.',
+      );
     } catch (e) {
       state = state.copyWith(busy: false);
       rethrow;
@@ -322,27 +359,42 @@ class HomeController extends StateNotifier<HomeUiState> {
     final start = homeWeekStart(today);
     final targets = [
       for (var i = 0; i < 7; i++) start.add(Duration(days: i)),
-    ].where((d) => d.isBefore(today)).toList();
+    ].where((d) => !d.isAfter(today)).toList();
 
     if (targets.isEmpty) {
       state = state.copyWith(weekLoading: false);
       return;
     }
 
+    final merged = Map<String, DayAdherence>.from(state.weekDays);
+    for (final d in targets) {
+      if (homeSameDay(d, today)) continue;
+      try {
+        final local = await _db.listPrisesForDate(homeDayKey(d));
+        if (local.isNotEmpty) {
+          merged[homeDayKey(d)] = DayAdherence.fromPrises(d, local);
+        }
+      } catch (_) {}
+    }
+    if (mounted) {
+      state = state.copyWith(weekDays: merged);
+    }
+
     final results = await Future.wait(
       targets.map((d) async {
+        if (homeSameDay(d, today)) return null;
         try {
-          return MapEntry(homeDayKey(d), DayAdherence.fromPrises(
-            d,
-            await _repo.listPrises(date: d),
-          ));
+          final prises = await _repo.listPrises(date: d);
+          try {
+            await _db.upsertPrises(prises);
+          } catch (_) {}
+          return MapEntry(homeDayKey(d), DayAdherence.fromPrises(d, prises));
         } catch (_) {
           return null;
         }
       }),
     );
 
-    final merged = Map<String, DayAdherence>.from(state.weekDays);
     for (final entry in results) {
       if (entry != null) merged[entry.key] = entry.value;
     }
@@ -370,6 +422,16 @@ class HomeController extends StateNotifier<HomeUiState> {
 
   Future<void> _loadCheckIn() async {
     final today = homeDateOnly(DateTime.now());
+    final key = homeDayKey(today);
+    try {
+      final local = await _db.getCheckInForDateKey(key);
+      if (mounted && local != null) {
+        state = state.copyWith(
+          todayCheckIn: local,
+          checkInKnown: true,
+        );
+      }
+    } catch (_) {}
     try {
       final entries = await _repo.listCheckIns(depuis: today);
       if (!mounted) return;
@@ -377,25 +439,62 @@ class HomeController extends StateNotifier<HomeUiState> {
       for (final e in entries) {
         if (homeSameDay(e.date, today)) todays = e;
       }
+      if (todays != null) {
+        await _db.upsertCheckInLocal(
+          id: 'server-$key',
+          date: todays.date,
+          statut: todays.statut,
+        );
+      }
       state = state.copyWith(
         todayCheckIn: todays,
         checkInKnown: true,
         clearCheckIn: todays == null,
       );
     } catch (_) {
-      // Sans réponse, on n’affiche pas la carte plutôt que d’en proposer deux.
+      if (!mounted) return;
+      if (!state.checkInKnown) {
+        try {
+          final local = await _db.getCheckInForDateKey(key);
+          state = state.copyWith(
+            todayCheckIn: local,
+            checkInKnown: local != null,
+            clearCheckIn: local == null,
+          );
+        } catch (_) {}
+      }
     }
   }
 
   Future<void> submitCheckIn(String statut) async {
     state = state.copyWith(checkInBusy: true, clearError: true);
     try {
-      final entry = await _repo.submitCheckIn(statut);
+      final today = homeDateOnly(DateTime.now());
+      final key = homeDayKey(today);
+      final existing = await _db.getCheckInForDateKey(key);
+      if (existing != null || state.todayCheckIn != null) {
+        state = state.copyWith(
+          checkInBusy: false,
+          todayCheckIn: existing ?? state.todayCheckIn,
+          checkInKnown: true,
+        );
+        return;
+      }
+      final clientId = const Uuid().v4();
+      await _db.transaction(() async {
+        await _db.upsertCheckInLocal(
+          id: clientId,
+          date: today,
+          statut: statut,
+        );
+        await _engine.enqueueCreateCheckIn(dateKey: key, statut: statut);
+      });
       state = state.copyWith(
         checkInBusy: false,
-        todayCheckIn: entry,
+        todayCheckIn: CheckInEntry(date: today, statut: statut),
         checkInKnown: true,
       );
+      unawaited(_engine.flush(force: true));
     } catch (e) {
       state = state.copyWith(checkInBusy: false);
       if (e is ApiException && e.code == 'CHECK_IN_DEJA_FAIT_AUJOURDHUI') {

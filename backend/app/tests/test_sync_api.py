@@ -1,4 +1,4 @@
-"""Tests Sync V2 — push / pull Phase 4."""
+"""Tests Sync V2 — push / pull Phases 4–5."""
 
 from __future__ import annotations
 
@@ -130,3 +130,94 @@ async def test_sync_push_report_on_confirmed_rejected(
     assert r.status_code == 200, r.text
     assert r.json()["results"][0]["status"] == "rejected"
     assert r.json()["results"][0]["reason"] == "SYNC_CONFLICT"
+
+
+@pytest.mark.asyncio
+async def test_sync_push_constante_and_check_in_phase5(
+    client: AsyncClient,
+    auth_prefix: str,
+    onboarding_prefix: str,
+    otp_inbox: dict[str, str],
+    cgu_version: str,
+) -> None:
+    api = settings.api_v1_prefix
+    headers, _ = await _onboard_patient(
+        client,
+        auth_prefix,
+        onboarding_prefix,
+        otp_inbox,
+        cgu_version,
+        email="sync.p5@example.com",
+    )
+
+    const_mut = str(uuid4())
+    body_const = {
+        "mutations": [
+            {
+                "mutation_id": const_mut,
+                "entity": "constante",
+                "entity_id": None,
+                "op": "create_constante",
+                "payload": {
+                    "type": "poids",
+                    "valeur": 72.5,
+                    "unite": "kg",
+                    "mesure_at": "2026-09-11T10:00:00+00:00",
+                    "source": "manuel",
+                },
+            }
+        ]
+    }
+    r = await client.post(f"{api}/sync/push", headers=headers, json=body_const)
+    assert r.status_code == 200, r.text
+    assert r.json()["results"][0]["status"] == "applied"
+
+    r = await client.post(f"{api}/sync/push", headers=headers, json=body_const)
+    assert r.status_code == 200, r.text
+    assert r.json()["results"][0]["status"] == "duplicate"
+
+    check_mut = str(uuid4())
+    body_check = {
+        "mutations": [
+            {
+                "mutation_id": check_mut,
+                "entity": "check_in",
+                "entity_id": None,
+                "op": "create_check_in",
+                "payload": {"statut": "ca_va"},
+            }
+        ]
+    }
+    r = await client.post(f"{api}/sync/push", headers=headers, json=body_check)
+    assert r.status_code == 200, r.text
+    assert r.json()["results"][0]["status"] == "applied"
+
+    r = await client.post(f"{api}/sync/push", headers=headers, json=body_check)
+    assert r.status_code == 200, r.text
+    assert r.json()["results"][0]["status"] == "duplicate"
+
+    r = await client.post(
+        f"{api}/sync/push",
+        headers=headers,
+        json={
+            "mutations": [
+                {
+                    "mutation_id": str(uuid4()),
+                    "entity": "check_in",
+                    "op": "create_check_in",
+                    "payload": {"statut": "pas_top"},
+                }
+            ]
+        },
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["results"][0]["status"] == "rejected"
+    assert r.json()["results"][0]["reason"] == "CHECK_IN_DEJA_FAIT_AUJOURDHUI"
+
+    r = await client.get(f"{api}/sync/pull", headers=headers)
+    assert r.status_code == 200, r.text
+    entities = r.json()["entities"]
+    assert any(e.get("type") == "constante" for e in entities)
+    assert any(e.get("type") == "check_in" for e in entities)
+    cursor = r.json().get("next_cursor")
+    assert cursor is None or cursor.count("|") >= 2

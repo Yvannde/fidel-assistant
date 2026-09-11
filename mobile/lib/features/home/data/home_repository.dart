@@ -389,11 +389,17 @@ class HomeRepository {
     }
   }
 
-  Future<CheckInEntry> submitCheckIn(String statut) async {
+  Future<CheckInEntry> submitCheckIn(
+    String statut, {
+    String? clientMutationId,
+  }) async {
     try {
       final res = await _api.post<Map<String, dynamic>>(
         '/patients/me/check-in',
-        data: {'statut': statut},
+        data: {
+          'statut': statut,
+          if (clientMutationId != null) 'client_mutation_id': clientMutationId,
+        },
       );
       return CheckInEntry.fromJson(res.data ?? {'statut': statut});
     } on DioException catch (e) {
@@ -424,6 +430,7 @@ class HomeRepository {
     required Object valeur,
     required String unite,
     required DateTime mesureAt,
+    String? clientMutationId,
   }) async {
     try {
       final res = await _api.post<Map<String, dynamic>>(
@@ -434,9 +441,36 @@ class HomeRepository {
           'unite': unite,
           'mesure_at': mesureAt.toUtc().toIso8601String(),
           'source': 'manuel',
+          if (clientMutationId != null) 'client_mutation_id': clientMutationId,
         },
       );
       return ConstanteCreated.fromJson(res.data ?? {});
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  /// Variante string pour SyncEngine (fallback unitaire).
+  Future<void> createConstanteRaw({
+    required String type,
+    required Object valeur,
+    required String unite,
+    required DateTime mesureAt,
+    String source = 'manuel',
+    String? clientMutationId,
+  }) async {
+    try {
+      await _api.post<Map<String, dynamic>>(
+        '/patients/me/constantes',
+        data: {
+          'type': type,
+          'valeur': valeur,
+          'unite': unite,
+          'mesure_at': mesureAt.toUtc().toIso8601String(),
+          'source': source,
+          if (clientMutationId != null) 'client_mutation_id': clientMutationId,
+        },
+      );
     } on DioException catch (e) {
       ApiClient.throwApi(e);
     }

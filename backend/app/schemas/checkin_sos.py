@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 
 class CheckInIn(BaseModel):
     statut: str = Field(pattern="^(ca_va|pas_top)$")
+    client_mutation_id: UUID | None = None
 
 
 class CheckInOut(BaseModel):

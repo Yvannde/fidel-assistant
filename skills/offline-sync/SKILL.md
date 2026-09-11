@@ -47,7 +47,7 @@ Flux type :
 3. Au passage `online` (après hystérésis) : push outbox puis pull delta ; merge selon règles de conflit.
 4. Acquittement serveur → retirer de l’outbox + appliquer la réponse au snapshot.
 
-État actuel : **Phase 4 livrée** — `POST /sync/push` + `GET /sync/pull` ; SyncEngine flush = batch push puis pull + merge Drift (`server_version`) ; cursor `sync_pull_cursor_v1`. Constantes / check-in = Phase 5. Prefs alarme / caches `reminder_*` hors Drift.
+État actuel : **Phase 5 livrée** — constantes + check-in offline (outbox `create_constante` / `create_check_in`) ; pull multi-entité (cursor `{ts}|{type}|{id}`, prises 30 j) ; Drift `ConstanteSnapshots` / `CheckInSnapshots`. Observabilité = Phase 6. Prefs alarme / caches `reminder_*` hors Drift.
 
 ## C. Matrice d’entités
 
@@ -66,7 +66,7 @@ Alarmes H0 / préavis / marquage : **toujours locales** (voir `mobile-flutter`) 
 | `mutation_id` | UUID | = `client_mutation_id` envoyé à l’API ; clé d’idempotence |
 | `entity` | string | ex. `prise`, `constante` |
 | `entity_id` | UUID / string | id serveur ou client temporaire |
-| `op` | enum | `confirm` \| `report` \| (P1 : `create_constante`, …) |
+| `op` | enum | `confirm` \| `report` \| `create_constante` \| `create_check_in` |
 | `payload` | json | corps de la mutation |
 | `client_ts` | timestamp | heure **corrigée** serveur |
 | `attempts` | int | compteur de retries |
@@ -113,7 +113,7 @@ Ne jamais inventer un merge silencieux hors de ce tableau.
 | **2** | `ServerClock` + `NetworkStatus` (hystérésis, probe, circuit breaker) — **implémentée** |
 | **3** | Drift : snapshot P0 + projection UI Accueil / confirm-snooze — **implémentée** |
 | **4** | `POST /sync/push` + `GET /sync/pull?since=` (voir `api-contract`) — **implémentée** |
-| **5** | P1 : constantes, historique prises, check-in |
+| **5** | P1 : constantes, historique prises, check-in — **implémentée** |
 | **6** | Observabilité, tests rejeu / flapping / horloge fausse, runbook |
 
 ## Checklist QA (référence Phase 6)

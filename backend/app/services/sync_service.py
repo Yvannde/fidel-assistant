@@ -1,38 +1,63 @@
-"""Sync V2 — push / pull (Phase 4)."""
+"""Sync V2 — push / pull (Phases 4–5)."""
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import and_, or_, select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import AppException
 from app.models import (
+    CheckIn,
+    Constante,
     Medicament,
     MedicamentHoraire,
     PatientTraitement,
     Prise,
     User,
 )
+from app.services import checkin_sos_service as checkin_svc
+from app.services import constante_service as constante_svc
 from app.services import patient_suivi_service as suivi
 
 
-def _cursor_for_prise(prise: Prise) -> str:
-    ts = prise.updated_at.astimezone(UTC).isoformat()
-    return f"{ts}|{prise.id}"
+def _cursor(ts: datetime, entity_type: str, entity_id: UUID | str) -> str:
+    return f"{ts.astimezone(UTC).isoformat()}|{entity_type}|{entity_id}"
 
 
-def _parse_cursor(since: str | None) -> tuple[datetime | None, UUID | None]:
+def _parse_cursor(
+    since: str | None,
+) -> tuple[datetime | None, str | None, UUID | None]:
+    """Cursor Phase 5: `{ts}|{type}|{id}`. Phase 4 legacy: `{ts}|{id}` → type=prise."""
     if not since:
-        return None, None
+        return None, None, None
+    parts = since.split("|")
     try:
-        ts_raw, id_raw = since.rsplit("|", 1)
-        return datetime.fromisoformat(ts_raw), UUID(id_raw)
+        if len(parts) == 3:
+            return datetime.fromisoformat(parts[0]), parts[1], UUID(parts[2])
+        if len(parts) == 2:
+            return datetime.fromisoformat(parts[0]), "prise", UUID(parts[1])
     except (ValueError, TypeError):
-        return None, None
+        return None, None, None
+    return None, None, None
+
+
+def _after_cursor(
+    ts: datetime,
+    entity_type: str,
+    entity_id: UUID,
+    since_ts: datetime | None,
+    since_type: str | None,
+    since_id: UUID | None,
+) -> bool:
+    if since_ts is None or since_type is None or since_id is None:
+        return True
+    key = (ts.astimezone(UTC), entity_type, str(entity_id))
+    since_key = (since_ts.astimezone(UTC), since_type, str(since_id))
+    return key > since_key
 
 
 async def push_mutations(
@@ -57,23 +82,26 @@ async def push_mutations(
             )
             continue
 
-        if entity != "prise" or entity_id is None:
-            results.append(
-                {
-                    "mutation_id": mutation_id,
-                    "status": "rejected",
-                    "reason": "MUTATION_REJECTED",
-                }
-            )
-            continue
-
         try:
-            if op == "confirm":
-                await suivi.confirmer_prise(
+            if entity == "prise" and entity_id is not None:
+                await _push_prise(
                     db,
                     user=user,
-                    prise_id=entity_id,
-                    canal=str(payload.get("canal") or "app"),
+                    mutation_id=mutation_id,
+                    entity_id=entity_id,
+                    op=op,
+                    payload=payload,
+                    results=results,
+                )
+            elif entity == "constante" and op == "create_constante":
+                await constante_svc.create_constante(
+                    db,
+                    user=user,
+                    type_=str(payload.get("type") or ""),
+                    valeur=payload.get("valeur"),
+                    unite=str(payload.get("unite") or ""),
+                    mesure_at=_as_dt(payload.get("mesure_at")),
+                    source=str(payload.get("source") or "manuel"),
                     client_mutation_id=mutation_id,
                 )
                 results.append(
@@ -83,27 +111,11 @@ async def push_mutations(
                         "reason": None,
                     }
                 )
-            elif op == "report":
-                raw_heure = payload.get("nouvelle_heure")
-                if not raw_heure:
-                    results.append(
-                        {
-                            "mutation_id": mutation_id,
-                            "status": "rejected",
-                            "reason": "MUTATION_REJECTED",
-                        }
-                    )
-                    continue
-                when = (
-                    datetime.fromisoformat(str(raw_heure))
-                    if not isinstance(raw_heure, datetime)
-                    else raw_heure
-                )
-                await suivi.reporter_prise(
+            elif entity == "check_in" and op == "create_check_in":
+                await checkin_svc.create_check_in(
                     db,
                     user=user,
-                    prise_id=entity_id,
-                    nouvelle_heure=when,
+                    statut=str(payload.get("statut") or ""),
                     client_mutation_id=mutation_id,
                 )
                 results.append(
@@ -144,15 +156,89 @@ async def push_mutations(
     return {"results": results}
 
 
+def _as_dt(raw: object) -> datetime:
+    if isinstance(raw, datetime):
+        return raw
+    if raw is None:
+        return datetime.now(UTC)
+    return datetime.fromisoformat(str(raw))
+
+
+async def _push_prise(
+    db: AsyncSession,
+    *,
+    user: User,
+    mutation_id: UUID,
+    entity_id: UUID,
+    op: str,
+    payload: dict,
+    results: list[dict],
+) -> None:
+    if op == "confirm":
+        await suivi.confirmer_prise(
+            db,
+            user=user,
+            prise_id=entity_id,
+            canal=str(payload.get("canal") or "app"),
+            client_mutation_id=mutation_id,
+        )
+        results.append(
+            {
+                "mutation_id": mutation_id,
+                "status": "applied",
+                "reason": None,
+            }
+        )
+    elif op == "report":
+        raw_heure = payload.get("nouvelle_heure")
+        if not raw_heure:
+            results.append(
+                {
+                    "mutation_id": mutation_id,
+                    "status": "rejected",
+                    "reason": "MUTATION_REJECTED",
+                }
+            )
+            return
+        when = _as_dt(raw_heure)
+        await suivi.reporter_prise(
+            db,
+            user=user,
+            prise_id=entity_id,
+            nouvelle_heure=when,
+            client_mutation_id=mutation_id,
+        )
+        results.append(
+            {
+                "mutation_id": mutation_id,
+                "status": "applied",
+                "reason": None,
+            }
+        )
+    else:
+        results.append(
+            {
+                "mutation_id": mutation_id,
+                "status": "rejected",
+                "reason": "MUTATION_REJECTED",
+            }
+        )
+
+
 async def pull_delta(
     db: AsyncSession, *, user: User, since: str | None = None
 ) -> dict:
     patient = suivi._require_patient(user)
-    since_ts, since_id = _parse_cursor(since)
+    since_ts, since_type, since_id = _parse_cursor(since)
     now = datetime.now(UTC)
-    horizon_start = now - timedelta(days=1)
+    horizon_start = now - timedelta(days=30)
     horizon_end = now + timedelta(days=7)
+    today = now.date()
+    checkin_since = today - timedelta(days=30)
 
+    scored: list[tuple[str, dict]] = []
+
+    # --- Prises (30j passés → 7j futurs) ---
     prise_q = (
         select(Prise, Medicament)
         .join(MedicamentHoraire, Prise.medicament_horaire_id == MedicamentHoraire.id)
@@ -164,41 +250,99 @@ async def pull_delta(
             Prise.heure_prevue <= horizon_end,
         )
     )
-    if since_ts is not None and since_id is not None:
-        prise_q = prise_q.where(
-            or_(
-                Prise.updated_at > since_ts,
-                and_(Prise.updated_at == since_ts, Prise.id > since_id),
-            )
-        )
-    prise_q = prise_q.order_by(Prise.updated_at.asc(), Prise.id.asc())
-
-    entities: list[dict] = []
-    last_cursor: str | None = None
     result = await db.execute(prise_q)
     for prise, med in result.all():
-        entities.append(
-            {
-                "type": "prise",
-                "id": str(prise.id),
-                "server_version": int(prise.server_version or 1),
-                "updated_at": prise.updated_at.astimezone(UTC).isoformat(),
-                "medicament_id": str(med.id),
-                "medicament_nom": med.nom,
-                "dosage": med.dosage,
-                "heure_prevue": prise.heure_prevue.astimezone(UTC).isoformat(),
-                "statut": prise.statut,
-                "confirmee_at": (
-                    prise.confirmee_at.astimezone(UTC).isoformat()
-                    if prise.confirmee_at
-                    else None
-                ),
-                "canal": prise.canal,
-            }
+        ts = prise.updated_at.astimezone(UTC)
+        if not _after_cursor(ts, "prise", prise.id, since_ts, since_type, since_id):
+            continue
+        cur = _cursor(ts, "prise", prise.id)
+        scored.append(
+            (
+                cur,
+                {
+                    "type": "prise",
+                    "id": str(prise.id),
+                    "server_version": int(prise.server_version or 1),
+                    "updated_at": ts.isoformat(),
+                    "medicament_id": str(med.id),
+                    "medicament_nom": med.nom,
+                    "dosage": med.dosage,
+                    "heure_prevue": prise.heure_prevue.astimezone(UTC).isoformat(),
+                    "statut": prise.statut,
+                    "confirmee_at": (
+                        prise.confirmee_at.astimezone(UTC).isoformat()
+                        if prise.confirmee_at
+                        else None
+                    ),
+                    "canal": prise.canal,
+                },
+            )
         )
-        last_cursor = _cursor_for_prise(prise)
 
-    # Traitements actifs (miroir) — inclus si since absent ou toujours (léger)
+    # --- Constantes (30 j) ---
+    const_q = select(Constante).where(
+        Constante.patient_id == patient.user_id,
+        or_(
+            Constante.created_at >= horizon_start,
+            Constante.mesure_at >= horizon_start,
+        ),
+    )
+    const_result = await db.execute(const_q)
+    for row in const_result.scalars().all():
+        ts = (row.created_at or row.mesure_at).astimezone(UTC)
+        if not _after_cursor(ts, "constante", row.id, since_ts, since_type, since_id):
+            continue
+        cur = _cursor(ts, "constante", row.id)
+        scored.append(
+            (
+                cur,
+                {
+                    "type": "constante",
+                    "id": str(row.id),
+                    "server_version": 1,
+                    "updated_at": ts.isoformat(),
+                    "created_at": ts.isoformat(),
+                    "constante_type": row.type,
+                    "type_constante": row.type,
+                    "valeur": constante_svc._public_valeur(row.type, row.valeur),
+                    "unite": row.unite,
+                    "mesure_at": row.mesure_at.astimezone(UTC).isoformat()
+                    if row.mesure_at.tzinfo
+                    else row.mesure_at.replace(tzinfo=UTC).isoformat(),
+                    "source": row.source,
+                },
+            )
+        )
+
+    # --- Check-ins (30 j) ---
+    ci_q = select(CheckIn).where(
+        CheckIn.patient_id == patient.user_id,
+        CheckIn.date >= checkin_since,
+    )
+    ci_result = await db.execute(ci_q)
+    for row in ci_result.scalars().all():
+        ts = row.created_at.astimezone(UTC)
+        if not _after_cursor(ts, "check_in", row.id, since_ts, since_type, since_id):
+            continue
+        cur = _cursor(ts, "check_in", row.id)
+        scored.append(
+            (
+                cur,
+                {
+                    "type": "check_in",
+                    "id": str(row.id),
+                    "server_version": 1,
+                    "updated_at": ts.isoformat(),
+                    "created_at": ts.isoformat(),
+                    "date": row.date.isoformat()
+                    if isinstance(row.date, date)
+                    else str(row.date),
+                    "statut": row.statut,
+                },
+            )
+        )
+
+    # Traitements actifs — full snapshot when since absent
     if since is None:
         tr_result = await db.execute(
             select(PatientTraitement)
@@ -212,29 +356,41 @@ async def pull_delta(
             )
         )
         for t in tr_result.scalars().all():
-            entities.append(
-                {
-                    "type": "traitement",
-                    "id": str(t.id),
-                    "server_version": 1,
-                    "updated_at": (
-                        t.updated_at.astimezone(UTC).isoformat()
-                        if getattr(t, "updated_at", None)
-                        else now.isoformat()
-                    ),
-                    "payload": {
-                        "id": str(t.id),
-                        "date_debut": t.date_debut.isoformat() if t.date_debut else None,
-                        "date_fin_prevue": (
-                            t.date_fin_prevue.isoformat() if t.date_fin_prevue else None
-                        ),
-                        "jour_traitement": getattr(t, "jour_traitement", None),
-                    },
-                }
+            ts = (
+                t.updated_at.astimezone(UTC)
+                if getattr(t, "updated_at", None)
+                else now
             )
+            scored.append(
+                (
+                    _cursor(ts, "traitement", t.id),
+                    {
+                        "type": "traitement",
+                        "id": str(t.id),
+                        "server_version": 1,
+                        "updated_at": ts.isoformat(),
+                        "payload": {
+                            "id": str(t.id),
+                            "date_debut": t.date_debut.isoformat()
+                            if t.date_debut
+                            else None,
+                            "date_fin_prevue": (
+                                t.date_fin_prevue.isoformat()
+                                if t.date_fin_prevue
+                                else None
+                            ),
+                            "jour_traitement": getattr(t, "jour_traitement", None),
+                        },
+                    },
+                )
+            )
+
+    scored.sort(key=lambda x: x[0])
+    entities = [e for _, e in scored]
+    next_cursor = scored[-1][0] if scored else since
 
     return {
         "entities": entities,
-        "next_cursor": last_cursor if since is not None else last_cursor,
+        "next_cursor": next_cursor,
         "server_time": now,
     }

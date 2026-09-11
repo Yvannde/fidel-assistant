@@ -162,7 +162,15 @@ async def create_constante(
     unite: str,
     mesure_at: datetime,
     source: str,
+    client_mutation_id: UUID | None = None,
 ) -> dict:
+    from app.services import patient_suivi_service as suivi
+
+    if client_mutation_id is not None:
+        existing = await suivi._get_client_mutation(db, mutation_id=client_mutation_id)
+        if existing is not None:
+            return _replay_constante_create(existing.result_snapshot)
+
     patient = _require_patient(user)
     type_norm = type_.strip().lower()
     if type_norm not in VALID_TYPES:
@@ -220,12 +228,67 @@ async def create_constante(
             contenu=message,
         )
 
-    await db.commit()
-    await db.refresh(row)
-    return {
+    result = {
         "constante": _serialize(row),
         "tendance": tendance,
         "message": message,
+    }
+    if client_mutation_id is not None:
+        await suivi._record_client_mutation(
+            db,
+            mutation_id=client_mutation_id,
+            user_id=user.id,
+            entity="constante",
+            entity_id=row.id,
+            op="create_constante",
+            result=_snapshot_constante_create(result),
+        )
+
+    await db.commit()
+    await db.refresh(row)
+    result["constante"] = _serialize(row)
+    return result
+
+
+def _snapshot_constante_create(result: dict) -> dict:
+    c = result.get("constante") or {}
+    snap_c: dict[str, Any] = {}
+    for k, v in c.items():
+        if isinstance(v, UUID):
+            snap_c[k] = str(v)
+        elif isinstance(v, datetime):
+            snap_c[k] = v.isoformat()
+        else:
+            snap_c[k] = v
+    return {
+        "constante": snap_c,
+        "tendance": result.get("tendance"),
+        "message": result.get("message"),
+    }
+
+
+def _replay_constante_create(snapshot: dict | None) -> dict:
+    if not snapshot:
+        return {"constante": {}, "tendance": "stable", "message": ""}
+    c = snapshot.get("constante") or {}
+    out_c: dict[str, Any] = {}
+    for k, v in c.items():
+        if k == "id" and isinstance(v, str):
+            try:
+                out_c[k] = UUID(v)
+            except ValueError:
+                out_c[k] = v
+        elif k == "mesure_at" and isinstance(v, str):
+            try:
+                out_c[k] = datetime.fromisoformat(v)
+            except ValueError:
+                out_c[k] = v
+        else:
+            out_c[k] = v
+    return {
+        "constante": out_c,
+        "tendance": snapshot.get("tendance") or "stable",
+        "message": snapshot.get("message") or "",
     }
 
 

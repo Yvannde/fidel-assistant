@@ -18,7 +18,7 @@ import 'sync_outbox.dart';
 /// Incrémenté après un pull réussi — l’UI Accueil écoute pour recharger la projection.
 final syncPullTickProvider = StateProvider<int>((ref) => 0);
 
-/// Port minimal pour confirm/report (testable sans mocker tout le repo).
+/// Port minimal pour mutations outbox (testable sans mocker tout le repo).
 abstract interface class SyncPriseGateway {
   Future<void> confirmPrise(String priseId, {String? clientMutationId});
   Future<void> reportPrise(
@@ -26,6 +26,15 @@ abstract interface class SyncPriseGateway {
     DateTime nouvelleHeure, {
     String? clientMutationId,
   });
+  Future<void> createConstante({
+    required String type,
+    required Object valeur,
+    required String unite,
+    required DateTime mesureAt,
+    String source = 'manuel',
+    String? clientMutationId,
+  });
+  Future<void> createCheckIn(String statut, {String? clientMutationId});
 }
 
 /// Push/pull batch (Phase 4). Les fakes de test n’implémentent pas cette interface.
@@ -55,6 +64,30 @@ class HomeSyncPriseGateway implements SyncPriseGateway, SyncBatchGateway {
       nouvelleHeure,
       clientMutationId: clientMutationId,
     );
+  }
+
+  @override
+  Future<void> createConstante({
+    required String type,
+    required Object valeur,
+    required String unite,
+    required DateTime mesureAt,
+    String source = 'manuel',
+    String? clientMutationId,
+  }) {
+    return _repo.createConstanteRaw(
+      type: type,
+      valeur: valeur,
+      unite: unite,
+      mesureAt: mesureAt,
+      source: source,
+      clientMutationId: clientMutationId,
+    );
+  }
+
+  @override
+  Future<void> createCheckIn(String statut, {String? clientMutationId}) {
+    return _repo.submitCheckIn(statut, clientMutationId: clientMutationId);
   }
 
   @override
@@ -156,6 +189,43 @@ class SyncEngine {
     );
   }
 
+  Future<void> enqueueCreateConstante({
+    required String clientId,
+    required String type,
+    required Object valeur,
+    required String unite,
+    required DateTime mesureAt,
+    String source = 'manuel',
+  }) async {
+    await _outbox.enqueue(
+      entity: 'constante',
+      entityId: clientId,
+      op: 'create_constante',
+      clientTs: _now(),
+      payload: {
+        'type': type,
+        'valeur': valeur,
+        'unite': unite,
+        'mesure_at': mesureAt.toUtc().toIso8601String(),
+        'source': source,
+        'client_id': clientId,
+      },
+    );
+  }
+
+  Future<void> enqueueCreateCheckIn({
+    required String dateKey,
+    required String statut,
+  }) async {
+    await _outbox.enqueue(
+      entity: 'check_in',
+      entityId: dateKey,
+      op: 'create_check_in',
+      clientTs: _now(),
+      payload: {'statut': statut, 'date': dateKey},
+    );
+  }
+
   Future<void> _runPass() async {
     final ready = await _outbox.listReady();
     final gateway = _gatewayFactory();
@@ -246,7 +316,7 @@ class SyncEngine {
           (e) => <String, dynamic>{
             'mutation_id': e.mutationId,
             'entity': e.entity,
-            'entity_id': e.entityId,
+            'entity_id': e.entity == 'check_in' ? null : e.entityId,
             'op': e.op,
             'payload': e.payload,
             'client_ts': e.clientTs.toUtc().toIso8601String(),
@@ -312,6 +382,32 @@ class SyncEngine {
           await gateway.reportPrise(
             entry.entityId,
             DateTime.parse(raw).toUtc(),
+            clientMutationId: entry.mutationId,
+          );
+        } else if (entry.op == 'create_constante') {
+          final type = entry.payload['type'] as String?;
+          final unite = entry.payload['unite'] as String?;
+          final mesureRaw = entry.payload['mesure_at'] as String?;
+          if (type == null || unite == null || mesureRaw == null) {
+            await _outbox.markPermanent(entry.mutationId);
+            continue;
+          }
+          await gateway.createConstante(
+            type: type,
+            valeur: entry.payload['valeur'] ?? 0,
+            unite: unite,
+            mesureAt: DateTime.parse(mesureRaw).toUtc(),
+            source: (entry.payload['source'] as String?) ?? 'manuel',
+            clientMutationId: entry.mutationId,
+          );
+        } else if (entry.op == 'create_check_in') {
+          final statut = entry.payload['statut'] as String?;
+          if (statut == null) {
+            await _outbox.markPermanent(entry.mutationId);
+            continue;
+          }
+          await gateway.createCheckIn(
+            statut,
             clientMutationId: entry.mutationId,
           );
         } else {

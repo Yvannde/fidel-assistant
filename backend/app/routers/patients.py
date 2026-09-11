@@ -156,7 +156,12 @@ async def create_check_in(
     user: Annotated[User, Depends(get_current_user)],
 ) -> CheckInOut:
     return CheckInOut(
-        **await checkin_sos_service.create_check_in(db, user=user, statut=body.statut)
+        **await checkin_sos_service.create_check_in(
+            db,
+            user=user,
+            statut=body.statut,
+            client_mutation_id=body.client_mutation_id,
+        )
     )
 
 
@@ -207,6 +212,7 @@ async def create_constante(
             unite=body.unite,
             mesure_at=body.mesure_at,
             source=body.source,
+            client_mutation_id=body.client_mutation_id,
         )
     )
 
