@@ -8,6 +8,7 @@
 | Google Sign-In setup | [`google-auth-setup.md`](google-auth-setup.md) |
 | Emails Resend | [`email-resend.md`](email-resend.md) |
 | Batterie tests auth | [`auth-test-battery.md`](auth-test-battery.md) |
+| Runbook sync offline | [`sync-runbook.md`](sync-runbook.md) |
 | Scénario onboarding | [`onboarding-scenario.md`](onboarding-scenario.md) |
 | Contribution | [`CONTRIBUTING.md`](../CONTRIBUTING.md) |
 | Sécurité | [`SECURITY.md`](../SECURITY.md) |

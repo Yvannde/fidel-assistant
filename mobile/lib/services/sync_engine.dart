@@ -13,6 +13,7 @@ import '../core/network/providers.dart';
 import '../features/home/data/home_repository.dart';
 import 'network_status.dart';
 import 'server_clock.dart';
+import 'sync_metrics.dart';
 import 'sync_outbox.dart';
 
 /// Incrémenté après un pull réussi — l’UI Accueil écoute pour recharger la projection.
@@ -101,7 +102,7 @@ class HomeSyncPriseGateway implements SyncPriseGateway, SyncBatchGateway {
   }
 }
 
-/// Moteur de sync outbox — single-flight + FIFO + push/pull (Phase 4).
+/// Moteur de sync outbox — single-flight + FIFO + push/pull (Phases 4–6).
 class SyncEngine {
   SyncEngine({
     required SyncOutbox outbox,
@@ -111,13 +112,15 @@ class SyncEngine {
     AppDatabase? db,
     SharedPreferences? prefs,
     Future<void> Function()? onAfterPull,
+    SyncMetrics? metrics,
   })  : _outbox = outbox,
         _gatewayFactory = gatewayFactory,
         _clock = clock,
         _network = network,
         _db = db,
         _prefs = prefs,
-        _onAfterPull = onAfterPull;
+        _onAfterPull = onAfterPull,
+        _metrics = metrics ?? SyncMetrics(prefs: prefs);
 
   static const pullCursorKey = 'sync_pull_cursor_v1';
 
@@ -128,6 +131,7 @@ class SyncEngine {
   final AppDatabase? _db;
   final SharedPreferences? _prefs;
   final Future<void> Function()? _onAfterPull;
+  final SyncMetrics _metrics;
 
   Future<void>? _inflight;
 
@@ -138,6 +142,8 @@ class SyncEngine {
   /// [force] : ignore `canSync` (post-mutation / refresh manuel).
   Future<void> flush({bool force = false}) {
     if (!force && _network != null && !_network.canSync) {
+      final reason = _network.circuitOpen ? 'circuit' : 'offline';
+      unawaited(_metrics.recordSkip(skippedReason: reason));
       return Future<void>.value();
     }
     if (_inflight != null) return _inflight!;
@@ -227,6 +233,7 @@ class SyncEngine {
   }
 
   Future<void> _runPass() async {
+    final started = DateTime.now().toUtc();
     final ready = await _outbox.listReady();
     final gateway = _gatewayFactory();
     final batch = gateway is SyncBatchGateway ? gateway as SyncBatchGateway : null;
@@ -234,23 +241,35 @@ class SyncEngine {
     var anySuccess = false;
     var anyFail = false;
     var any5xx = false;
+    var applied = 0;
+    var duplicate = 0;
+    var rejected = 0;
+    var pushed = 0;
+    var pulled = 0;
+    String? error;
 
     if (ready.isNotEmpty) {
+      pushed = ready.length;
       if (batch != null) {
         try {
           final pushOutcome = await _runBatchPush(batch, ready);
           anySuccess = pushOutcome.success;
           anyFail = pushOutcome.fail;
           any5xx = pushOutcome.is5xx;
+          applied = pushOutcome.applied;
+          duplicate = pushOutcome.duplicate;
+          rejected = pushOutcome.rejected;
         } on DioException catch (e) {
           if (e.response?.statusCode == 404) {
             final unitary = await _runUnitaryPush(gateway, ready);
             anySuccess = unitary.success;
             anyFail = unitary.fail;
             any5xx = unitary.is5xx;
+            applied = unitary.applied;
           } else {
             anyFail = true;
             any5xx = _is5xx(e);
+            error = e.toString();
             for (final entry in ready) {
               if (_isRetryable(e)) {
                 await _outbox.markRetry(
@@ -265,6 +284,7 @@ class SyncEngine {
         } catch (e) {
           anyFail = true;
           any5xx = _is5xx(e);
+          error = e.toString();
           for (final entry in ready) {
             if (_isRetryable(e)) {
               await _outbox.markRetry(
@@ -281,18 +301,33 @@ class SyncEngine {
         anySuccess = unitary.success;
         anyFail = unitary.fail;
         any5xx = unitary.is5xx;
+        applied = unitary.applied;
       }
     }
 
     if (batch != null) {
       try {
-        await _runPull(batch);
+        pulled = await _runPull(batch);
       } catch (e) {
         debugPrint('SyncEngine.pull: $e');
         anyFail = true;
         if (_is5xx(e)) any5xx = true;
+        error ??= e.toString();
       }
     }
+
+    final remaining = (await _outbox.listReady()).length;
+    await _metrics.recordPass(
+      startedAt: started,
+      durationMs: DateTime.now().toUtc().difference(started).inMilliseconds,
+      pushed: pushed,
+      applied: applied,
+      duplicate: duplicate,
+      rejected: rejected,
+      pulled: pulled,
+      outboxRemaining: remaining,
+      error: error,
+    );
 
     final net = _network;
     if (net == null) return;
@@ -303,7 +338,15 @@ class SyncEngine {
     }
   }
 
-  Future<({bool success, bool fail, bool is5xx})> _runBatchPush(
+  Future<
+      ({
+        bool success,
+        bool fail,
+        bool is5xx,
+        int applied,
+        int duplicate,
+        int rejected,
+      })> _runBatchPush(
     SyncBatchGateway batch,
     List<SyncOutboxEntry> ready,
   ) async {
@@ -331,6 +374,9 @@ class SyncEngine {
 
     var anySuccess = false;
     var anyFail = false;
+    var applied = 0;
+    var duplicate = 0;
+    var rejected = 0;
     for (final entry in ready) {
       final result = byId[entry.mutationId];
       if (result == null) {
@@ -344,8 +390,14 @@ class SyncEngine {
       if (result.status == 'applied' || result.status == 'duplicate') {
         await _outbox.markDone(entry.mutationId);
         anySuccess = true;
+        if (result.status == 'applied') {
+          applied++;
+        } else {
+          duplicate++;
+        }
       } else if (result.status == 'rejected') {
         await _outbox.markPermanent(entry.mutationId);
+        rejected++;
       } else {
         anyFail = true;
         await _outbox.markRetry(
@@ -354,16 +406,24 @@ class SyncEngine {
         );
       }
     }
-    return (success: anySuccess, fail: anyFail, is5xx: false);
+    return (
+      success: anySuccess,
+      fail: anyFail,
+      is5xx: false,
+      applied: applied,
+      duplicate: duplicate,
+      rejected: rejected,
+    );
   }
 
-  Future<({bool success, bool fail, bool is5xx})> _runUnitaryPush(
+  Future<({bool success, bool fail, bool is5xx, int applied})> _runUnitaryPush(
     SyncPriseGateway gateway,
     List<SyncOutboxEntry> ready,
   ) async {
     var anySuccess = false;
     var anyFail = false;
     var any5xx = false;
+    var applied = 0;
 
     for (final entry in ready) {
       await _outbox.markInflight(entry.mutationId);
@@ -416,6 +476,7 @@ class SyncEngine {
         }
         await _outbox.markDone(entry.mutationId);
         anySuccess = true;
+        applied++;
       } catch (e) {
         anyFail = true;
         if (_is5xx(e)) any5xx = true;
@@ -429,12 +490,17 @@ class SyncEngine {
         }
       }
     }
-    return (success: anySuccess, fail: anyFail, is5xx: any5xx);
+    return (
+      success: anySuccess,
+      fail: anyFail,
+      is5xx: any5xx,
+      applied: applied,
+    );
   }
 
-  Future<void> _runPull(SyncBatchGateway batch) async {
+  Future<int> _runPull(SyncBatchGateway batch) async {
     final db = _db;
-    if (db == null) return;
+    if (db == null) return 0;
 
     final since = _prefs?.getString(pullCursorKey);
     final pull = await batch.syncPull(since: since);
@@ -451,6 +517,7 @@ class SyncEngine {
         debugPrint('SyncEngine.onAfterPull: $e');
       }
     }
+    return pull.entities.length;
   }
 
   bool _is5xx(Object e) {

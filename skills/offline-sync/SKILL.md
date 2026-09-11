@@ -47,7 +47,7 @@ Flux type :
 3. Au passage `online` (après hystérésis) : push outbox puis pull delta ; merge selon règles de conflit.
 4. Acquittement serveur → retirer de l’outbox + appliquer la réponse au snapshot.
 
-État actuel : **Phase 5 livrée** — constantes + check-in offline (outbox `create_constante` / `create_check_in`) ; pull multi-entité (cursor `{ts}|{type}|{id}`, prises 30 j) ; Drift `ConstanteSnapshots` / `CheckInSnapshots`. Observabilité = Phase 6. Prefs alarme / caches `reminder_*` hors Drift.
+État actuel : **Phase 6 livrée** — SyncMetrics (`sync_last_pass_v1`) + checklist QA automatisée + runbook [`docs/sync-runbook.md`](../../docs/sync-runbook.md). Prefs alarme / caches `reminder_*` hors Drift.
 
 ## C. Matrice d’entités
 
@@ -114,12 +114,14 @@ Ne jamais inventer un merge silencieux hors de ce tableau.
 | **3** | Drift : snapshot P0 + projection UI Accueil / confirm-snooze — **implémentée** |
 | **4** | `POST /sync/push` + `GET /sync/pull?since=` (voir `api-contract`) — **implémentée** |
 | **5** | P1 : constantes, historique prises, check-in — **implémentée** |
-| **6** | Observabilité, tests rejeu / flapping / horloge fausse, runbook |
+| **6** | Observabilité, tests rejeu / flapping / horloge fausse, runbook — **implémentée** |
 
 ## Checklist QA (référence Phase 6)
 
-- [ ] Rejeu : même `mutation_id` ×3 → un seul effet serveur (`duplicate` ensuite)
-- [ ] Coupure après envoi avant réponse → retry sans doublon
-- [ ] Réseau on/off toutes les 2 s pendant 1 min → ≤ 2 passes de sync (cooldown + hystérésis)
-- [ ] Horloge device −3 h → ordre des mutations et conflits restent corrects
-- [ ] Serveur `confirmee` + client veut `en_attente` → conflict, pas downgrade
+- [x] Rejeu : même `mutation_id` ×3 → un seul effet serveur (`duplicate` ensuite)
+- [x] Coupure après envoi avant réponse → retry sans doublon
+- [x] Réseau on/off toutes les 2 s pendant 1 min → ≤ 2 passes de sync (cooldown + hystérésis)
+- [x] Horloge device −3 h → ordre des mutations et conflits restent corrects
+- [x] Serveur `confirmee` + client veut `en_attente` → conflict, pas downgrade
+
+Voir aussi `docs/sync-runbook.md`.

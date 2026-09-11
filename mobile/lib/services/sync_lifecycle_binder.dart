@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/locale/locale_controller.dart';
 import 'network_status.dart';
 import 'sync_engine.dart';
+import 'sync_metrics.dart';
 
-/// Probe périodique + flush gated sur resume / timer (Phase 2).
+/// Probe périodique + flush gated sur resume / timer (Phase 2 + métriques Phase 6).
 class SyncLifecycleBinder extends ConsumerStatefulWidget {
   const SyncLifecycleBinder({super.key, required this.child});
 
@@ -53,7 +55,19 @@ class _SyncLifecycleBinderState extends ConsumerState<SyncLifecycleBinder>
 
   void _scheduledFlush() {
     final net = ref.read(networkStatusProvider);
-    if (!net.allowScheduledFlush()) return;
+    final metrics = SyncMetrics(prefs: ref.read(sharedPreferencesProvider));
+    if (!net.canSync) {
+      unawaited(
+        metrics.recordSkip(
+          skippedReason: net.circuitOpen ? 'circuit' : 'offline',
+        ),
+      );
+      return;
+    }
+    if (!net.allowScheduledFlush()) {
+      unawaited(metrics.recordSkip(skippedReason: 'cooldown'));
+      return;
+    }
     unawaited(ref.read(syncEngineProvider).flush());
   }
 
