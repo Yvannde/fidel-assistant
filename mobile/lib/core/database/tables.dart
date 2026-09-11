@@ -10,6 +10,7 @@ class PriseSnapshots extends Table {
   TextColumn get medicamentNom => text().withDefault(const Constant(''))();
   TextColumn get dosage => text().withDefault(const Constant(''))();
   DateTimeColumn get updatedAt => dateTime().nullable()();
+  IntColumn get serverVersion => integer().withDefault(const Constant(1))();
   TextColumn get payloadJson => text().nullable()();
 
   @override

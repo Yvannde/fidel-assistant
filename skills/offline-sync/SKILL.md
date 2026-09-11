@@ -47,7 +47,7 @@ Flux type :
 3. Au passage `online` (après hystérésis) : push outbox puis pull delta ; merge selon règles de conflit.
 4. Acquittement serveur → retirer de l’outbox + appliquer la réponse au snapshot.
 
-État actuel : **Phase 3 livrée** — Drift snapshot P0 + outbox Drift + projection Accueil (`snapshot ⊕ outbox`). Push/pull = Phase 4. Prefs alarme / caches `reminder_*` hors Drift.
+État actuel : **Phase 4 livrée** — `POST /sync/push` + `GET /sync/pull` ; SyncEngine flush = batch push puis pull + merge Drift (`server_version`) ; cursor `sync_pull_cursor_v1`. Constantes / check-in = Phase 5. Prefs alarme / caches `reminder_*` hors Drift.
 
 ## C. Matrice d’entités
 
@@ -112,7 +112,7 @@ Ne jamais inventer un merge silencieux hors de ce tableau.
 | **1** | `SyncEngine` + outbox SharedPreferences ; `client_mutation_id` sur confirm / report / sync-offline — **implémentée** |
 | **2** | `ServerClock` + `NetworkStatus` (hystérésis, probe, circuit breaker) — **implémentée** |
 | **3** | Drift : snapshot P0 + projection UI Accueil / confirm-snooze — **implémentée** |
-| **4** | `POST /sync/push` + `GET /sync/pull?since=` (voir `api-contract`) |
+| **4** | `POST /sync/push` + `GET /sync/pull?since=` (voir `api-contract`) — **implémentée** |
 | **5** | P1 : constantes, historique prises, check-in |
 | **6** | Observabilité, tests rejeu / flapping / horloge fausse, runbook |
 

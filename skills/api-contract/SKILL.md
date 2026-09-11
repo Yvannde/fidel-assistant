@@ -128,14 +128,14 @@ Pas de `POST /onboarding/role`. Voir `auth-onboarding/SKILL.md`.
 
 ---
 
-## 5bis. Sync V2 (contrat futur — Phase 4)
+## 5bis. Sync V2 (Phase 4 — implémentée)
 
-> **Contrat figé en Phase 0.** Implémentation backend : Phase 1 = `client_mutation_id` sur les routes prises ci-dessus ; Phase 4 = endpoints génériques ci-dessous. Ne pas inventer d’autres chemins sans mettre à jour ce skill d’abord. Détail moteur mobile : `offline-sync/SKILL.md`.
+> **Contrat figé en Phase 0.** Implémentation : `POST /sync/push`, `GET /sync/pull` ; `Prise.server_version` ; mobile SyncEngine batch + cursor `"{updated_at_iso}|{prise_id}"` (prefs `sync_pull_cursor_v1`). Détail moteur : `offline-sync/SKILL.md`.
 
 | Méthode | Chemin | Entrée | Sortie | Erreurs possibles |
 |---|---|---|---|---|
 | POST | `/sync/push` | 🔒 `{mutations: [{mutation_id, entity, entity_id, op, payload, client_ts}]}` | `{results: [{mutation_id, status: applied\|duplicate\|rejected, reason?}]}` — traitement ordonné ; une mutation `rejected` n’annule pas les autres | `MUTATION_REJECTED`, `SYNC_CONFLICT` |
-| GET | `/sync/pull` | 🔒 `since?` (cursor opaque) | `{entities: [...], next_cursor, server_time}` — delta ; chaque entité porte `id`, `server_version`, `updated_at` | — |
+| GET | `/sync/pull` | 🔒 `since?` (cursor opaque `{updated_at}|{prise_id}`) | `{entities: [...], next_cursor, server_time}` — delta ; MVP `type: prise\|traitement` + `id`, `server_version`, `updated_at` | — |
 
 Notes :
 

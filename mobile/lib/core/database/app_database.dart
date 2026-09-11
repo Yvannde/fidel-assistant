@@ -24,7 +24,17 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.memory() : super(openMemoryConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) => m.createAll(),
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.addColumn(priseSnapshots, priseSnapshots.serverVersion);
+          }
+        },
+      );
 
   // --- Prises ---
 
@@ -59,6 +69,7 @@ class AppDatabase extends _$AppDatabase {
             medicamentNom: Value(p.medicamentNom),
             dosage: Value(p.dosage),
             updatedAt: Value(DateTime.now().toUtc()),
+            serverVersion: const Value(1),
             payloadJson: Value(
               jsonEncode({
                 'id': p.id,
@@ -293,6 +304,104 @@ class AppDatabase extends _$AppDatabase {
     await (delete(syncOutboxEntries)
           ..where((t) => t.mutationId.equals(mutationId)))
         .go();
+  }
+
+  Future<bool> hasPendingOutboxForEntity(String entityId) async {
+    final rows = await (select(syncOutboxEntries)
+          ..where(
+            (t) =>
+                t.entityId.equals(entityId) &
+                t.state.isIn([
+                  SyncOutboxState.pending.wireName,
+                  SyncOutboxState.inflight.wireName,
+                ]),
+          ))
+        .get();
+    return rows.isNotEmpty;
+  }
+
+  /// Merge entities from GET /sync/pull. Skips prises with pending outbox.
+  Future<void> mergePullEntities(List<Map<String, dynamic>> entities) async {
+    for (final raw in entities) {
+      final type = raw['type'] as String?;
+      if (type == 'prise') {
+        await _mergePriseEntity(raw);
+      } else if (type == 'traitement') {
+        await _mergeTraitementEntity(raw);
+      }
+    }
+  }
+
+  Future<void> _mergePriseEntity(Map<String, dynamic> raw) async {
+    final id = raw['id'] as String?;
+    if (id == null || id.isEmpty) return;
+    if (await hasPendingOutboxForEntity(id)) return;
+
+    final remoteVersion = (raw['server_version'] as num?)?.toInt() ?? 1;
+    final existing = await getPrise(id);
+    if (existing != null && existing.serverVersion >= remoteVersion) {
+      return;
+    }
+
+    final heureRaw = raw['heure_prevue'] as String?;
+    final heure = heureRaw != null
+        ? DateTime.parse(heureRaw).toUtc()
+        : (existing?.heurePrevue ?? DateTime.now().toUtc());
+    final dateKey =
+        '${heure.toLocal().year.toString().padLeft(4, '0')}-'
+        '${heure.toLocal().month.toString().padLeft(2, '0')}-'
+        '${heure.toLocal().day.toString().padLeft(2, '0')}';
+    final updatedAtRaw = raw['updated_at'] as String?;
+    final updatedAt = updatedAtRaw != null
+        ? DateTime.parse(updatedAtRaw).toUtc()
+        : DateTime.now().toUtc();
+
+    final payload = Map<String, dynamic>.from(raw)
+      ..remove('type')
+      ..remove('server_version');
+
+    await into(priseSnapshots).insert(
+      PriseSnapshotsCompanion.insert(
+        id: id,
+        dateKey: dateKey,
+        heurePrevue: heure,
+        statut: (raw['statut'] as String?) ?? existing?.statut ?? 'en_attente',
+        medicamentNom: Value(
+          raw['medicament_nom'] as String? ??
+              existing?.medicamentNom ??
+              '',
+        ),
+        dosage: Value(raw['dosage'] as String? ?? existing?.dosage ?? ''),
+        updatedAt: Value(updatedAt),
+        serverVersion: Value(remoteVersion),
+        payloadJson: Value(jsonEncode(payload)),
+      ),
+      mode: InsertMode.insertOrReplace,
+    );
+  }
+
+  Future<void> _mergeTraitementEntity(Map<String, dynamic> raw) async {
+    final id = raw['id'] as String?;
+    if (id == null || id.isEmpty) return;
+    final payload = raw['payload'];
+    final payloadMap = payload is Map
+        ? Map<String, dynamic>.from(payload)
+        : Map<String, dynamic>.from(raw)
+      ..remove('type')
+      ..remove('server_version')
+      ..remove('updated_at');
+    final updatedAtRaw = raw['updated_at'] as String?;
+    final updatedAt = updatedAtRaw != null
+        ? DateTime.parse(updatedAtRaw).toUtc()
+        : DateTime.now().toUtc();
+    await into(traitementMirrors).insert(
+      TraitementMirrorsCompanion.insert(
+        id: id,
+        payloadJson: jsonEncode(payloadMap),
+        updatedAt: updatedAt,
+      ),
+      mode: InsertMode.insertOrReplace,
+    );
   }
 
   SyncOutboxEntry _outboxFromRow(OutboxRow row) {

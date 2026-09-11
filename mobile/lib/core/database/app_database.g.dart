@@ -52,6 +52,14 @@ class $PriseSnapshotsTable extends PriseSnapshots
   late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
       'updated_at', aliasedName, true,
       type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _serverVersionMeta =
+      const VerificationMeta('serverVersion');
+  @override
+  late final GeneratedColumn<int> serverVersion = GeneratedColumn<int>(
+      'server_version', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1));
   static const VerificationMeta _payloadJsonMeta =
       const VerificationMeta('payloadJson');
   @override
@@ -67,6 +75,7 @@ class $PriseSnapshotsTable extends PriseSnapshots
         medicamentNom,
         dosage,
         updatedAt,
+        serverVersion,
         payloadJson
       ];
   @override
@@ -118,6 +127,12 @@ class $PriseSnapshotsTable extends PriseSnapshots
       context.handle(_updatedAtMeta,
           updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
     }
+    if (data.containsKey('server_version')) {
+      context.handle(
+          _serverVersionMeta,
+          serverVersion.isAcceptableOrUnknown(
+              data['server_version']!, _serverVersionMeta));
+    }
     if (data.containsKey('payload_json')) {
       context.handle(
           _payloadJsonMeta,
@@ -147,6 +162,8 @@ class $PriseSnapshotsTable extends PriseSnapshots
           .read(DriftSqlType.string, data['${effectivePrefix}dosage'])!,
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      serverVersion: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}server_version'])!,
       payloadJson: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}payload_json']),
     );
@@ -166,6 +183,7 @@ class PriseSnapshot extends DataClass implements Insertable<PriseSnapshot> {
   final String medicamentNom;
   final String dosage;
   final DateTime? updatedAt;
+  final int serverVersion;
   final String? payloadJson;
   const PriseSnapshot(
       {required this.id,
@@ -175,6 +193,7 @@ class PriseSnapshot extends DataClass implements Insertable<PriseSnapshot> {
       required this.medicamentNom,
       required this.dosage,
       this.updatedAt,
+      required this.serverVersion,
       this.payloadJson});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -188,6 +207,7 @@ class PriseSnapshot extends DataClass implements Insertable<PriseSnapshot> {
     if (!nullToAbsent || updatedAt != null) {
       map['updated_at'] = Variable<DateTime>(updatedAt);
     }
+    map['server_version'] = Variable<int>(serverVersion);
     if (!nullToAbsent || payloadJson != null) {
       map['payload_json'] = Variable<String>(payloadJson);
     }
@@ -205,6 +225,7 @@ class PriseSnapshot extends DataClass implements Insertable<PriseSnapshot> {
       updatedAt: updatedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(updatedAt),
+      serverVersion: Value(serverVersion),
       payloadJson: payloadJson == null && nullToAbsent
           ? const Value.absent()
           : Value(payloadJson),
@@ -222,6 +243,7 @@ class PriseSnapshot extends DataClass implements Insertable<PriseSnapshot> {
       medicamentNom: serializer.fromJson<String>(json['medicamentNom']),
       dosage: serializer.fromJson<String>(json['dosage']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      serverVersion: serializer.fromJson<int>(json['serverVersion']),
       payloadJson: serializer.fromJson<String?>(json['payloadJson']),
     );
   }
@@ -236,6 +258,7 @@ class PriseSnapshot extends DataClass implements Insertable<PriseSnapshot> {
       'medicamentNom': serializer.toJson<String>(medicamentNom),
       'dosage': serializer.toJson<String>(dosage),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'serverVersion': serializer.toJson<int>(serverVersion),
       'payloadJson': serializer.toJson<String?>(payloadJson),
     };
   }
@@ -248,6 +271,7 @@ class PriseSnapshot extends DataClass implements Insertable<PriseSnapshot> {
           String? medicamentNom,
           String? dosage,
           Value<DateTime?> updatedAt = const Value.absent(),
+          int? serverVersion,
           Value<String?> payloadJson = const Value.absent()}) =>
       PriseSnapshot(
         id: id ?? this.id,
@@ -257,6 +281,7 @@ class PriseSnapshot extends DataClass implements Insertable<PriseSnapshot> {
         medicamentNom: medicamentNom ?? this.medicamentNom,
         dosage: dosage ?? this.dosage,
         updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        serverVersion: serverVersion ?? this.serverVersion,
         payloadJson: payloadJson.present ? payloadJson.value : this.payloadJson,
       );
   PriseSnapshot copyWithCompanion(PriseSnapshotsCompanion data) {
@@ -271,6 +296,9 @@ class PriseSnapshot extends DataClass implements Insertable<PriseSnapshot> {
           : this.medicamentNom,
       dosage: data.dosage.present ? data.dosage.value : this.dosage,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      serverVersion: data.serverVersion.present
+          ? data.serverVersion.value
+          : this.serverVersion,
       payloadJson:
           data.payloadJson.present ? data.payloadJson.value : this.payloadJson,
     );
@@ -286,6 +314,7 @@ class PriseSnapshot extends DataClass implements Insertable<PriseSnapshot> {
           ..write('medicamentNom: $medicamentNom, ')
           ..write('dosage: $dosage, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('serverVersion: $serverVersion, ')
           ..write('payloadJson: $payloadJson')
           ..write(')'))
         .toString();
@@ -293,7 +322,7 @@ class PriseSnapshot extends DataClass implements Insertable<PriseSnapshot> {
 
   @override
   int get hashCode => Object.hash(id, dateKey, heurePrevue, statut,
-      medicamentNom, dosage, updatedAt, payloadJson);
+      medicamentNom, dosage, updatedAt, serverVersion, payloadJson);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -305,6 +334,7 @@ class PriseSnapshot extends DataClass implements Insertable<PriseSnapshot> {
           other.medicamentNom == this.medicamentNom &&
           other.dosage == this.dosage &&
           other.updatedAt == this.updatedAt &&
+          other.serverVersion == this.serverVersion &&
           other.payloadJson == this.payloadJson);
 }
 
@@ -316,6 +346,7 @@ class PriseSnapshotsCompanion extends UpdateCompanion<PriseSnapshot> {
   final Value<String> medicamentNom;
   final Value<String> dosage;
   final Value<DateTime?> updatedAt;
+  final Value<int> serverVersion;
   final Value<String?> payloadJson;
   final Value<int> rowid;
   const PriseSnapshotsCompanion({
@@ -326,6 +357,7 @@ class PriseSnapshotsCompanion extends UpdateCompanion<PriseSnapshot> {
     this.medicamentNom = const Value.absent(),
     this.dosage = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.serverVersion = const Value.absent(),
     this.payloadJson = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -337,6 +369,7 @@ class PriseSnapshotsCompanion extends UpdateCompanion<PriseSnapshot> {
     this.medicamentNom = const Value.absent(),
     this.dosage = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.serverVersion = const Value.absent(),
     this.payloadJson = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
@@ -351,6 +384,7 @@ class PriseSnapshotsCompanion extends UpdateCompanion<PriseSnapshot> {
     Expression<String>? medicamentNom,
     Expression<String>? dosage,
     Expression<DateTime>? updatedAt,
+    Expression<int>? serverVersion,
     Expression<String>? payloadJson,
     Expression<int>? rowid,
   }) {
@@ -362,6 +396,7 @@ class PriseSnapshotsCompanion extends UpdateCompanion<PriseSnapshot> {
       if (medicamentNom != null) 'medicament_nom': medicamentNom,
       if (dosage != null) 'dosage': dosage,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (serverVersion != null) 'server_version': serverVersion,
       if (payloadJson != null) 'payload_json': payloadJson,
       if (rowid != null) 'rowid': rowid,
     });
@@ -375,6 +410,7 @@ class PriseSnapshotsCompanion extends UpdateCompanion<PriseSnapshot> {
       Value<String>? medicamentNom,
       Value<String>? dosage,
       Value<DateTime?>? updatedAt,
+      Value<int>? serverVersion,
       Value<String?>? payloadJson,
       Value<int>? rowid}) {
     return PriseSnapshotsCompanion(
@@ -385,6 +421,7 @@ class PriseSnapshotsCompanion extends UpdateCompanion<PriseSnapshot> {
       medicamentNom: medicamentNom ?? this.medicamentNom,
       dosage: dosage ?? this.dosage,
       updatedAt: updatedAt ?? this.updatedAt,
+      serverVersion: serverVersion ?? this.serverVersion,
       payloadJson: payloadJson ?? this.payloadJson,
       rowid: rowid ?? this.rowid,
     );
@@ -414,6 +451,9 @@ class PriseSnapshotsCompanion extends UpdateCompanion<PriseSnapshot> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
+    if (serverVersion.present) {
+      map['server_version'] = Variable<int>(serverVersion.value);
+    }
     if (payloadJson.present) {
       map['payload_json'] = Variable<String>(payloadJson.value);
     }
@@ -433,6 +473,7 @@ class PriseSnapshotsCompanion extends UpdateCompanion<PriseSnapshot> {
           ..write('medicamentNom: $medicamentNom, ')
           ..write('dosage: $dosage, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('serverVersion: $serverVersion, ')
           ..write('payloadJson: $payloadJson, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -1590,6 +1631,7 @@ typedef $$PriseSnapshotsTableCreateCompanionBuilder = PriseSnapshotsCompanion
   Value<String> medicamentNom,
   Value<String> dosage,
   Value<DateTime?> updatedAt,
+  Value<int> serverVersion,
   Value<String?> payloadJson,
   Value<int> rowid,
 });
@@ -1602,6 +1644,7 @@ typedef $$PriseSnapshotsTableUpdateCompanionBuilder = PriseSnapshotsCompanion
   Value<String> medicamentNom,
   Value<String> dosage,
   Value<DateTime?> updatedAt,
+  Value<int> serverVersion,
   Value<String?> payloadJson,
   Value<int> rowid,
 });
@@ -1635,6 +1678,9 @@ class $$PriseSnapshotsTableFilterComposer
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get serverVersion => $composableBuilder(
+      column: $table.serverVersion, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get payloadJson => $composableBuilder(
       column: $table.payloadJson, builder: (column) => ColumnFilters(column));
@@ -1671,6 +1717,10 @@ class $$PriseSnapshotsTableOrderingComposer
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<int> get serverVersion => $composableBuilder(
+      column: $table.serverVersion,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get payloadJson => $composableBuilder(
       column: $table.payloadJson, builder: (column) => ColumnOrderings(column));
 }
@@ -1704,6 +1754,9 @@ class $$PriseSnapshotsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get serverVersion => $composableBuilder(
+      column: $table.serverVersion, builder: (column) => column);
 
   GeneratedColumn<String> get payloadJson => $composableBuilder(
       column: $table.payloadJson, builder: (column) => column);
@@ -1743,6 +1796,7 @@ class $$PriseSnapshotsTableTableManager extends RootTableManager<
             Value<String> medicamentNom = const Value.absent(),
             Value<String> dosage = const Value.absent(),
             Value<DateTime?> updatedAt = const Value.absent(),
+            Value<int> serverVersion = const Value.absent(),
             Value<String?> payloadJson = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -1754,6 +1808,7 @@ class $$PriseSnapshotsTableTableManager extends RootTableManager<
             medicamentNom: medicamentNom,
             dosage: dosage,
             updatedAt: updatedAt,
+            serverVersion: serverVersion,
             payloadJson: payloadJson,
             rowid: rowid,
           ),
@@ -1765,6 +1820,7 @@ class $$PriseSnapshotsTableTableManager extends RootTableManager<
             Value<String> medicamentNom = const Value.absent(),
             Value<String> dosage = const Value.absent(),
             Value<DateTime?> updatedAt = const Value.absent(),
+            Value<int> serverVersion = const Value.absent(),
             Value<String?> payloadJson = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -1776,15 +1832,12 @@ class $$PriseSnapshotsTableTableManager extends RootTableManager<
             medicamentNom: medicamentNom,
             dosage: dosage,
             updatedAt: updatedAt,
+            serverVersion: serverVersion,
             payloadJson: payloadJson,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (
-                    e.readTable<$PriseSnapshotsTable, PriseSnapshot>(table),
-                    BaseReferences<_$AppDatabase, $PriseSnapshotsTable,
-                        PriseSnapshot>(db, table, e)
-                  ))
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -1929,12 +1982,7 @@ class $$TraitementMirrorsTableTableManager extends RootTableManager<
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (
-                    e.readTable<$TraitementMirrorsTable, TraitementMirror>(
-                        table),
-                    BaseReferences<_$AppDatabase, $TraitementMirrorsTable,
-                        TraitementMirror>(db, table, e)
-                  ))
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -2185,11 +2233,7 @@ class $$SyncOutboxEntriesTableTableManager extends RootTableManager<
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (
-                    e.readTable<$SyncOutboxEntriesTable, OutboxRow>(table),
-                    BaseReferences<_$AppDatabase, $SyncOutboxEntriesTable,
-                        OutboxRow>(db, table, e)
-                  ))
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: null,
         ));
@@ -2381,12 +2425,7 @@ class $$DashboardSnapshotsTableTableManager extends RootTableManager<
             updatedAt: updatedAt,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (
-                    e.readTable<$DashboardSnapshotsTable, DashboardSnapshot>(
-                        table),
-                    BaseReferences<_$AppDatabase, $DashboardSnapshotsTable,
-                        DashboardSnapshot>(db, table, e)
-                  ))
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: null,
         ));

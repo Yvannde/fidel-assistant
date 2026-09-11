@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/database/providers.dart';
 import '../core/locale/locale_controller.dart';
 import '../features/home/application/home_controller.dart';
 import '../features/home/data/home_repository.dart';
@@ -115,6 +116,7 @@ Future<void> syncRemindersFromHome(
   final alarms = read(reminderAlarmServiceProvider);
   final alarmPrefs = read(alarmPrefsProvider);
   final prefs = read(sharedPreferencesProvider);
+  final db = read(appDatabaseProvider);
 
   try {
     await engine.flush();
@@ -167,10 +169,17 @@ Future<void> syncRemindersFromHome(
   }
 
   addPrises(dashboard.prisesAujourdhui);
+  try {
+    await db.upsertPrises(dashboard.prisesAujourdhui);
+  } catch (_) {}
+
   final extraDays = ReminderSyncPerf.extraDaysToFetch(now);
   for (var i = 1; i <= extraDays; i++) {
     try {
       final list = await repo.listPrises(date: today.add(Duration(days: i)));
+      try {
+        await db.upsertPrises(list);
+      } catch (_) {}
       addPrises(list);
     } catch (_) {}
   }

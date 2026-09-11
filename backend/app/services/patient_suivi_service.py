@@ -605,7 +605,13 @@ def _prise_snapshot(prise: Prise) -> dict:
         "confirmee_at": prise.confirmee_at.isoformat() if prise.confirmee_at else None,
         "canal": prise.canal,
         "heure_prevue": prise.heure_prevue.isoformat() if prise.heure_prevue else None,
+        "updated_at": prise.updated_at.isoformat() if prise.updated_at else None,
+        "server_version": getattr(prise, "server_version", 1),
     }
+
+
+def _bump_server_version(prise: Prise) -> None:
+    prise.server_version = int(getattr(prise, "server_version", 1) or 1) + 1
 
 
 async def _record_client_mutation(
@@ -704,11 +710,14 @@ async def confirmer_prise(
     prise.statut = "confirmee"
     prise.confirmee_at = datetime.now(UTC)
     prise.canal = canal
+    _bump_server_version(prise)
     result = {
         "id": prise.id,
         "statut": prise.statut,
         "confirmee_at": prise.confirmee_at,
         "canal": prise.canal,
+        "server_version": prise.server_version,
+        "updated_at": prise.updated_at,
     }
     if client_mutation_id is not None:
         await _record_client_mutation(
@@ -739,13 +748,22 @@ async def reporter_prise(
 
     patient = _require_patient(user)
     prise = await _prise_for_patient(db, patient_id=patient.user_id, prise_id=prise_id)
+    if prise.statut == "confirmee":
+        raise AppException(
+            "SYNC_CONFLICT",
+            "Impossible de reporter une prise déjà confirmée.",
+            status_code=409,
+        )
     prise.heure_prevue = nouvelle_heure.astimezone(UTC)
     prise.statut = "en_attente"
     prise.confirmee_at = None
+    _bump_server_version(prise)
     result = {
         "id": prise.id,
         "heure_prevue": prise.heure_prevue,
         "statut": prise.statut,
+        "server_version": prise.server_version,
+        "updated_at": prise.updated_at,
     }
     if client_mutation_id is not None:
         await _record_client_mutation(
@@ -796,6 +814,7 @@ async def sync_prises_offline(
         if incoming_statut == "confirmee":
             prise.confirmee_at = item.get("confirmee_at") or datetime.now(UTC)
             prise.canal = prise.canal or "app"
+        _bump_server_version(prise)
 
         if mutation_id is not None:
             await _record_client_mutation(
