@@ -2,13 +2,18 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/database/app_database.dart';
+import '../../../core/database/providers.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/network/providers.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../../services/reminder_sync.dart';
+import '../../../services/sync_engine.dart';
+import '../../../services/sync_outbox.dart';
 import '../data/home_repository.dart';
 import '../domain/constante_models.dart';
 import '../domain/dashboard_models.dart';
+import 'home_projection.dart';
 
 final homeRepositoryProvider = Provider<HomeRepository>((ref) {
   return HomeRepository(apiClient: ref.watch(apiClientProvider));
@@ -174,9 +179,45 @@ class HomeController extends StateNotifier<HomeUiState> {
   final Ref _ref;
 
   HomeRepository get _repo => _ref.read(homeRepositoryProvider);
+  AppDatabase get _db => _ref.read(appDatabaseProvider);
+  SyncOutbox get _outbox => _ref.read(syncOutboxProvider);
+  SyncEngine get _engine => _ref.read(syncEngineProvider);
+
+  Future<PatientDashboard?> _projectFromLocal() async {
+    final base = await _db.readDashboardMeta();
+    if (base == null) return null;
+    final pending = await _outbox.listPendingForProjection();
+    return HomeProjection.projectDashboard(base: base, outbox: pending);
+  }
+
+  Future<void> _applyProjectedDashboard(PatientDashboard dashboard) async {
+    state = state.copyWith(
+      loading: false,
+      dashboard: dashboard,
+      selectedDay: homeDateOnly(DateTime.now()),
+      clearDayPrises: true,
+      clearError: true,
+    );
+  }
+
+  Future<void> reloadProjection() async {
+    final projected = await _projectFromLocal();
+    if (projected == null || !mounted) return;
+    await _applyProjectedDashboard(projected);
+    unawaited(syncRemindersFromHome(_ref.read, projected));
+  }
 
   Future<void> load({bool secondary = true}) async {
     state = state.copyWith(loading: true, clearError: true);
+
+    // Hydrate locale d’abord (offline-first).
+    try {
+      final local = await _projectFromLocal();
+      if (local != null && mounted) {
+        await _applyProjectedDashboard(local);
+      }
+    } catch (_) {}
+
     try {
       final profile = await _repo.fetchProfile();
       final session = _ref.read(authSessionProvider);
@@ -188,8 +229,17 @@ class HomeController extends StateNotifier<HomeUiState> {
       }
       PatientDashboard? dashboard;
       if (profile.hasPatientProfile) {
-        dashboard = await _repo.fetchDashboard();
+        final fetched = await _repo.fetchDashboard();
+        if (fetched != null) {
+          await _db.upsertDashboard(fetched);
+          final pending = await _outbox.listPendingForProjection();
+          dashboard = HomeProjection.projectDashboard(
+            base: fetched,
+            outbox: pending,
+          );
+        }
       }
+      if (!mounted) return;
       state = state.copyWith(
         loading: false,
         profile: profile,
@@ -206,6 +256,11 @@ class HomeController extends StateNotifier<HomeUiState> {
         unawaited(_loadSecondary());
       }
     } catch (e) {
+      // Garde la projection locale si présente.
+      if (state.dashboard != null) {
+        state = state.copyWith(loading: false, clearError: true);
+        return;
+      }
       state = state.copyWith(
         loading: false,
         error: e is ApiException ? e.message : e.toString(),
@@ -298,12 +353,18 @@ class HomeController extends StateNotifier<HomeUiState> {
   Future<void> _loadTraitements() async {
     try {
       final details = await _repo.listTraitements();
+      await _db.upsertTraitements(details);
       if (!mounted) return;
       state = state.copyWith(
         traitementDetails: {for (final t in details) t.id: t},
       );
     } catch (_) {
-      // Le dashboard suffit à afficher le traitement sans la progression.
+      try {
+        final cached = await _db.readTraitementDetails();
+        if (cached.isNotEmpty && mounted) {
+          state = state.copyWith(traitementDetails: cached);
+        }
+      } catch (_) {}
     }
   }
 
@@ -345,25 +406,6 @@ class HomeController extends StateNotifier<HomeUiState> {
     }
   }
 
-  Future<void> selectDay(DateTime day) async {
-    final picked = homeDateOnly(day);
-    if (homeSameDay(picked, state.day)) return;
-    state = state.copyWith(selectedDay: picked, busy: true, clearError: true);
-    if (homeSameDay(picked, DateTime.now())) {
-      state = state.copyWith(busy: false, clearDayPrises: true);
-      return;
-    }
-    try {
-      final prises = await _repo.listPrises(date: picked);
-      state = state.copyWith(busy: false, dayPrises: prises);
-    } catch (e) {
-      state = state.copyWith(
-        busy: false,
-        error: e is ApiException ? e.message : e.toString(),
-      );
-    }
-  }
-
   Future<void> activateFollowUp() async {
     state = state.copyWith(busy: true, clearError: true);
     try {
@@ -383,33 +425,83 @@ class HomeController extends StateNotifier<HomeUiState> {
   }
 
   Future<void> confirmPrise(String id) async {
-    await _mutatePrise(() => _repo.confirmPrise(id));
-  }
-
-  Future<void> reportPrise(String id, DateTime nouvelleHeure) async {
-    await _mutatePrise(() => _repo.reportPrise(id, nouvelleHeure));
-  }
-
-  Future<void> _mutatePrise(Future<void> Function() action) async {
     state = state.copyWith(busy: true, clearError: true);
     try {
-      await action();
-      if (state.isTodaySelected) {
-        await load(secondary: false);
-        return;
-      }
-      final prises = await _repo.listPrises(date: state.day);
-      state = state.copyWith(busy: false, dayPrises: prises);
-      final dash = state.dashboard;
-      if (dash != null) {
-        unawaited(syncRemindersFromHome(_ref.read, dash));
-      }
+      await _db.transaction(() async {
+        await _db.updatePriseLocal(id: id, statut: 'confirmee');
+        await _engine.enqueueConfirm(priseId: id);
+      });
+      await reloadProjection();
+      state = state.copyWith(busy: false);
+      unawaited(_engine.flush(force: true));
     } catch (e) {
       state = state.copyWith(
         busy: false,
         error: e is ApiException ? e.message : e.toString(),
       );
       rethrow;
+    }
+  }
+
+  Future<void> reportPrise(String id, DateTime nouvelleHeure) async {
+    state = state.copyWith(busy: true, clearError: true);
+    try {
+      await _db.transaction(() async {
+        await _db.updatePriseLocal(
+          id: id,
+          heurePrevue: nouvelleHeure,
+          statut: 'en_attente',
+        );
+        await _engine.enqueueReport(priseId: id, nouvelleHeure: nouvelleHeure);
+      });
+      await reloadProjection();
+      state = state.copyWith(busy: false);
+      unawaited(_engine.flush(force: true));
+    } catch (e) {
+      state = state.copyWith(
+        busy: false,
+        error: e is ApiException ? e.message : e.toString(),
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> selectDay(DateTime day) async {
+    final d = homeDateOnly(day);
+    if (homeSameDay(d, state.day)) return;
+    if (homeSameDay(d, DateTime.now())) {
+      state = state.copyWith(selectedDay: d, clearDayPrises: true);
+      return;
+    }
+    state = state.copyWith(selectedDay: d, busy: true, clearError: true);
+    try {
+      final local = await _db.listPrisesForDate(homeDayKey(d));
+      final pending = await _outbox.listPendingForProjection();
+      final projected = HomeProjection.applyOutbox(
+        snapshot: local,
+        outbox: pending,
+      );
+      if (projected.isNotEmpty && mounted) {
+        state = state.copyWith(busy: false, dayPrises: projected);
+      }
+      final prises = await _repo.listPrises(date: d);
+      await _db.upsertPrises(prises);
+      final pending2 = await _outbox.listPendingForProjection();
+      final merged = HomeProjection.applyOutbox(
+        snapshot: prises,
+        outbox: pending2,
+      );
+      if (!mounted) return;
+      state = state.copyWith(busy: false, dayPrises: merged);
+    } catch (e) {
+      if (state.dayPrises != null) {
+        state = state.copyWith(busy: false);
+        return;
+      }
+      state = state.copyWith(
+        busy: false,
+        error: e is ApiException ? e.message : e.toString(),
+      );
     }
   }
 

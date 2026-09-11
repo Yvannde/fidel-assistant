@@ -131,21 +131,25 @@ class DashboardOut(BaseModel):
 
 class PriseConfirmerIn(BaseModel):
     canal: str = Field(pattern="^(app|sms)$", default="app")
+    client_mutation_id: UUID | None = None
 
 
 class PriseReporterIn(BaseModel):
     nouvelle_heure: datetime
+    client_mutation_id: UUID | None = None
 
 
 class PriseSyncItemIn(BaseModel):
     id: UUID
     statut: str = Field(pattern="^(confirmee|manquee|en_attente)$")
     confirmee_at: datetime | None = None
+    client_mutation_id: UUID | None = None
 
 
 class PriseSyncOut(BaseModel):
     synced: list[UUID]
     conflicts: list[UUID]
+    duplicates: list[UUID] = []
 
 
 class MessageOut(BaseModel):

@@ -100,5 +100,8 @@ class Prise(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
     )
+    server_version: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="1", default=1
+    )
 
     horaire: Mapped[MedicamentHoraire] = relationship(back_populates="prises")

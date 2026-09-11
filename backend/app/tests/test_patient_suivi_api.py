@@ -131,6 +131,83 @@ async def test_patient_suivi_dashboard_to_prise(
 
 
 @pytest.mark.asyncio
+async def test_confirm_prise_client_mutation_idempotent(
+    client: AsyncClient,
+    auth_prefix: str,
+    onboarding_prefix: str,
+    otp_inbox: dict[str, str],
+    cgu_version: str,
+) -> None:
+    from uuid import uuid4
+
+    from app.core.config import settings
+
+    api = settings.api_v1_prefix
+    headers, _ctx = await _onboard_patient(
+        client,
+        auth_prefix,
+        onboarding_prefix,
+        otp_inbox,
+        cgu_version,
+        email="suivi.idempotent@example.com",
+    )
+
+    r = await client.get(f"{api}/patients/me/dashboard", headers=headers)
+    assert r.status_code == 200, r.text
+    traitement_id = r.json()["traitements"][0]["id"]
+
+    r = await client.post(
+        f"{api}/traitements/{traitement_id}/medicaments",
+        headers=headers,
+        json={
+            "nom": "Aspi",
+            "dosage": "100mg",
+            "forme": "comprime",
+            "horaires": [{"heure": "08:00:00", "jours": ["tous"]}],
+        },
+    )
+    assert r.status_code == 201, r.text
+
+    r = await client.get(f"{api}/patients/me/prises", headers=headers)
+    assert r.status_code == 200, r.text
+    prises = r.json()
+    assert len(prises) >= 1
+    prise_id = prises[0]["id"]
+    mutation_id = str(uuid4())
+
+    r = await client.post(
+        f"{api}/prises/{prise_id}/confirmer",
+        headers=headers,
+        json={"canal": "app", "client_mutation_id": mutation_id},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["statut"] == "confirmee"
+
+    r = await client.post(
+        f"{api}/prises/{prise_id}/confirmer",
+        headers=headers,
+        json={"canal": "app", "client_mutation_id": mutation_id},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["statut"] == "confirmee"
+
+    r = await client.post(
+        f"{api}/prises/sync-offline",
+        headers=headers,
+        json=[
+            {
+                "id": prise_id,
+                "statut": "confirmee",
+                "client_mutation_id": mutation_id,
+            }
+        ],
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert mutation_id in [str(x) for x in body.get("duplicates", [])]
+
+
+@pytest.mark.asyncio
 async def test_list_traitements_and_medicaments(
     client: AsyncClient,
     auth_prefix: str,

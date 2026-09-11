@@ -11,13 +11,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../core/database/app_database.dart';
 import '../core/network/api_client.dart';
 import '../core/storage/token_storage.dart';
 import '../features/home/data/home_repository.dart';
 import 'alarm_prefs.dart';
-import 'pending_prise_sync_queue.dart';
 import 'reminder_sync_perf.dart';
 import 'scheduled_dose.dart';
+import 'sync_engine.dart';
+import 'sync_outbox.dart';
 
 typedef ReminderNotificationCallback = void Function(NotificationResponse);
 
@@ -839,30 +841,45 @@ Future<void> reminderBackgroundHandler(NotificationResponse response) async {
 
     final prefs = await SharedPreferences.getInstance();
     final alarmPrefs = AlarmPrefs(prefs);
-    final queue = PendingPriseSyncQueue(prefs);
-    final repo =
-        HomeRepository(apiClient: ApiClient(tokenStorage: TokenStorage()));
+    final db = AppDatabase();
+    final outbox = SyncOutbox(db, prefs: prefs);
+    final engine = SyncEngine(
+      outbox: outbox,
+      gatewayFactory: () => HomeSyncPriseGateway(
+        HomeRepository(apiClient: ApiClient(tokenStorage: TokenStorage())),
+      ),
+    );
 
     if (action == ReminderAlarmService.actionConfirm) {
-      await queue.enqueueConfirm(priseId: priseId);
+      await db.transaction(() async {
+        await db.updatePriseLocal(id: priseId, statut: 'confirmee');
+        await engine.enqueueConfirm(priseId: priseId);
+      });
       try {
-        await repo.confirmPrise(priseId);
-        await queue.flush(repo);
+        await engine.flush(force: true);
       } catch (e) {
         debugPrint('reminderBackgroundHandler confirm: $e');
       }
+      await db.close();
       return;
     }
     if (action == ReminderAlarmService.actionSnooze) {
       final when =
           DateTime.now().add(Duration(minutes: alarmPrefs.snoozeMinutes));
-      await queue.enqueueReport(priseId: priseId, nouvelleHeure: when);
+      await db.transaction(() async {
+        await db.updatePriseLocal(
+          id: priseId,
+          heurePrevue: when,
+          statut: 'en_attente',
+        );
+        await engine.enqueueReport(priseId: priseId, nouvelleHeure: when);
+      });
       try {
-        await repo.reportPrise(priseId, when);
-        await queue.flush(repo);
+        await engine.flush(force: true);
       } catch (e) {
         debugPrint('reminderBackgroundHandler snooze: $e');
       }
+      await db.close();
       final alarms = ReminderAlarmService(prefs);
       await alarms.init();
       await alarms.scheduleOneShot(

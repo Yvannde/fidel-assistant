@@ -284,23 +284,64 @@ class HomeRepository {
     }
   }
 
-  Future<void> confirmPrise(String priseId) async {
+  Future<void> confirmPrise(
+    String priseId, {
+    String? clientMutationId,
+  }) async {
     try {
       await _api.post<Map<String, dynamic>>(
         '/prises/$priseId/confirmer',
-        data: {'canal': 'app'},
+        data: {
+          'canal': 'app',
+          if (clientMutationId != null) 'client_mutation_id': clientMutationId,
+        },
       );
     } on DioException catch (e) {
       ApiClient.throwApi(e);
     }
   }
 
-  Future<void> reportPrise(String priseId, DateTime nouvelleHeure) async {
+  Future<void> reportPrise(
+    String priseId,
+    DateTime nouvelleHeure, {
+    String? clientMutationId,
+  }) async {
     try {
       await _api.post<Map<String, dynamic>>(
         '/prises/$priseId/reporter',
-        data: {'nouvelle_heure': nouvelleHeure.toUtc().toIso8601String()},
+        data: {
+          'nouvelle_heure': nouvelleHeure.toUtc().toIso8601String(),
+          if (clientMutationId != null) 'client_mutation_id': clientMutationId,
+        },
       );
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  /// POST /sync/push — batch ordonné (Phase 4).
+  Future<SyncPushResponse> syncPush(List<Map<String, dynamic>> mutations) async {
+    try {
+      final res = await _api.post<Map<String, dynamic>>(
+        '/sync/push',
+        data: {'mutations': mutations},
+      );
+      return SyncPushResponse.fromJson(res.data ?? {});
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  /// GET /sync/pull — delta cursor (Phase 4).
+  Future<SyncPullResponse> syncPull({String? since}) async {
+    try {
+      final res = await _api.get<Map<String, dynamic>>(
+        '/sync/pull',
+        queryParameters: {
+          if (since != null && since.isNotEmpty) 'since': since,
+        },
+      );
+      return SyncPullResponse.fromJson(res.data ?? {});
     } on DioException catch (e) {
       ApiClient.throwApi(e);
     }
@@ -532,5 +573,70 @@ class HomeRepository {
     } on DioException catch (e) {
       ApiClient.throwApi(e);
     }
+  }
+}
+
+class SyncPushResultItem {
+  const SyncPushResultItem({
+    required this.mutationId,
+    required this.status,
+    this.reason,
+  });
+
+  final String mutationId;
+  final String status; // applied | duplicate | rejected
+  final String? reason;
+
+  factory SyncPushResultItem.fromJson(Map<String, dynamic> json) {
+    return SyncPushResultItem(
+      mutationId: '${json['mutation_id'] ?? ''}',
+      status: '${json['status'] ?? 'rejected'}',
+      reason: json['reason'] as String?,
+    );
+  }
+}
+
+class SyncPushResponse {
+  const SyncPushResponse({required this.results});
+
+  final List<SyncPushResultItem> results;
+
+  factory SyncPushResponse.fromJson(Map<String, dynamic> json) {
+    final raw = json['results'];
+    final list = raw is List
+        ? raw
+            .whereType<Map>()
+            .map((e) => SyncPushResultItem.fromJson(Map<String, dynamic>.from(e)))
+            .toList()
+        : <SyncPushResultItem>[];
+    return SyncPushResponse(results: list);
+  }
+}
+
+class SyncPullResponse {
+  const SyncPullResponse({
+    required this.entities,
+    this.nextCursor,
+    this.serverTime,
+  });
+
+  final List<Map<String, dynamic>> entities;
+  final String? nextCursor;
+  final DateTime? serverTime;
+
+  factory SyncPullResponse.fromJson(Map<String, dynamic> json) {
+    final raw = json['entities'];
+    final entities = raw is List
+        ? raw
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList()
+        : <Map<String, dynamic>>[];
+    final st = json['server_time'];
+    return SyncPullResponse(
+      entities: entities,
+      nextCursor: json['next_cursor'] as String?,
+      serverTime: st is String ? DateTime.tryParse(st)?.toUtc() : null,
+    );
   }
 }

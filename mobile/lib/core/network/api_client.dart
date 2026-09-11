@@ -10,7 +10,9 @@ class ApiClient {
     required TokenStorage tokenStorage,
     Dio? dio,
     Dio? refreshDio,
+    void Function(Headers headers)? onResponseHeaders,
   })  : _tokenStorage = tokenStorage,
+        _onResponseHeaders = onResponseHeaders,
         _dio = dio ??
             Dio(
               BaseOptions(
@@ -35,6 +37,26 @@ class ApiClient {
                 },
               ),
             ) {
+    void captureDate(Response<dynamic> response) {
+      _onResponseHeaders?.call(response.headers);
+    }
+
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onResponse: (response, handler) {
+          captureDate(response);
+          handler.next(response);
+        },
+      ),
+    );
+    _refreshDio.interceptors.add(
+      InterceptorsWrapper(
+        onResponse: (response, handler) {
+          captureDate(response);
+          handler.next(response);
+        },
+      ),
+    );
     _dio.interceptors.add(
       QueuedInterceptorsWrapper(
         onRequest: (options, handler) async {
@@ -82,6 +104,7 @@ class ApiClient {
   final TokenStorage _tokenStorage;
   final Dio _dio;
   final Dio _refreshDio;
+  final void Function(Headers headers)? _onResponseHeaders;
 
   Dio get raw => _dio;
 

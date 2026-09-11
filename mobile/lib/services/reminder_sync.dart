@@ -3,15 +3,16 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/database/providers.dart';
 import '../core/locale/locale_controller.dart';
 import '../features/home/application/home_controller.dart';
 import '../features/home/data/home_repository.dart';
 import '../features/home/domain/dashboard_models.dart';
 import 'alarm_prefs.dart';
-import 'pending_prise_sync_queue.dart';
 import 'reminder_alarm_service.dart';
 import 'reminder_sync_perf.dart';
 import 'scheduled_dose.dart';
+import 'sync_engine.dart';
 
 final reminderAlarmServiceProvider = Provider<ReminderAlarmService>((ref) {
   return ReminderAlarmService(ref.watch(sharedPreferencesProvider));
@@ -21,9 +22,8 @@ final alarmPrefsProvider = Provider<AlarmPrefs>((ref) {
   return AlarmPrefs(ref.watch(sharedPreferencesProvider));
 });
 
-final pendingPriseSyncQueueProvider = Provider<PendingPriseSyncQueue>((ref) {
-  return PendingPriseSyncQueue(ref.watch(sharedPreferencesProvider));
-});
+const _syncGateKey = 'reminder_sync_gate_v1';
+const _voixMetaPrefsKey = 'reminder_voix_meta_v1';
 
 const _syncGateKey = 'reminder_sync_gate_v1';
 const _voixMetaPrefsKey = 'reminder_voix_meta_v1';
@@ -39,8 +39,7 @@ class ReminderActionDispatcher {
     final priseId = payload['priseId'] as String?;
     final kind = payload['kind'] as String?;
     final alarms = _container.read(reminderAlarmServiceProvider);
-    final queue = _container.read(pendingPriseSyncQueueProvider);
-    final repo = _container.read(homeRepositoryProvider);
+    final engine = _container.read(syncEngineProvider);
     final snoozeMin = _container.read(alarmPrefsProvider).snoozeMinutes;
 
     debugPrint(
@@ -61,27 +60,25 @@ class ReminderActionDispatcher {
     await alarms.cancelPrise(priseId);
 
     if (response.actionId == ReminderAlarmService.actionConfirm) {
-      await queue.enqueueConfirm(priseId: priseId);
+      await engine.enqueueConfirm(priseId: priseId);
       try {
-        await repo.confirmPrise(priseId);
-        await queue.flush(repo);
+        await engine.flush(force: true);
       } catch (e) {
         debugPrint('ReminderAction confirm: $e');
       }
       try {
         await _container
             .read(homeControllerProvider.notifier)
-            .load(secondary: false);
+            .reloadProjection();
       } catch (_) {}
       return;
     }
 
     if (response.actionId == ReminderAlarmService.actionSnooze) {
       final when = DateTime.now().add(Duration(minutes: snoozeMin));
-      await queue.enqueueReport(priseId: priseId, nouvelleHeure: when);
+      await engine.enqueueReport(priseId: priseId, nouvelleHeure: when);
       try {
-        await repo.reportPrise(priseId, when);
-        await queue.flush(repo);
+        await engine.flush(force: true);
       } catch (e) {
         debugPrint('ReminderAction snooze: $e');
       }
@@ -96,7 +93,7 @@ class ReminderActionDispatcher {
       try {
         await _container
             .read(homeControllerProvider.notifier)
-            .load(secondary: false);
+            .reloadProjection();
       } catch (_) {}
     }
   }
@@ -118,13 +115,14 @@ Future<void> syncRemindersFromHome(
   if (!dashboard.notificationsAccordees) return;
 
   final repo = read(homeRepositoryProvider);
-  final queue = read(pendingPriseSyncQueueProvider);
+  final engine = read(syncEngineProvider);
   final alarms = read(reminderAlarmServiceProvider);
   final alarmPrefs = read(alarmPrefsProvider);
   final prefs = read(sharedPreferencesProvider);
+  final db = read(appDatabaseProvider);
 
   try {
-    await queue.flush(repo);
+    await engine.flush();
   } catch (_) {}
 
   final dashFp = ReminderSyncPerf.dashboardPendingFingerprint(
@@ -174,10 +172,17 @@ Future<void> syncRemindersFromHome(
   }
 
   addPrises(dashboard.prisesAujourdhui);
+  try {
+    await db.upsertPrises(dashboard.prisesAujourdhui);
+  } catch (_) {}
+
   final extraDays = ReminderSyncPerf.extraDaysToFetch(now);
   for (var i = 1; i <= extraDays; i++) {
     try {
       final list = await repo.listPrises(date: today.add(Duration(days: i)));
+      try {
+        await db.upsertPrises(list);
+      } catch (_) {}
       addPrises(list);
     } catch (_) {}
   }

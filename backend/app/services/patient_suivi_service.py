@@ -12,6 +12,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import AppException
 from app.models import (
+    ClientMutation,
     Maladie,
     Medicament,
     MedicamentHoraire,
@@ -591,39 +592,191 @@ async def _prise_for_patient(db: AsyncSession, *, patient_id: UUID, prise_id: UU
     return prise
 
 
+async def _get_client_mutation(
+    db: AsyncSession, *, mutation_id: UUID
+) -> ClientMutation | None:
+    return await db.get(ClientMutation, mutation_id)
+
+
+def _prise_snapshot(prise: Prise) -> dict:
+    return {
+        "id": str(prise.id),
+        "statut": prise.statut,
+        "confirmee_at": prise.confirmee_at.isoformat() if prise.confirmee_at else None,
+        "canal": prise.canal,
+        "heure_prevue": prise.heure_prevue.isoformat() if prise.heure_prevue else None,
+        "updated_at": prise.updated_at.isoformat() if prise.updated_at else None,
+        "server_version": getattr(prise, "server_version", 1),
+    }
+
+
+def _bump_server_version(prise: Prise) -> None:
+    prise.server_version = int(getattr(prise, "server_version", 1) or 1) + 1
+
+
+async def _record_client_mutation(
+    db: AsyncSession,
+    *,
+    mutation_id: UUID,
+    user_id: UUID,
+    entity: str,
+    entity_id: UUID | None,
+    op: str,
+    result: dict,
+) -> None:
+    # Serialize UUIDs / datetimes for JSONB
+    snapshot: dict = {}
+    for k, v in result.items():
+        if isinstance(v, UUID):
+            snapshot[k] = str(v)
+        elif isinstance(v, datetime):
+            snapshot[k] = v.isoformat()
+        else:
+            snapshot[k] = v
+    db.add(
+        ClientMutation(
+            mutation_id=mutation_id,
+            user_id=user_id,
+            entity=entity,
+            entity_id=entity_id,
+            op=op,
+            result_snapshot=snapshot,
+        )
+    )
+
+
+def _replay_snapshot(snapshot: dict | None) -> dict:
+    if not snapshot:
+        return {}
+    out: dict = {}
+    for k, v in snapshot.items():
+        if k in ("id",) and isinstance(v, str):
+            try:
+                out[k] = UUID(v)
+            except ValueError:
+                out[k] = v
+        elif k in ("confirmee_at", "heure_prevue") and isinstance(v, str):
+            try:
+                out[k] = datetime.fromisoformat(v)
+            except ValueError:
+                out[k] = v
+        else:
+            out[k] = v
+    return out
+
+
 async def confirmer_prise(
-    db: AsyncSession, *, user: User, prise_id: UUID, canal: str
+    db: AsyncSession,
+    *,
+    user: User,
+    prise_id: UUID,
+    canal: str,
+    client_mutation_id: UUID | None = None,
 ) -> dict:
+    if client_mutation_id is not None:
+        existing = await _get_client_mutation(db, mutation_id=client_mutation_id)
+        if existing is not None:
+            return _replay_snapshot(existing.result_snapshot)
+
     patient = _require_patient(user)
     prise = await _prise_for_patient(db, patient_id=patient.user_id, prise_id=prise_id)
+
     if prise.statut == "confirmee":
-        raise AppException(
-            "PRISE_DEJA_CONFIRMEE",
-            "Cette prise est déjà confirmée.",
-            status_code=409,
+        if client_mutation_id is None:
+            raise AppException(
+                "PRISE_DEJA_CONFIRMEE",
+                "Cette prise est déjà confirmée.",
+                status_code=409,
+            )
+        # Nouveau mutation_id sur prise déjà confirmée → succès idempotent.
+        result = {
+            "id": prise.id,
+            "statut": prise.statut,
+            "confirmee_at": prise.confirmee_at,
+            "canal": prise.canal,
+        }
+        await _record_client_mutation(
+            db,
+            mutation_id=client_mutation_id,
+            user_id=user.id,
+            entity="prise",
+            entity_id=prise.id,
+            op="confirm",
+            result=result,
         )
+        await db.commit()
+        return result
+
     prise.statut = "confirmee"
     prise.confirmee_at = datetime.now(UTC)
     prise.canal = canal
-    await db.commit()
-    return {
+    _bump_server_version(prise)
+    result = {
         "id": prise.id,
         "statut": prise.statut,
         "confirmee_at": prise.confirmee_at,
         "canal": prise.canal,
+        "server_version": prise.server_version,
+        "updated_at": prise.updated_at,
     }
+    if client_mutation_id is not None:
+        await _record_client_mutation(
+            db,
+            mutation_id=client_mutation_id,
+            user_id=user.id,
+            entity="prise",
+            entity_id=prise.id,
+            op="confirm",
+            result=result,
+        )
+    await db.commit()
+    return result
 
 
 async def reporter_prise(
-    db: AsyncSession, *, user: User, prise_id: UUID, nouvelle_heure: datetime
+    db: AsyncSession,
+    *,
+    user: User,
+    prise_id: UUID,
+    nouvelle_heure: datetime,
+    client_mutation_id: UUID | None = None,
 ) -> dict:
+    if client_mutation_id is not None:
+        existing = await _get_client_mutation(db, mutation_id=client_mutation_id)
+        if existing is not None:
+            return _replay_snapshot(existing.result_snapshot)
+
     patient = _require_patient(user)
     prise = await _prise_for_patient(db, patient_id=patient.user_id, prise_id=prise_id)
+    if prise.statut == "confirmee":
+        raise AppException(
+            "SYNC_CONFLICT",
+            "Impossible de reporter une prise déjà confirmée.",
+            status_code=409,
+        )
     prise.heure_prevue = nouvelle_heure.astimezone(UTC)
     prise.statut = "en_attente"
     prise.confirmee_at = None
+    _bump_server_version(prise)
+    result = {
+        "id": prise.id,
+        "heure_prevue": prise.heure_prevue,
+        "statut": prise.statut,
+        "server_version": prise.server_version,
+        "updated_at": prise.updated_at,
+    }
+    if client_mutation_id is not None:
+        await _record_client_mutation(
+            db,
+            mutation_id=client_mutation_id,
+            user_id=user.id,
+            entity="prise",
+            entity_id=prise.id,
+            op="report",
+            result=result,
+        )
     await db.commit()
-    return {"id": prise.id, "heure_prevue": prise.heure_prevue, "statut": prise.statut}
+    return result
 
 
 async def sync_prises_offline(
@@ -632,11 +785,22 @@ async def sync_prises_offline(
     patient = _require_patient(user)
     synced: list[UUID] = []
     conflicts: list[UUID] = []
+    duplicates: list[UUID] = []
 
     for item in items:
         prise_id = item["id"]
+        mutation_id = item.get("client_mutation_id")
+
+        if mutation_id is not None:
+            existing = await _get_client_mutation(db, mutation_id=mutation_id)
+            if existing is not None:
+                duplicates.append(mutation_id)
+                continue
+
         try:
-            prise = await _prise_for_patient(db, patient_id=patient.user_id, prise_id=prise_id)
+            prise = await _prise_for_patient(
+                db, patient_id=patient.user_id, prise_id=prise_id
+            )
         except AppException:
             conflicts.append(prise_id)
             continue
@@ -650,7 +814,19 @@ async def sync_prises_offline(
         if incoming_statut == "confirmee":
             prise.confirmee_at = item.get("confirmee_at") or datetime.now(UTC)
             prise.canal = prise.canal or "app"
+        _bump_server_version(prise)
+
+        if mutation_id is not None:
+            await _record_client_mutation(
+                db,
+                mutation_id=mutation_id,
+                user_id=user.id,
+                entity="prise",
+                entity_id=prise.id,
+                op="confirm" if incoming_statut == "confirmee" else "sync",
+                result=_prise_snapshot(prise),
+            )
         synced.append(prise_id)
 
     await db.commit()
-    return {"synced": synced, "conflicts": conflicts}
+    return {"synced": synced, "conflicts": conflicts, "duplicates": duplicates}

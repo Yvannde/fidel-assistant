@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/premium.dart';
+import '../../../services/sync_engine.dart';
 import '../application/home_controller.dart';
 import 'home_care_screen.dart';
 import 'home_dashboard_screen.dart';
@@ -27,6 +28,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<int>(syncPullTickProvider, (prev, next) {
+      if (prev == next) return;
+      ref.read(homeControllerProvider.notifier).reloadProjection();
+    });
     final index = ref.watch(homeTabIndexProvider);
     return DawnBackdrop(
       child: Scaffold(
