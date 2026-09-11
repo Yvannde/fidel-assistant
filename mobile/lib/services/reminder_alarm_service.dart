@@ -16,6 +16,7 @@ import '../core/network/api_client.dart';
 import '../core/storage/token_storage.dart';
 import '../features/home/data/home_repository.dart';
 import 'alarm_prefs.dart';
+import 'dose_slot.dart';
 import 'reminder_sync_perf.dart';
 import 'scheduled_dose.dart';
 import 'sync_engine.dart';
@@ -66,27 +67,28 @@ class ReminderAlarmService {
 
   bool get _en => (_prefs.getString('fa_locale_code') ?? 'fr') == 'en';
 
-  static int alarmNotificationId(String priseId) {
+  /// Hash stable pour ids notif/alarme — passer [slotId] (legacy: priseId).
+  static int alarmNotificationId(String slotId) {
     var hash = 0;
-    for (final cu in priseId.codeUnits) {
+    for (final cu in slotId.codeUnits) {
       hash = 0x7fffffff & (hash * 31 + cu);
     }
     return hash == 0 ? 1 : hash;
   }
 
-  static int markNotificationId(String priseId) {
-    final alarm = alarmNotificationId(priseId);
+  static int markNotificationId(String slotId) {
+    final alarm = alarmNotificationId(slotId);
     final mark = 0x7fffffff & (alarm ^ 0x5f5f5f5f);
     return mark == 0 || mark == alarm ? (alarm == 1 ? 2 : 1) : mark;
   }
 
-  static int preavisNotificationId(String priseId) {
-    final alarm = alarmNotificationId(priseId);
+  static int preavisNotificationId(String slotId) {
+    final alarm = alarmNotificationId(slotId);
     var preavis = 0x7fffffff & (alarm ^ 0x11111111);
     if (preavis == 0 || preavis == alarm) {
       preavis = alarm == 1 ? 3 : 1;
     }
-    final mark = markNotificationId(priseId);
+    final mark = markNotificationId(slotId);
     if (preavis == mark) {
       preavis = 0x7fffffff & (preavis ^ 0x22222222);
       if (preavis == 0 || preavis == alarm || preavis == mark) {
@@ -97,8 +99,7 @@ class ReminderAlarmService {
   }
 
   /// @deprecated Prefer [alarmNotificationId] / [markNotificationId].
-  static int notificationIdFor(String priseId) =>
-      alarmNotificationId(priseId);
+  static int notificationIdFor(String slotId) => alarmNotificationId(slotId);
 
   static List<AndroidNotificationAction> markAndroidActions({
     required bool en,
@@ -123,20 +124,13 @@ class ReminderAlarmService {
     return DateFormat.Hm(_en ? 'en' : 'fr').format(local);
   }
 
-  String _medLabel(ScheduledDose dose) {
-    final nom = dose.medicamentNom.trim();
-    final dosage = dose.dosage.trim();
-    if (nom.isEmpty) return dosage;
-    if (dosage.isEmpty) return nom;
-    return '$nom · $dosage';
-  }
-
-  ({String title, String body}) _copyFor({
-    required ScheduledDose dose,
+  ({String title, String body}) _copyForSlot({
+    required DoseSlot slot,
     required String kind,
   }) {
-    final clock = _formatClock(dose.heurePrevue);
-    final med = _medLabel(dose);
+    final clock = _formatClock(slot.heurePrevue);
+    final maladie = slot.maladieNom.trim();
+    final meds = slot.medsBody(en: _en);
     final delta = alarmPrefs.preavisMinutes;
 
     if (kind == kindPreavis) {
@@ -148,12 +142,14 @@ class ReminderAlarmService {
               : 'Rappel dans $delta min ($clock).',
         );
       }
-      final label = med.isEmpty ? clock : med;
+      final head = maladie.isNotEmpty ? maladie : clock;
       return (
-        title: _en ? 'In $delta min' : 'Dans $delta min',
-        body: _en
-            ? '$label — dose at $clock.'
-            : '$label — prise à $clock.',
+        title: _en ? 'In $delta min — $head' : 'Dans $delta min — $head',
+        body: meds.isEmpty
+            ? (_en ? 'Dose at $clock.' : 'Prise à $clock.')
+            : (_en
+                ? '$meds\nScheduled $clock.'
+                : '$meds\nPrévu à $clock.'),
       );
     }
 
@@ -166,11 +162,16 @@ class ReminderAlarmService {
               : "C'est l'heure de ton rappel de $clock.",
         );
       }
+      final title = maladie.isNotEmpty
+          ? (_en ? '$maladie — it\'s time' : '$maladie — c’est l’heure')
+          : (_en ? 'Dose · $clock' : 'Prise · $clock');
       return (
-        title: med.isEmpty ? (_en ? 'Dose · $clock' : 'Prise · $clock') : med,
-        body: _en
-            ? 'Time to take your dose (scheduled $clock).'
-            : 'C’est l’heure de ta prise (prévue à $clock).',
+        title: title,
+        body: meds.isEmpty
+            ? (_en
+                ? 'Time to take your dose (scheduled $clock).'
+                : 'C’est l’heure de ta prise (prévue à $clock).')
+            : meds,
       );
     }
 
@@ -183,13 +184,16 @@ class ReminderAlarmService {
             : 'As-tu bien fait ton rappel de $clock ?',
       );
     }
+    final label = maladie.isNotEmpty ? maladie : clock;
     return (
-      title: med.isEmpty
-          ? (_en ? 'Confirm dose · $clock' : 'Confirmer · $clock')
-          : med,
-      body: _en
-          ? 'Confirm if you took this dose (scheduled $clock).'
-          : 'Confirme si tu as pris cette dose (prévue à $clock).',
+      title: _en
+          ? 'Have you taken your medication ($label)?'
+          : 'Avez-vous pris vos médicaments ($label) ?',
+      body: meds.isEmpty
+          ? (_en
+              ? 'Confirm if you took this dose (scheduled $clock).'
+              : 'Confirme si tu as pris cette dose (prévue à $clock).')
+          : meds,
     );
   }
 
@@ -347,8 +351,7 @@ class ReminderAlarmService {
     await rescheduleAll(future, force: true);
   }
 
-  /// Reschedule différentiel : ne touche que les prises ajoutées / modifiées /
-  /// retirées, et ne stoppe jamais une alarme en cours de sonnerie.
+  /// Reschedule différentiel par [DoseSlot] (maladie × heure).
   ///
   /// [force] : réarme toutes les doses non-ringing (boot / cold start).
   Future<void> rescheduleAll(
@@ -363,20 +366,21 @@ class ReminderAlarmService {
     final preavisMin = alarmPrefs.preavisMinutes;
     final isDiscreet = discreet;
 
+    // Toujours rafraîchir le cache doses plates (restore cold start).
+    await _saveDoseCache(doses);
+
+    final slots = DoseSlot.groupScheduled(doses);
     final desiredSigs = <String, String>{};
-    final desired = <String, ScheduledDose>{};
-    for (final d in doses) {
-      desired[d.priseId] = d;
-      desiredSigs[d.priseId] = ScheduledDose.signature(
-        dose: d,
+    final desired = <String, DoseSlot>{};
+    for (final s in slots) {
+      desired[s.slotId] = s;
+      desiredSigs[s.slotId] = DoseSlot.signature(
+        slot: s,
         preavisMinutes: preavisMin,
         discreet: isDiscreet,
         audioKey: audioKey,
       );
     }
-
-    // Toujours rafraîchir le cache doses (même si on skip la replanif).
-    await _saveDoseCache(desired.values.toList());
 
     final previous = _loadSnapshot();
     if (!force &&
@@ -384,7 +388,7 @@ class ReminderAlarmService {
             ScheduledDose.globalFingerprint(desiredSigs)) {
       debugPrint(
         'ReminderAlarmService: rescheduleAll skip (unchanged, '
-        '${desiredSigs.length} doses)',
+        '${desiredSigs.length} slots / ${doses.length} doses)',
       );
       return;
     }
@@ -399,36 +403,31 @@ class ReminderAlarmService {
     var skipped = 0;
     var protectedRinging = 0;
 
-    // Retraits.
-    for (final priseId in previous.keys.toList()) {
-      if (desired.containsKey(priseId)) continue;
-      final alarmId = alarmNotificationId(priseId);
+    // Retraits (anciens priseId ou slotId absents).
+    for (final key in previous.keys.toList()) {
+      if (desired.containsKey(key)) continue;
+      final alarmId = alarmNotificationId(key);
       if (ScheduledDose.shouldProtectRingingAlarm(
         alarmId: alarmId,
         ringingIds: ringingIds,
       )) {
-        await _cancelFlnOnly(priseId, ids);
+        await _cancelFlnOnly(key, ids);
         protectedRinging++;
       } else {
-        await _cancelPriseLocal(
-          priseId,
-          ids,
-          alarmIds,
-          stopAlarm: true,
-        );
+        await _cancelSlotLocal(key, ids, alarmIds, stopAlarm: true);
         removed++;
       }
     }
 
     // Ajouts / mises à jour.
     for (final entry in desired.entries) {
-      final priseId = entry.key;
-      final dose = entry.value;
-      final sig = desiredSigs[priseId]!;
-      final alarmId = alarmNotificationId(priseId);
-      final preavisId = preavisNotificationId(priseId);
-      final markId = markNotificationId(priseId);
-      final unchanged = previous[priseId] == sig;
+      final slotId = entry.key;
+      final slot = entry.value;
+      final sig = desiredSigs[slotId]!;
+      final alarmId = alarmNotificationId(slotId);
+      final preavisId = preavisNotificationId(slotId);
+      final markId = markNotificationId(slotId);
+      final unchanged = previous[slotId] == sig;
       final stillTracked = alarmIds.contains(alarmId) ||
           ids.contains(preavisId) ||
           ids.contains(markId);
@@ -442,15 +441,14 @@ class ReminderAlarmService {
         alarmId: alarmId,
         ringingIds: ringingIds,
       )) {
-        // Ne pas re-set / stop H0 pendant le ring.
         if (!alarmIds.contains(alarmId)) alarmIds.add(alarmId);
         protectedRinging++;
         continue;
       }
 
-      await _cancelPriseLocal(priseId, ids, alarmIds, stopAlarm: true);
+      await _cancelSlotLocal(slotId, ids, alarmIds, stopAlarm: true);
       await _scheduleTriple(
-        dose,
+        slot,
         now: now,
         track: ids,
         trackAlarms: alarmIds,
@@ -470,17 +468,17 @@ class ReminderAlarmService {
     );
   }
 
-  /// Snooze : H0' = [dose.heurePrevue], préavis = H0'−Δ, mark = H0'+5.
-  Future<void> scheduleOneShot(ScheduledDose dose) async {
+  /// Snooze / one-shot : H0' = [slot.heurePrevue], préavis = H0'−Δ, mark = H0'+5.
+  Future<void> scheduleOneShotSlot(DoseSlot slot) async {
     if (!_ready) return;
     await ensureExactAlarmPermission();
     final now = tz.TZDateTime.now(tz.local);
     final ids = _trackedIds();
     final alarmIds = _trackedAlarmPkgIds();
-    await _cancelPriseLocal(dose.priseId, ids, alarmIds, stopAlarm: true);
+    await _cancelSlotLocal(slot.slotId, ids, alarmIds, stopAlarm: true);
 
     await _scheduleTriple(
-      dose,
+      slot,
       now: now,
       track: ids,
       trackAlarms: alarmIds,
@@ -489,38 +487,69 @@ class ReminderAlarmService {
     await _prefs.setString(_alarmPkgIdsKey, jsonEncode(alarmIds));
 
     final snap = _loadSnapshot();
-    snap[dose.priseId] = ScheduledDose.signature(
-      dose: dose,
+    snap[slot.slotId] = DoseSlot.signature(
+      slot: slot,
       preavisMinutes: alarmPrefs.preavisMinutes,
       discreet: discreet,
       audioKey: await alarmPrefs.resolveAudioPath(),
     );
     await _saveSnapshot(snap);
+
     final cache = _loadDoseCache();
+    final priseSet = slot.priseIds.toSet();
     final next = [
       for (final d in cache)
-        if (d.priseId != dose.priseId) d,
-      dose,
+        if (!priseSet.contains(d.priseId)) d,
+      for (final item in slot.items)
+        ScheduledDose(
+          priseId: item.priseId,
+          medicamentNom: item.medicamentNom,
+          dosage: item.dosage,
+          heurePrevue: slot.heurePrevue,
+          traitementId: slot.traitementId,
+          maladieNom: slot.maladieNom,
+        ),
     ];
     await _saveDoseCache(next);
   }
 
-  Future<void> cancelPrise(String priseId) async {
+  /// Compat : one-shot pour une seule prise.
+  Future<void> scheduleOneShot(ScheduledDose dose) async {
+    final slot = DoseSlot.groupScheduled([dose]).first;
+    await scheduleOneShotSlot(slot);
+  }
+
+  Future<void> cancelSlot(String slotId) async {
     final ids = _trackedIds();
     final alarmIds = _trackedAlarmPkgIds();
-    await _cancelPriseLocal(priseId, ids, alarmIds, stopAlarm: true);
+    await _cancelSlotLocal(slotId, ids, alarmIds, stopAlarm: true);
     await _prefs.setString(_idsKey, jsonEncode(ids));
     await _prefs.setString(_alarmPkgIdsKey, jsonEncode(alarmIds));
-    final snap = _loadSnapshot()..remove(priseId);
+    final snap = _loadSnapshot()..remove(slotId);
     await _saveSnapshot(snap);
+  }
+
+  /// Annule le préavis du slot dès que l’alarme H0 sonne.
+  Future<void> cancelPreavisForSlot(String slotId) async {
+    if (slotId.isEmpty) return;
+    final ids = _trackedIds();
+    final preavisId = preavisNotificationId(slotId);
+    await _plugin.cancel(preavisId);
+    ids.remove(preavisId);
+    await _prefs.setString(_idsKey, jsonEncode(ids));
+  }
+
+  /// Compat legacy (annule en traitant l’id comme clé snapshot).
+  Future<void> cancelPrise(String priseOrSlotId) async {
+    await cancelSlot(priseOrSlotId);
     await _saveDoseCache(
-      _loadDoseCache().where((d) => d.priseId != priseId).toList(),
+      _loadDoseCache().where((d) => d.priseId != priseOrSlotId).toList(),
     );
   }
 
-  Future<void> _cancelFlnOnly(String priseId, List<int> ids) async {
-    final markId = markNotificationId(priseId);
-    final preavisId = preavisNotificationId(priseId);
+  Future<void> _cancelFlnOnly(String slotId, List<int> ids) async {
+    final markId = markNotificationId(slotId);
+    final preavisId = preavisNotificationId(slotId);
     await _plugin.cancel(preavisId);
     await _plugin.cancel(markId);
     ids
@@ -528,15 +557,15 @@ class ReminderAlarmService {
       ..remove(markId);
   }
 
-  Future<void> _cancelPriseLocal(
-    String priseId,
+  Future<void> _cancelSlotLocal(
+    String slotId,
     List<int> ids,
     List<int> alarmIds, {
     required bool stopAlarm,
   }) async {
-    final alarmId = alarmNotificationId(priseId);
-    final markId = markNotificationId(priseId);
-    final preavisId = preavisNotificationId(priseId);
+    final alarmId = alarmNotificationId(slotId);
+    final markId = markNotificationId(slotId);
+    final preavisId = preavisNotificationId(slotId);
     await _plugin.cancel(preavisId);
     await _plugin.cancel(markId);
     ids
@@ -587,26 +616,36 @@ class ReminderAlarmService {
   }
 
   /// Annule préavis + alarme package + mark (isolate background).
-  static Future<void> cancelBothForPrise(String priseId) async {
+  static Future<void> cancelBothForSlot(String slotId) async {
     final plugin = FlutterLocalNotificationsPlugin();
-    await plugin.cancel(preavisNotificationId(priseId));
-    await plugin.cancel(markNotificationId(priseId));
+    await plugin.cancel(preavisNotificationId(slotId));
+    await plugin.cancel(markNotificationId(slotId));
     try {
-      await Alarm.stop(alarmNotificationId(priseId));
+      await Alarm.stop(alarmNotificationId(slotId));
     } catch (_) {}
   }
+
+  /// @deprecated Prefer [cancelBothForSlot].
+  static Future<void> cancelBothForPrise(String priseOrSlotId) =>
+      cancelBothForSlot(priseOrSlotId);
 
   static Future<void> cancelNotificationId(int id) async {
     await FlutterLocalNotificationsPlugin().cancel(id);
   }
 
+  /// Annule uniquement le préavis (appelable hors instance, isolate / ring).
+  static Future<void> cancelPreavisStatic(String slotId) async {
+    if (slotId.isEmpty) return;
+    await FlutterLocalNotificationsPlugin().cancel(preavisNotificationId(slotId));
+  }
+
   Future<({int preavis, int alarms, int marks})> _scheduleTriple(
-    ScheduledDose dose, {
+    DoseSlot slot, {
     required tz.TZDateTime now,
     required List<int> track,
     required List<int> trackAlarms,
   }) async {
-    final h0 = tz.TZDateTime.from(dose.heurePrevue.toLocal(), tz.local);
+    final h0 = tz.TZDateTime.from(slot.heurePrevue.toLocal(), tz.local);
     final preavisAt = h0.subtract(Duration(minutes: alarmPrefs.preavisMinutes));
     final markAt = h0.add(markDelay);
     var preavis = 0;
@@ -614,25 +653,25 @@ class ReminderAlarmService {
     var marks = 0;
 
     if (preavisAt.isAfter(now) && preavisAt.isBefore(h0)) {
-      final ok = await _schedulePreavis(dose, when: preavisAt);
+      final ok = await _schedulePreavis(slot, when: preavisAt);
       if (ok) {
-        track.add(preavisNotificationId(dose.priseId));
+        track.add(preavisNotificationId(slot.slotId));
         preavis = 1;
       }
     }
 
     if (h0.isAfter(now)) {
-      final ok = await _scheduleAlarmRing(dose, when: h0);
+      final ok = await _scheduleAlarmRing(slot, when: h0);
       if (ok) {
-        trackAlarms.add(alarmNotificationId(dose.priseId));
+        trackAlarms.add(alarmNotificationId(slot.slotId));
         alarms = 1;
       }
     }
 
     if (markAt.isAfter(now)) {
-      final ok = await _scheduleMark(dose, when: markAt);
+      final ok = await _scheduleMark(slot, when: markAt);
       if (ok) {
-        track.add(markNotificationId(dose.priseId));
+        track.add(markNotificationId(slot.slotId));
         marks = 1;
       }
     }
@@ -641,17 +680,12 @@ class ReminderAlarmService {
   }
 
   Future<bool> _schedulePreavis(
-    ScheduledDose dose, {
+    DoseSlot slot, {
     required tz.TZDateTime when,
   }) async {
-    final id = preavisNotificationId(dose.priseId);
-    final copy = _copyFor(dose: dose, kind: kindPreavis);
-    final payload = jsonEncode({
-      'kind': kindPreavis,
-      'priseId': dose.priseId,
-      'medicamentNom': dose.medicamentNom,
-      'dosage': dose.dosage,
-    });
+    final id = preavisNotificationId(slot.slotId);
+    final copy = _copyForSlot(slot: slot, kind: kindPreavis);
+    final payload = jsonEncode(slot.toPayload(kind: kindPreavis));
 
     try {
       await _plugin.zonedSchedule(
@@ -689,19 +723,13 @@ class ReminderAlarmService {
   }
 
   Future<bool> _scheduleAlarmRing(
-    ScheduledDose dose, {
+    DoseSlot slot, {
     required tz.TZDateTime when,
   }) async {
-    final id = alarmNotificationId(dose.priseId);
-    final copy = _copyFor(dose: dose, kind: kindAlarm);
+    final id = alarmNotificationId(slot.slotId);
+    final copy = _copyForSlot(slot: slot, kind: kindAlarm);
     final audioPath = await alarmPrefs.resolveAudioPath();
-    final payload = jsonEncode({
-      'kind': kindAlarm,
-      'priseId': dose.priseId,
-      'medicamentNom': dose.medicamentNom,
-      'dosage': dose.dosage,
-      'heurePrevue': dose.heurePrevue.toIso8601String(),
-    });
+    final payload = jsonEncode(slot.toPayload(kind: kindAlarm));
 
     try {
       final settings = AlarmSettings(
@@ -733,17 +761,12 @@ class ReminderAlarmService {
   }
 
   Future<bool> _scheduleMark(
-    ScheduledDose dose, {
+    DoseSlot slot, {
     required tz.TZDateTime when,
   }) async {
-    final id = markNotificationId(dose.priseId);
-    final copy = _copyFor(dose: dose, kind: kindMark);
-    final payload = jsonEncode({
-      'kind': kindMark,
-      'priseId': dose.priseId,
-      'medicamentNom': dose.medicamentNom,
-      'dosage': dose.dosage,
-    });
+    final id = markNotificationId(slot.slotId);
+    final copy = _copyForSlot(slot: slot, kind: kindMark);
+    final payload = jsonEncode(slot.toPayload(kind: kindMark));
 
     try {
       await _plugin.zonedSchedule(
@@ -831,13 +854,13 @@ Future<void> reminderBackgroundHandler(NotificationResponse response) async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     final payload = parseReminderPayload(response.payload);
-    final priseId = payload['priseId'] as String?;
-    if (priseId == null || priseId.isEmpty) return;
+    final slot = DoseSlot.fromPayload(payload);
+    if (slot.priseIds.isEmpty) return;
 
     final action = response.actionId;
     if (action == null || action.isEmpty) return;
 
-    await ReminderAlarmService.cancelBothForPrise(priseId);
+    await ReminderAlarmService.cancelBothForSlot(slot.slotId);
 
     final prefs = await SharedPreferences.getInstance();
     final alarmPrefs = AlarmPrefs(prefs);
@@ -852,8 +875,10 @@ Future<void> reminderBackgroundHandler(NotificationResponse response) async {
 
     if (action == ReminderAlarmService.actionConfirm) {
       await db.transaction(() async {
-        await db.updatePriseLocal(id: priseId, statut: 'confirmee');
-        await engine.enqueueConfirm(priseId: priseId);
+        for (final priseId in slot.priseIds) {
+          await db.updatePriseLocal(id: priseId, statut: 'confirmee');
+          await engine.enqueueConfirm(priseId: priseId);
+        }
       });
       try {
         await engine.flush(force: true);
@@ -867,12 +892,14 @@ Future<void> reminderBackgroundHandler(NotificationResponse response) async {
       final when =
           DateTime.now().add(Duration(minutes: alarmPrefs.snoozeMinutes));
       await db.transaction(() async {
-        await db.updatePriseLocal(
-          id: priseId,
-          heurePrevue: when,
-          statut: 'en_attente',
-        );
-        await engine.enqueueReport(priseId: priseId, nouvelleHeure: when);
+        for (final priseId in slot.priseIds) {
+          await db.updatePriseLocal(
+            id: priseId,
+            heurePrevue: when,
+            statut: 'en_attente',
+          );
+          await engine.enqueueReport(priseId: priseId, nouvelleHeure: when);
+        }
       });
       try {
         await engine.flush(force: true);
@@ -882,14 +909,7 @@ Future<void> reminderBackgroundHandler(NotificationResponse response) async {
       await db.close();
       final alarms = ReminderAlarmService(prefs);
       await alarms.init();
-      await alarms.scheduleOneShot(
-        ScheduledDose(
-          priseId: priseId,
-          medicamentNom: payload['medicamentNom'] as String? ?? '',
-          dosage: payload['dosage'] as String? ?? '',
-          heurePrevue: when,
-        ),
-      );
+      await alarms.scheduleOneShotSlot(slot.copyWithHeure(when));
     }
   } catch (e, st) {
     debugPrint('reminderBackgroundHandler: $e\n$st');

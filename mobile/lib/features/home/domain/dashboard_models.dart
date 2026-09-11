@@ -249,6 +249,9 @@ class PriseDuJour {
     required this.dosage,
     required this.heurePrevue,
     required this.statut,
+    this.traitementId,
+    this.maladieId,
+    this.maladieNom,
   });
 
   final String id;
@@ -256,6 +259,9 @@ class PriseDuJour {
   final String dosage;
   final DateTime heurePrevue;
   final String statut;
+  final String? traitementId;
+  final String? maladieId;
+  final String? maladieNom;
 
   bool get isPending => statut == 'en_attente';
   bool get isTaken => statut == 'confirmee';
@@ -264,15 +270,47 @@ class PriseDuJour {
   bool isLate(DateTime now) =>
       isMissed || (isPending && heurePrevue.isBefore(now));
 
+  PriseDuJour copyWith({
+    String? id,
+    String? medicamentNom,
+    String? dosage,
+    DateTime? heurePrevue,
+    String? statut,
+    String? traitementId,
+    String? maladieId,
+    String? maladieNom,
+  }) {
+    return PriseDuJour(
+      id: id ?? this.id,
+      medicamentNom: medicamentNom ?? this.medicamentNom,
+      dosage: dosage ?? this.dosage,
+      heurePrevue: heurePrevue ?? this.heurePrevue,
+      statut: statut ?? this.statut,
+      traitementId: traitementId ?? this.traitementId,
+      maladieId: maladieId ?? this.maladieId,
+      maladieNom: maladieNom ?? this.maladieNom,
+    );
+  }
+
   factory PriseDuJour.fromJson(Map<String, dynamic> json) {
     return PriseDuJour(
       id: json['id'].toString(),
-      medicamentNom: json['medicament_nom'] as String? ?? '',
+      medicamentNom: json['medicament_nom'] as String? ??
+          json['medicamentNom'] as String? ??
+          '',
       dosage: json['dosage'] as String? ?? '',
       heurePrevue:
-          DateTime.tryParse(json['heure_prevue']?.toString() ?? '') ??
+          DateTime.tryParse(json['heure_prevue']?.toString() ??
+                  json['heurePrevue']?.toString() ??
+                  '') ??
               DateTime.now(),
       statut: json['statut'] as String? ?? 'en_attente',
+      traitementId: json['traitement_id']?.toString() ??
+          json['traitementId']?.toString(),
+      maladieId:
+          json['maladie_id']?.toString() ?? json['maladieId']?.toString(),
+      maladieNom: json['maladie_nom'] as String? ??
+          json['maladieNom'] as String?,
     );
   }
 }

@@ -240,7 +240,7 @@ async def pull_delta(
 
     # --- Prises (30j passés → 7j futurs) ---
     prise_q = (
-        select(Prise, Medicament)
+        select(Prise, Medicament, PatientTraitement)
         .join(MedicamentHoraire, Prise.medicament_horaire_id == MedicamentHoraire.id)
         .join(Medicament, MedicamentHoraire.medicament_id == Medicament.id)
         .join(PatientTraitement, Medicament.patient_traitement_id == PatientTraitement.id)
@@ -249,13 +249,15 @@ async def pull_delta(
             Prise.heure_prevue >= horizon_start,
             Prise.heure_prevue <= horizon_end,
         )
+        .options(selectinload(PatientTraitement.maladie))
     )
     result = await db.execute(prise_q)
-    for prise, med in result.all():
+    for prise, med, traitement in result.all():
         ts = prise.updated_at.astimezone(UTC)
         if not _after_cursor(ts, "prise", prise.id, since_ts, since_type, since_id):
             continue
         cur = _cursor(ts, "prise", prise.id)
+        maladie = traitement.maladie
         scored.append(
             (
                 cur,
@@ -275,6 +277,13 @@ async def pull_delta(
                         else None
                     ),
                     "canal": prise.canal,
+                    "traitement_id": str(traitement.id),
+                    "maladie_id": str(traitement.maladie_id)
+                    if traitement.maladie_id
+                    else None,
+                    "maladie_nom": maladie.nom
+                    if maladie
+                    else (traitement.maladie_libelle or ""),
                 },
             )
         )

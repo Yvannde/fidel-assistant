@@ -66,27 +66,37 @@ Chaque feature suit le même découpage interne : `presentation/` (écrans, widg
 
 C'est la partie la plus critique techniquement. **Tout est local** (offline, même avion) : FastAPI ne sonne pas et ne poll pas les doses. Les notifications push serveur (FCM, plus tard) restent réservées à l’aidant / engagement — **ne pas confondre** avec l’alarme patient.
 
-### Trois moments distincts par `Prise`
+### Trois moments distincts par **DoseSlot** (maladie × heure)
+
+L’unité de planification n’est **pas** la prise individuelle, mais le **créneau thérapeutique** :
+
+- même `heure_prevue` (minute locale) + même `traitement_id` / maladie → **1 DoseSlot**
+- 2 maladies à la même heure → **2 slots** (2 alarmes)
+- 1 préavis + 1 alarme H0 + 1 marquage H+5 **par slot** (ex. 5 medocs tuberculose à 08:00 → 3 notifications au total, pas 15)
+- Copy maladie-first (non-discret) : préavis « Dans Δ min — {maladie} », H0 « {maladie} — c’est l’heure », mark « Avez-vous pris vos médicaments ({maladie}) ? » + liste medocs (si > 6 : « N médicaments »)
+- **Cancel auto du préavis** du slot dès que l’alarme H0 sonne / `AlarmRingScreen` s’ouvre
+- Confirm / snooze H+5 et Accueil : **tout le slot** (N mutations outbox)
 
 Les **notifications** (préavis + marquage + bandeau H0) et l’**alarme applicative** (H0) se **complètent** : on n’enlève pas le système de notifs pour « remplacer » par une alarme.
 
 | Instant | Canal | Rôle | Comportement |
 |---|---|---|---|
-| **H0 − Δ** (préavis) | Notif locale | Avertir avant la prise | Texte du type « dans Δ min, prise… ». **Pas** d’alarme sonore. Δ configurable dans l’app (**défaut 5 min** ; options typiques 2 / 5 / 10). |
+| **H0 − Δ** (préavis) | Notif locale | Avertir avant la prise | Texte du type « dans Δ min — {maladie} ». **Pas** d’alarme sonore. Δ configurable dans l’app (**défaut 5 min** ; options typiques 2 / 5 / 10). Annulé automatiquement à H0. |
 | **H0** (`heure_prevue`) | **Alarme app** + notif locale | Réveil effectif | L’alarme **lancée par Fidel** (écran plein / Activity, son en boucle jusqu’à action utilisateur) **et** une notification en parallèle. **Sans** boutons « J’ai pris » sur ce moment (le marquage vient à H+5). |
-| **H0 + 5 min** | Notif locale (marquage) | Confirmer la prise | Actions **« J’ai pris »** / **« Plus tard »** (confirm / snooze). File offline → `POST /prises/sync-offline` / `reporter`. |
+| **H0 + 5 min** | Notif locale (marquage) | Confirmer la prise | Actions **« J’ai pris »** / **« Plus tard »** (confirm / snooze) sur **tout le slot**. File offline → N confirms/reports outbox. |
 
 > Une notif canal « alarm » **ne suffit pas** : H0 doit être une **expérience alarme** (son insistent, UI Fidel, pas un simple bandeau type messagerie).
 
 ### Planification technique
 
+- `DoseSlot` (`lib/services/dose_slot.dart`) : groupement + `slotId` stable ; ids notif/alarme dérivés du `slotId`
 - `flutter_local_notifications` pour **préavis**, **bandeau H0** et **marquage H+5**
 - Mode **alarme exacte** (`AndroidScheduleMode.exactAllowWhileIdle`) — ne pas soumettre au Doze standard
 - Alarme H0 : mécanisme natif dédié (ex. `AlarmManager` / Activity plein écran / service audio) en plus de la notif — le détail d’implémentation peut évoluer, le contrat produit ci-dessus non
-- **Reschedule différentiel** : à chaque sync home, ne replanifier que les prises ajoutées / modifiées / retirées (snapshot local). **Ne jamais** `Alarm.stop` / re-set une alarme **en cours de sonnerie** — le ring UI / Arrêter gère la fin.
-- **Cache local + restore au démarrage** : les doses planifiées sont persistées (`reminder_doses_cache_v1`). Au cold start / après reboot, `restoreFromLocalCache()` (dans `main.dart`, après `Alarm.init`) réarme préavis + H0 + mark **sans attendre** le load Accueil ni le réseau. Les receivers `BOOT_COMPLETED` (package `alarm` + FLN) restent en place ; le restore Flutter couvre le cas où l’utilisateur rouvre l’app.
+- **Reschedule différentiel** : à chaque sync home, ne replanifier que les **slots** ajoutés / modifiés / retirés (snapshot local). **Ne jamais** `Alarm.stop` / re-set une alarme **en cours de sonnerie** — le ring UI / Arrêter gère la fin.
+- **Cache local + restore au démarrage** : les doses planifiées sont persistées (`reminder_doses_cache_v1`, liste plate de `ScheduledDose`). Au cold start / après reboot, `restoreFromLocalCache()` (dans `main.dart`, après `Alarm.init`) réarme préavis + H0 + mark **sans attendre** le load Accueil ni le réseau. Les receivers `BOOT_COMPLETED` (package `alarm` + FLN) restent en place ; le restore Flutter couvre le cas où l’utilisateur rouvre l’app.
 - **Perf / batterie** : horizon de planification **48 h** (`ReminderSyncPerf`) ; skip de `syncRemindersFromHome` si fingerprint dashboard+prefs inchangé ; ne re-télécharger la voix personnalisée que si meta (`id` / url) a changé ou fichier local absent.
-- Confirm / snooze annule **préavis restant + alarme H0 + notif H+5** pour cette prise ; snooze replanifie H0' = now+snooze prefs, préavis = H0'−Δ, mark = H0'+5 min
+- Confirm / snooze annule **préavis restant + alarme H0 + notif H+5** pour le **slot** ; snooze replanifie H0' = now+snooze prefs pour **toutes** les prises du créneau
 
 ### Garde-fous (l’OS ne doit pas étouffer l’alarme)
 
@@ -115,8 +125,9 @@ L’utilisateur configure dans Fidel (écran Réglages / Alarmes), au minimum V1
 
 ### Mode discret et copie
 
-- Mode **discret** : pas de nom de médicament (confidentialité), **heure toujours visible** ; l’alarme **sonne toujours** (discret ≠ silencieux)
-- Mode normal : titre = médicament · dosage, corps = motif + heure prévue
+- Mode **discret** : pas de nom de maladie / médicament (confidentialité), **heure toujours visible** ; l’alarme **sonne toujours** (discret ≠ silencieux)
+- Mode normal : titre = **maladie** (puis liste medocs), corps = détail + heure prévue
+- Accueil Aujourd’hui : Matin / Après-midi / Soir → **cartes créneau** (heure + maladie + état N/M) → sous-lignes medocs ; confirm rapide = **créneau entier**
 - **Voix personnalisée** : lue au moment de l’**alarme H0** (pas sur le préavis)
 
 ## Onboarding et auth (référence)

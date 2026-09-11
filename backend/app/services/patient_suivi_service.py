@@ -549,7 +549,7 @@ async def list_prises(
     day_end = _combine_local(day, time(23, 59, 59), tz)
 
     result = await db.execute(
-        select(Prise, Medicament)
+        select(Prise, Medicament, PatientTraitement)
         .join(MedicamentHoraire, Prise.medicament_horaire_id == MedicamentHoraire.id)
         .join(Medicament, MedicamentHoraire.medicament_id == Medicament.id)
         .join(PatientTraitement, Medicament.patient_traitement_id == PatientTraitement.id)
@@ -558,10 +558,12 @@ async def list_prises(
             Prise.heure_prevue >= day_start,
             Prise.heure_prevue <= day_end,
         )
+        .options(selectinload(PatientTraitement.maladie))
         .order_by(Prise.heure_prevue)
     )
     rows = []
-    for prise, med in result.all():
+    for prise, med, traitement in result.all():
+        maladie = traitement.maladie
         rows.append(
             {
                 "id": prise.id,
@@ -572,6 +574,9 @@ async def list_prises(
                 "statut": prise.statut,
                 "confirmee_at": prise.confirmee_at,
                 "canal": prise.canal,
+                "traitement_id": traitement.id,
+                "maladie_id": traitement.maladie_id,
+                "maladie_nom": maladie.nom if maladie else (traitement.maladie_libelle or ""),
             }
         )
     await db.commit()

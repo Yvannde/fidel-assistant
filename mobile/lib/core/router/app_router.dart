@@ -315,15 +315,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/alarm-ring',
         pageBuilder: (context, state) {
+          final extra = state.extra;
+          if (extra is AlarmRingArgs) {
+            return _softPage(
+              state: state,
+              child: AlarmRingScreen(
+                slot: extra.slot,
+                alarmId: extra.alarmId,
+              ),
+            );
+          }
           final q = state.uri.queryParameters;
           return _softPage(
             state: state,
-            child: AlarmRingScreen(
+            child: AlarmRingScreen.legacy(
               priseId: q['priseId'] ?? '',
               medicamentNom: q['nom'] ?? '',
               dosage: q['dosage'] ?? '',
               heurePrevueIso: q['heure'],
               alarmId: int.tryParse(q['alarmId'] ?? ''),
+              maladieNom: q['maladie'],
+              slotId: q['slotId'],
+              traitementId: q['traitementId'],
             ),
           );
         },

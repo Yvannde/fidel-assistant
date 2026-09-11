@@ -9,6 +9,7 @@ import '../features/home/application/home_controller.dart';
 import '../features/home/data/home_repository.dart';
 import '../features/home/domain/dashboard_models.dart';
 import 'alarm_prefs.dart';
+import 'dose_slot.dart';
 import 'reminder_alarm_service.dart';
 import 'reminder_sync_perf.dart';
 import 'scheduled_dose.dart';
@@ -33,7 +34,7 @@ class ReminderActionDispatcher {
 
   Future<void> handle(NotificationResponse response) async {
     final payload = parseReminderPayload(response.payload);
-    final priseId = payload['priseId'] as String?;
+    final slot = DoseSlot.fromPayload(payload);
     final kind = payload['kind'] as String?;
     final alarms = _container.read(reminderAlarmServiceProvider);
     final engine = _container.read(syncEngineProvider);
@@ -41,7 +42,8 @@ class ReminderActionDispatcher {
 
     debugPrint(
       'ReminderAction: actionId=${response.actionId} kind=$kind '
-      'type=${response.notificationResponseType} priseId=$priseId',
+      'type=${response.notificationResponseType} slotId=${slot.slotId} '
+      'prises=${slot.priseIds.length}',
     );
 
     if (response.actionId == null || response.actionId!.isEmpty) {
@@ -52,12 +54,14 @@ class ReminderActionDispatcher {
       return;
     }
 
-    if (priseId == null || priseId.isEmpty) return;
+    if (slot.priseIds.isEmpty) return;
 
-    await alarms.cancelPrise(priseId);
+    await alarms.cancelSlot(slot.slotId);
 
     if (response.actionId == ReminderAlarmService.actionConfirm) {
-      await engine.enqueueConfirm(priseId: priseId);
+      for (final priseId in slot.priseIds) {
+        await engine.enqueueConfirm(priseId: priseId);
+      }
       try {
         await engine.flush(force: true);
       } catch (e) {
@@ -73,20 +77,15 @@ class ReminderActionDispatcher {
 
     if (response.actionId == ReminderAlarmService.actionSnooze) {
       final when = DateTime.now().add(Duration(minutes: snoozeMin));
-      await engine.enqueueReport(priseId: priseId, nouvelleHeure: when);
+      for (final priseId in slot.priseIds) {
+        await engine.enqueueReport(priseId: priseId, nouvelleHeure: when);
+      }
       try {
         await engine.flush(force: true);
       } catch (e) {
         debugPrint('ReminderAction snooze: $e');
       }
-      await alarms.scheduleOneShot(
-        ScheduledDose(
-          priseId: priseId,
-          medicamentNom: payload['medicamentNom'] as String? ?? '',
-          dosage: payload['dosage'] as String? ?? '',
-          heurePrevue: when,
-        ),
-      );
+      await alarms.scheduleOneShotSlot(slot.copyWithHeure(when));
       try {
         await _container
             .read(homeControllerProvider.notifier)
@@ -163,6 +162,8 @@ Future<void> syncRemindersFromHome(
           medicamentNom: p.medicamentNom,
           dosage: p.dosage,
           heurePrevue: p.heurePrevue,
+          traitementId: p.traitementId,
+          maladieNom: p.maladieNom,
         ),
       );
     }
@@ -189,7 +190,7 @@ Future<void> syncRemindersFromHome(
     byId[d.priseId] = d;
   }
 
-  await alarms.rescheduleAll(byId.values.toList());
+  await alarms.rescheduleAll(byId.values.toList(), force: force);
 
   // Gate après sync réussi (prefs discreet peuvent avoir changé).
   final gateAfter = ReminderSyncPerf.syncGateKey(

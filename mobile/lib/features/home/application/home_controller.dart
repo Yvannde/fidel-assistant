@@ -542,6 +542,34 @@ class HomeController extends StateNotifier<HomeUiState> {
     }
   }
 
+  /// Confirme toutes les prises encore `en_attente` d’un créneau (DoseSlot).
+  Future<void> confirmPrises(List<String> ids) async {
+    final unique = ids.where((id) => id.isNotEmpty).toSet().toList();
+    if (unique.isEmpty) return;
+    if (unique.length == 1) {
+      await confirmPrise(unique.first);
+      return;
+    }
+    state = state.copyWith(busy: true, clearError: true);
+    try {
+      await _db.transaction(() async {
+        for (final id in unique) {
+          await _db.updatePriseLocal(id: id, statut: 'confirmee');
+          await _engine.enqueueConfirm(priseId: id);
+        }
+      });
+      await reloadProjection();
+      state = state.copyWith(busy: false);
+      unawaited(_engine.flush(force: true));
+    } catch (e) {
+      state = state.copyWith(
+        busy: false,
+        error: e is ApiException ? e.message : e.toString(),
+      );
+      rethrow;
+    }
+  }
+
   Future<void> reportPrise(String id, DateTime nouvelleHeure) async {
     state = state.copyWith(busy: true, clearError: true);
     try {

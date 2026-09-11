@@ -9,6 +9,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/premium.dart';
 import '../../../core/ui/app_toast.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../services/dose_slot.dart';
 import '../application/home_controller.dart';
 import '../domain/dashboard_models.dart';
 import 'widgets/add_constante_sheet.dart';
@@ -151,7 +152,7 @@ class HomeDashboardScreen extends ConsumerWidget {
               prises: prises,
               now: now,
               busy: state.busy,
-              onConfirm: (prise) => _confirm(context, ref, prise.id, l10n),
+              onConfirmSlot: (slot) => _confirmSlot(context, ref, slot, l10n),
             ),
           ],
         ),
@@ -289,6 +290,34 @@ class HomeDashboardScreen extends ConsumerWidget {
   ) async {
     try {
       await ref.read(homeControllerProvider.notifier).confirmPrise(priseId);
+      if (context.mounted) AppToast.success(context, l10n.homeTakenToast);
+    } catch (e) {
+      if (context.mounted) {
+        AppToast.error(
+          context,
+          e is ApiException ? e.message : l10n.genericError,
+        );
+      }
+    }
+  }
+
+  Future<void> _confirmSlot(
+    BuildContext context,
+    WidgetRef ref,
+    DoseSlot slot,
+    AppLocalizations l10n,
+  ) async {
+    final state = ref.read(homeControllerProvider);
+    final byId = {
+      for (final p in state.visiblePrises) p.id: p,
+    };
+    final pending = [
+      for (final id in slot.priseIds)
+        if (byId[id]?.isPending == true) id,
+    ];
+    if (pending.isEmpty) return;
+    try {
+      await ref.read(homeControllerProvider.notifier).confirmPrises(pending);
       if (context.mounted) AppToast.success(context, l10n.homeTakenToast);
     } catch (e) {
       if (context.mounted) {

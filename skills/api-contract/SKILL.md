@@ -119,7 +119,7 @@ Pas de `POST /onboarding/role`. Voir `auth-onboarding/SKILL.md`.
 
 | Méthode | Chemin | Entrée | Sortie | Erreurs possibles |
 |---|---|---|---|---|
-| GET | `/patients/me/prises` | 🔒 `date?` (défaut: aujourd'hui) | `[Prise]` | — |
+| GET | `/patients/me/prises` | 🔒 `date?` (défaut: aujourd'hui) | `[Prise]` — inclut `traitement_id`, `maladie_id`, `maladie_nom` (groupement DoseSlot mobile) | — |
 | POST | `/prises/{id}/confirmer` | 🔒 `canal` (`app`\|`sms`), `client_mutation_id?` (UUID — **requis** dès Phase 1 mobile) | `Prise` mise à jour (`statut: confirmee`) ; si `client_mutation_id` déjà appliqué → même `Prise` (idempotent, pas d’erreur) | `PRISE_NOT_FOUND`, `PRISE_DEJA_CONFIRMEE` |
 | POST | `/prises/{id}/reporter` | 🔒 `nouvelle_heure`, `client_mutation_id?` (UUID — **requis** dès Phase 1 mobile) | `Prise` mise à jour ; idempotent si `client_mutation_id` déjà vu | `PRISE_NOT_FOUND` |
 | POST | `/prises/sync-offline` | 🔒 `[{id, statut, confirmee_at, client_mutation_id?}]` | `{synced: [...], conflicts: [...], duplicates?: [...]}` — lot hors-ligne ; `duplicates` = mutations déjà appliquées | — |
