@@ -5,12 +5,14 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/database/providers.dart';
+import '../../../core/locale/locale_controller.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/network/providers.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../../services/reminder_sync.dart';
 import '../../../services/sync_engine.dart';
 import '../../../services/sync_outbox.dart';
+import '../data/home_profile_cache.dart';
 import '../data/home_repository.dart';
 import '../domain/constante_models.dart';
 import '../domain/dashboard_models.dart';
@@ -83,7 +85,12 @@ class HomeUiState {
   List<ConstanteSeries> get constanteSeries =>
       ConstanteSeries.group(constantes);
 
-  bool get hasPatient => profile?.hasPatientProfile == true;
+  bool get hasPatient {
+    if (profile?.hasPatientProfile == true) return true;
+    final dash = dashboard;
+    if (dash == null) return false;
+    return dash.traitements.isNotEmpty || dash.prisesAujourdhui.isNotEmpty;
+  }
 
   DateTime get day => homeDateOnly(selectedDay ?? DateTime.now());
 
@@ -191,36 +198,70 @@ class HomeController extends StateNotifier<HomeUiState> {
     return HomeProjection.projectDashboard(base: base, outbox: pending);
   }
 
-  Future<void> _applyProjectedDashboard(PatientDashboard dashboard) async {
+  Future<void> reloadProjection() async {
+    final projected = await _projectFromLocal();
+    if (projected == null || !mounted) return;
+    final profile = state.profile ?? _offlineProfile(projected);
     state = state.copyWith(
       loading: false,
-      dashboard: dashboard,
+      profile: profile,
+      dashboard: projected,
       selectedDay: homeDateOnly(DateTime.now()),
       clearDayPrises: true,
       clearError: true,
     );
+    unawaited(syncRemindersFromHome(_ref.read, projected));
   }
 
-  Future<void> reloadProjection() async {
-    final projected = await _projectFromLocal();
-    if (projected == null || !mounted) return;
-    await _applyProjectedDashboard(projected);
-    unawaited(syncRemindersFromHome(_ref.read, projected));
+  HomeProfile? _offlineProfile(PatientDashboard? dashboard) {
+    final prefs = _ref.read(sharedPreferencesProvider);
+    final cached = HomeProfileCache.read(prefs);
+    if (cached != null) return cached;
+
+    final session = _ref.read(authSessionProvider);
+    if (session == null && dashboard == null) return null;
+
+    final hasPatient = session?.hasPatientProfile == true ||
+        (dashboard != null &&
+            (dashboard.traitements.isNotEmpty ||
+                dashboard.prisesAujourdhui.isNotEmpty));
+
+    return HomeProfile(
+      nomComplet: '',
+      hasPatientProfile: hasPatient,
+      isAidant: session?.isAidant ?? false,
+    );
+  }
+
+  Future<void> _persistProfile(HomeProfile profile) async {
+    await HomeProfileCache.save(_ref.read(sharedPreferencesProvider), profile);
   }
 
   Future<void> load({bool secondary = true}) async {
     state = state.copyWith(loading: true, clearError: true);
 
+    PatientDashboard? localDashboard;
+
     // Hydrate locale d’abord (offline-first).
     try {
       final local = await _projectFromLocal();
       if (local != null && mounted) {
-        await _applyProjectedDashboard(local);
+        localDashboard = local;
+        final profile = state.profile ?? _offlineProfile(local);
+        state = state.copyWith(
+          loading: true,
+          profile: profile,
+          dashboard: local,
+          selectedDay: homeDateOnly(DateTime.now()),
+          clearDayPrises: true,
+          clearError: true,
+        );
       }
     } catch (_) {}
 
     try {
       final profile = await _repo.fetchProfile();
+      await _persistProfile(profile);
       final session = _ref.read(authSessionProvider);
       if (session != null) {
         _ref.read(authSessionProvider.notifier).updateOnboarding(
@@ -244,26 +285,41 @@ class HomeController extends StateNotifier<HomeUiState> {
       state = state.copyWith(
         loading: false,
         profile: profile,
-        dashboard: dashboard,
+        dashboard: dashboard ?? localDashboard,
         selectedDay: homeDateOnly(DateTime.now()),
-        clearDashboard: dashboard == null,
+        clearDashboard: dashboard == null && localDashboard == null,
         clearDayPrises: true,
         clearError: true,
       );
-      if (dashboard != null) {
-        unawaited(syncRemindersFromHome(_ref.read, dashboard));
+      final dash = state.dashboard;
+      if (dash != null) {
+        unawaited(syncRemindersFromHome(_ref.read, dash));
       }
-      if (secondary && dashboard != null) {
+      if (secondary && dash != null) {
         unawaited(_loadSecondary());
       }
     } catch (e) {
-      // Garde la projection locale si présente.
-      if (state.dashboard != null) {
-        state = state.copyWith(loading: false, clearError: true);
+      // Garde projection + profil locaux si le réseau échoue.
+      final profile = state.profile ?? _offlineProfile(localDashboard);
+      if (state.dashboard != null || localDashboard != null) {
+        state = state.copyWith(
+          loading: false,
+          profile: profile,
+          dashboard: state.dashboard ?? localDashboard,
+          clearError: true,
+        );
+        final dash = state.dashboard;
+        if (dash != null) {
+          unawaited(syncRemindersFromHome(_ref.read, dash));
+        }
+        if (secondary && dash != null) {
+          unawaited(_loadSecondary());
+        }
         return;
       }
       state = state.copyWith(
         loading: false,
+        profile: profile,
         error: e is ApiException ? e.message : e.toString(),
       );
     }
