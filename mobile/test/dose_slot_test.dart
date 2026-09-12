@@ -163,6 +163,86 @@ void main() {
     });
   });
 
+  group('DoseSlot.findNextUntaken', () {
+    final h2000 = DateTime(2026, 9, 12, 20, 0);
+    final h2100 = DateTime(2026, 9, 12, 21, 0);
+    final now = DateTime(2026, 9, 12, 21, 18);
+
+    PriseDuJour prise({
+      required String id,
+      required String nom,
+      String statut = 'en_attente',
+      DateTime? heure,
+      String? traitementId,
+      String? maladieNom,
+    }) {
+      return PriseDuJour(
+        id: id,
+        medicamentNom: nom,
+        dosage: '500 mg',
+        heurePrevue: heure ?? h2000,
+        statut: statut,
+        traitementId: traitementId,
+        maladieNom: maladieNom,
+      );
+    }
+
+    test('returns overdue slot before upcoming', () {
+      final prises = [
+        prise(id: 'late', nom: 'Metformine', heure: h2000, maladieNom: 'Diabète'),
+        prise(id: 'next', nom: 'Aspirine', heure: h2100, maladieNom: 'HTA'),
+      ];
+      final slot = DoseSlot.findNextUntaken(prises, now);
+      expect(slot?.maladieNom, 'Diabète');
+      expect(slot?.priseIds, ['late']);
+    });
+
+    test('groups multi-medocs into one next slot', () {
+      final prises = [
+        for (var i = 1; i <= 3; i++)
+          prise(
+            id: 'p$i',
+            nom: 'Med$i',
+            traitementId: 'tb',
+            maladieNom: 'Tuberculose',
+          ),
+      ];
+      final slot = DoseSlot.findNextUntaken(prises, now);
+      expect(slot?.priseIds, hasLength(3));
+      expect(slot?.maladieNom, 'Tuberculose');
+    });
+
+    test('returns null when all confirmed', () {
+      final prises = [
+        prise(id: '1', nom: 'A', statut: 'confirmee'),
+        prise(id: '2', nom: 'B', statut: 'confirmee'),
+      ];
+      expect(DoseSlot.findNextUntaken(prises, now), isNull);
+    });
+
+    test('two diseases same hour → overdue first in sort order', () {
+      final prises = [
+        prise(
+          id: 'tb',
+          nom: 'Rifa',
+          heure: h2000,
+          traitementId: 'tb',
+          maladieNom: 'Tuberculose',
+        ),
+        prise(
+          id: 'db',
+          nom: 'Metformine',
+          heure: h2000,
+          traitementId: 'db',
+          maladieNom: 'Diabète',
+        ),
+      ];
+      final slot = DoseSlot.findNextUntaken(prises, now);
+      expect(slot, isNotNull);
+      expect(DoseSlot.pendingPriseIds(slot!, prises), hasLength(1));
+    });
+  });
+
   group('DoseSlot.fromPayload compat', () {
     test('legacy single priseId builds 1-item slot', () {
       final slot = DoseSlot.fromPayload({

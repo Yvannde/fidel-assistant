@@ -21,7 +21,6 @@ import 'l10n/app_localizations.dart';
 import 'services/live_alarm_test.dart';
 import 'services/reminder_sync.dart';
 import 'services/server_clock.dart';
-import 'services/sync_engine.dart';
 import 'services/sync_lifecycle_binder.dart';
 
 Future<void> main() async {
@@ -70,10 +69,6 @@ Future<void> main() async {
     debugPrint('main: restoreFromLocalCache failed: $e\n$st');
   }
   unawaited(maybeRunLiveAlarmTest(alarms));
-
-  if (restored != null) {
-    unawaited(container.read(syncEngineProvider).flush());
-  }
 
   final router = container.read(appRouterProvider);
   bindAlarmRingingNavigation(router);

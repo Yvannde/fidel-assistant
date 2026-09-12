@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
@@ -237,19 +238,30 @@ class HomeController extends StateNotifier<HomeUiState> {
     await HomeProfileCache.save(_ref.read(sharedPreferencesProvider), profile);
   }
 
+  void _scheduleSecondaryLoad() {
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) unawaited(_loadSecondary());
+      });
+    });
+  }
+
   Future<void> load({bool secondary = true}) async {
-    state = state.copyWith(loading: true, clearError: true);
+    final hadCache = state.dashboard != null;
+    if (!hadCache) {
+      state = state.copyWith(loading: true, clearError: true);
+    }
 
     PatientDashboard? localDashboard;
 
-    // Hydrate locale d’abord (offline-first).
+    // Hydrate locale d’abord (offline-first) — UI immédiate si cache.
     try {
       final local = await _projectFromLocal();
       if (local != null && mounted) {
         localDashboard = local;
         final profile = state.profile ?? _offlineProfile(local);
         state = state.copyWith(
-          loading: true,
+          loading: false,
           profile: profile,
           dashboard: local,
           selectedDay: homeDateOnly(DateTime.now()),
@@ -296,7 +308,7 @@ class HomeController extends StateNotifier<HomeUiState> {
         unawaited(syncRemindersFromHome(_ref.read, dash));
       }
       if (secondary && dash != null) {
-        unawaited(_loadSecondary());
+        _scheduleSecondaryLoad();
       }
     } catch (e) {
       // Garde projection + profil locaux si le réseau échoue.
@@ -313,7 +325,7 @@ class HomeController extends StateNotifier<HomeUiState> {
           unawaited(syncRemindersFromHome(_ref.read, dash));
         }
         if (secondary && dash != null) {
-          unawaited(_loadSecondary());
+          _scheduleSecondaryLoad();
         }
         return;
       }
@@ -636,6 +648,41 @@ class HomeController extends StateNotifier<HomeUiState> {
           statut: 'en_attente',
         );
         await _engine.enqueueReport(priseId: id, nouvelleHeure: nouvelleHeure);
+      });
+      await reloadProjection();
+      state = state.copyWith(busy: false);
+      unawaited(_engine.flush(force: true));
+    } catch (e) {
+      state = state.copyWith(
+        busy: false,
+        error: e is ApiException ? e.message : e.toString(),
+      );
+      rethrow;
+    }
+  }
+
+  /// Reporte toutes les prises d’un créneau à la même heure (DoseSlot).
+  Future<void> reportPrises(List<String> ids, DateTime nouvelleHeure) async {
+    final unique = ids.where((id) => id.isNotEmpty).toSet().toList();
+    if (unique.isEmpty) return;
+    if (unique.length == 1) {
+      await reportPrise(unique.first, nouvelleHeure);
+      return;
+    }
+    state = state.copyWith(busy: true, clearError: true);
+    try {
+      await _db.transaction(() async {
+        for (final id in unique) {
+          await _db.updatePriseLocal(
+            id: id,
+            heurePrevue: nouvelleHeure,
+            statut: 'en_attente',
+          );
+          await _engine.enqueueReport(
+            priseId: id,
+            nouvelleHeure: nouvelleHeure,
+          );
+        }
       });
       await reloadProjection();
       state = state.copyWith(busy: false);

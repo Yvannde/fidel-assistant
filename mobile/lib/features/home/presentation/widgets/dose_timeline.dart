@@ -21,6 +21,7 @@ class DoseTimeline extends StatelessWidget {
     required this.busy,
     required this.onConfirmSlot,
     this.embedded = true,
+    this.heroHandlesNext = false,
   });
 
   final List<PriseDuJour> prises;
@@ -30,6 +31,9 @@ class DoseTimeline extends StatelessWidget {
   /// Confirm V1 = tout le créneau (prises encore `en_attente`).
   final ValueChanged<DoseSlot> onConfirmSlot;
   final bool embedded;
+
+  /// Si true, le hero Accueil gère le CTA du prochain slot (pas de doublon).
+  final bool heroHandlesNext;
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +67,7 @@ class DoseTimeline extends StatelessWidget {
     }
 
     final slots = DoseSlot.groupPrises(prises);
-    final nextSlotId = _nextUntakenSlotId(slots, prises, now);
+    final nextSlotId = DoseSlot.findNextUntaken(prises, now)?.slotId;
 
     final groups = <_Moment, List<DoseSlot>>{};
     for (final s in slots) {
@@ -80,6 +84,7 @@ class DoseTimeline extends StatelessWidget {
       rows.add(_MomentHeader(moment: moment, l10n: l10n, tokens: tokens));
       for (final slot in items) {
         final pendingIds = _pendingIds(slot, prises);
+        final isNext = slot.slotId == nextSlotId;
         rows.add(
           _SlotCard(
             slot: slot,
@@ -88,8 +93,8 @@ class DoseTimeline extends StatelessWidget {
             busy: busy,
             isFirst: index == 0,
             isLast: index == lastIndex,
-            isNext: slot.slotId == nextSlotId,
-            onConfirm: pendingIds.isEmpty
+            isNext: isNext,
+            onConfirm: pendingIds.isEmpty || (heroHandlesNext && isNext)
                 ? null
                 : () => onConfirmSlot(slot),
           ),
@@ -110,33 +115,7 @@ class DoseTimeline extends StatelessWidget {
   }
 
   static List<String> _pendingIds(DoseSlot slot, List<PriseDuJour> prises) {
-    final byId = {for (final p in prises) p.id: p};
-    return [
-      for (final id in slot.priseIds)
-        if (byId[id]?.isPending == true) id,
-    ];
-  }
-
-  /// Prochain créneau non entièrement confirmé.
-  static String? _nextUntakenSlotId(
-    List<DoseSlot> slots,
-    List<PriseDuJour> prises,
-    DateTime now,
-  ) {
-    DoseSlot? overdue;
-    DoseSlot? upcoming;
-    for (final s in slots) {
-      final pending = _pendingIds(s, prises);
-      if (pending.isEmpty) continue;
-      final t = s.heurePrevue;
-      if (t.isBefore(now) || t.isAtSameMomentAs(now)) {
-        overdue ??= s;
-      } else {
-        upcoming ??= s;
-        break;
-      }
-    }
-    return (overdue ?? upcoming)?.slotId;
+    return DoseSlot.pendingPriseIds(slot, prises);
   }
 
   static _Moment _momentOf(DateTime time) {

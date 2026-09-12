@@ -1,5 +1,6 @@
-import 'scheduled_dose.dart';
+import '../l10n/app_localizations.dart';
 import '../features/home/domain/dashboard_models.dart';
+import 'scheduled_dose.dart';
 
 /// Une ligne médicament dans un [DoseSlot].
 class DoseSlotItem {
@@ -57,6 +58,44 @@ class DoseSlot {
   List<String> get priseIds => [for (final i in items) i.priseId];
 
   bool get isEmpty => items.isEmpty;
+
+  /// Titre maladie-first pour l’UI (hero, snooze sheet).
+  String displayTitle(AppLocalizations l10n) {
+    final maladie = maladieNom.trim();
+    if (maladie.isNotEmpty) return maladie;
+    if (items.length == 1) return items.first.medicamentNom;
+    return l10n.homeSlotMedCount(items.length);
+  }
+
+  /// Ids des prises encore `en_attente` dans ce slot.
+  static List<String> pendingPriseIds(
+    DoseSlot slot,
+    List<PriseDuJour> prises,
+  ) {
+    final byId = {for (final p in prises) p.id: p};
+    return [
+      for (final id in slot.priseIds)
+        if (byId[id]?.isPending == true) id,
+    ];
+  }
+
+  /// Prochain créneau non entièrement confirmé (retard prioritaire).
+  static DoseSlot? findNextUntaken(List<PriseDuJour> prises, DateTime now) {
+    final slots = groupPrises(prises);
+    DoseSlot? overdue;
+    DoseSlot? upcoming;
+    for (final s in slots) {
+      if (pendingPriseIds(s, prises).isEmpty) continue;
+      final t = s.heurePrevue;
+      if (t.isBefore(now) || t.isAtSameMomentAs(now)) {
+        overdue ??= s;
+      } else {
+        upcoming ??= s;
+        break;
+      }
+    }
+    return overdue ?? upcoming;
+  }
 
   /// Identifiant stable : `traitementId|yyyy-MM-dd|HH:mm` (fallback `_` si absent).
   static String buildSlotId({

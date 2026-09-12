@@ -88,19 +88,31 @@ class HomeDashboardScreen extends ConsumerWidget {
     final traitements = dash?.traitements ?? const <DashboardTraitement>[];
     final dashLoading = state.loading && state.dashboard == null;
     final nowKpis = DateTime.now();
+    final nextSlot = DoseSlot.findNextUntaken(prises, now);
 
     return [
       // 1. CTA setup puis hero action
       if (cta != null) ...[cta, const SizedBox(height: 16)],
       if (state.isTodaySelected)
         if (prises.isNotEmpty) ...[
-          NextDoseCard(
-            next: dash?.nextDose(now),
-            done: dash?.takenCount() ?? 0,
-            total: prises.length,
-            busy: state.busy,
-            onConfirm: () => _confirmNext(context, ref, dash, now, l10n),
-            onSnooze: () => _snoozeNext(context, ref, dash, now, l10n),
+          RepaintBoundary(
+            child: NextDoseCard(
+              slot: nextSlot,
+              prises: prises,
+              done: dash?.takenCount() ?? 0,
+              total: prises.length,
+              busy: state.busy,
+              onConfirm: () {
+                if (nextSlot != null) {
+                  _confirmSlot(context, ref, nextSlot, l10n);
+                }
+              },
+              onSnooze: () {
+                if (nextSlot != null) {
+                  _snoozeSlot(context, ref, nextSlot, l10n);
+                }
+              },
+            ),
           ),
           const SizedBox(height: 16),
         ] else if (cta == null && !dashLoading) ...[
@@ -116,12 +128,14 @@ class HomeDashboardScreen extends ConsumerWidget {
       ],
 
       // 2. KPIs du jour + graphe semaine
-      HomeKpisWeek(
-        pending: dash?.pendingCount(nowKpis) ?? 0,
-        taken: dash?.takenCount() ?? 0,
-        late: dash?.lateCount(nowKpis) ?? 0,
-        week: state.week,
-        weekLoading: state.weekLoading,
+      RepaintBoundary(
+        child: HomeKpisWeek(
+          pending: dash?.pendingCount(nowKpis) ?? 0,
+          taken: dash?.takenCount() ?? 0,
+          late: dash?.lateCount(nowKpis) ?? 0,
+          week: state.week,
+          weekLoading: state.weekLoading,
+        ),
       ),
       const SizedBox(height: 20),
 
@@ -152,6 +166,7 @@ class HomeDashboardScreen extends ConsumerWidget {
               prises: prises,
               now: now,
               busy: state.busy,
+              heroHandlesNext: state.isTodaySelected && prises.isNotEmpty,
               onConfirmSlot: (slot) => _confirmSlot(context, ref, slot, l10n),
             ),
           ],
@@ -270,37 +285,6 @@ class HomeDashboardScreen extends ConsumerWidget {
     return raw.isEmpty ? raw : raw[0].toUpperCase() + raw.substring(1);
   }
 
-  Future<void> _confirmNext(
-    BuildContext context,
-    WidgetRef ref,
-    PatientDashboard? dash,
-    DateTime now,
-    AppLocalizations l10n,
-  ) async {
-    final next = dash?.nextDose(now);
-    if (next == null) return;
-    await _confirm(context, ref, next.id, l10n);
-  }
-
-  Future<void> _confirm(
-    BuildContext context,
-    WidgetRef ref,
-    String priseId,
-    AppLocalizations l10n,
-  ) async {
-    try {
-      await ref.read(homeControllerProvider.notifier).confirmPrise(priseId);
-      if (context.mounted) AppToast.success(context, l10n.homeTakenToast);
-    } catch (e) {
-      if (context.mounted) {
-        AppToast.error(
-          context,
-          e is ApiException ? e.message : l10n.genericError,
-        );
-      }
-    }
-  }
-
   Future<void> _confirmSlot(
     BuildContext context,
     WidgetRef ref,
@@ -329,24 +313,24 @@ class HomeDashboardScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _snoozeNext(
+  Future<void> _snoozeSlot(
     BuildContext context,
     WidgetRef ref,
-    PatientDashboard? dash,
-    DateTime now,
+    DoseSlot slot,
     AppLocalizations l10n,
   ) async {
-    final next = dash?.nextDose(now);
-    if (next == null) return;
+    final state = ref.read(homeControllerProvider);
+    final pending = DoseSlot.pendingPriseIds(slot, state.visiblePrises);
+    if (pending.isEmpty) return;
 
-    final delay = await SnoozeSheet.show(context, next.medicamentNom);
+    final delay = await SnoozeSheet.show(context, slot.displayTitle(l10n));
     if (delay == null || !context.mounted) return;
 
     final target = DateTime.now().add(delay);
     try {
       await ref
           .read(homeControllerProvider.notifier)
-          .reportPrise(next.id, target);
+          .reportPrises(pending, target);
       if (context.mounted) {
         AppToast.success(
           context,

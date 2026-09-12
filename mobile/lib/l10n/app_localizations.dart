@@ -962,6 +962,12 @@ abstract class AppLocalizations {
   /// **'Next dose'**
   String get homeNextDoseLabel;
 
+  /// No description provided for @homeSlotMedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 medication} other{{count} medications}}'**
+  String homeSlotMedCount(int count);
+
   /// No description provided for @homeAllClearTitle.
   ///
   /// In en, this message translates to:
