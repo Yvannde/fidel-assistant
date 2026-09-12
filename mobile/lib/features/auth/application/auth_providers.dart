@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/providers.dart';
@@ -58,6 +60,7 @@ class AuthSessionController extends StateNotifier<AuthSession?> {
       needsCgu: false,
       needsConsentementSante: false,
     );
+    unawaited(_ref.read(authRepositoryProvider).persistSessionSnapshot(state!));
   }
 
   void updateOnboarding({
@@ -70,6 +73,7 @@ class AuthSessionController extends StateNotifier<AuthSession?> {
       onboardingStep: step,
       hasPatientProfile: hasPatientProfile,
     );
+    unawaited(_ref.read(authRepositoryProvider).persistSessionSnapshot(state!));
   }
 
   Future<void> logout() async {

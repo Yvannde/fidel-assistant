@@ -4,6 +4,8 @@ import '../config/app_config.dart';
 import '../storage/token_storage.dart';
 import 'api_exception.dart';
 
+enum RefreshResult { success, networkError, rejected }
+
 /// Client HTTP central — intercepteur Bearer + refresh automatique.
 class ApiClient {
   ApiClient({
@@ -81,8 +83,12 @@ class ApiClient {
           }
 
           final refreshed = await _tryRefresh();
-          if (!refreshed) {
+          if (refreshed == RefreshResult.rejected) {
             await _tokenStorage.clear();
+            handler.next(error);
+            return;
+          }
+          if (refreshed != RefreshResult.success) {
             handler.next(error);
             return;
           }
@@ -108,20 +114,22 @@ class ApiClient {
 
   Dio get raw => _dio;
 
-  Future<bool> _tryRefresh() async {
+  Future<RefreshResult> _tryRefresh() async {
     final refresh = await _tokenStorage.readRefreshToken();
-    if (refresh == null || refresh.isEmpty) return false;
+    if (refresh == null || refresh.isEmpty) return RefreshResult.rejected;
     try {
       final res = await _refreshDio.post<Map<String, dynamic>>(
         '/auth/refresh',
         data: {'refresh_token': refresh},
       );
       final access = res.data?['access_token'] as String?;
-      if (access == null || access.isEmpty) return false;
+      if (access == null || access.isEmpty) return RefreshResult.rejected;
       await _tokenStorage.saveAccessToken(access);
-      return true;
-    } on DioException {
-      return false;
+      return RefreshResult.success;
+    } on DioException catch (e) {
+      final status = e.response?.statusCode ?? 0;
+      if (status == 401 || status == 403) return RefreshResult.rejected;
+      return RefreshResult.networkError;
     }
   }
 
