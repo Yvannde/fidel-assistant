@@ -104,8 +104,9 @@ Pas de `POST /onboarding/role`. Voir `auth-onboarding/SKILL.md`.
 
 | Méthode | Chemin | Entrée | Sortie | Erreurs possibles |
 |---|---|---|---|---|
-| GET | `/patients/me/traitements` | 🔒 | `[PatientTraitement]` | — |
-| POST | `/patients/me/traitements` | 🔒 `maladie_id, phase, date_debut?` | `PatientTraitement` créé | — |
+| GET | `/patients/me/traitements` | 🔒 | `[PatientTraitement]` — uniquement `statut=actif` (auto-expire si `date_fin_prevue` passée) | — |
+| POST | `/patients/me/traitements` | 🔒 `maladie_id, phase, date_debut?, date_fin_prevue?` | `PatientTraitement` créé | — |
+| PATCH | `/patients/me/traitements/{id}` | 🔒 `statut?` (`actif`\|`suspendu`\|`termine`), `date_fin_prevue?`, `phase?` | `PatientTraitement` — `termine` désactive meds/horaires et marque les prises `en_attente` en `manquee` | `TRAITEMENT_NOT_FOUND` |
 | POST | `/traitements/{id}/medicaments` | 🔒 `nom, dosage, forme, horaires: [{heure, jours}]` | `Medicament` créé (avec ses `MedicamentHoraire`) | `TRAITEMENT_NOT_FOUND` |
 | GET | `/patients/me/medicaments` | 🔒 | `[Medicament]` avec horaires imbriqués | — |
 | PATCH | `/medicaments/{id}` | 🔒 champs modifiables | `Medicament` mis à jour | `MEDICAMENT_NOT_FOUND` |
@@ -159,7 +160,7 @@ Notes :
 
 | Méthode | Chemin | Entrée | Sortie | Erreurs possibles |
 |---|---|---|---|---|
-| POST | `/patients/me/check-in` | 🔒 `statut` (`ca_va`\|`pas_top`), `client_mutation_id?` | `CheckIn` créé | `CHECK_IN_DEJA_FAIT_AUJOURDHUI` |
+| POST | `/patients/me/check-in` | 🔒 `statut` (`tres_mal`\|`pas_top`\|`ca_va`\|`super`), `client_mutation_id?` | `CheckIn` créé | `CHECK_IN_DEJA_FAIT_AUJOURDHUI` |
 | GET | `/patients/me/check-in` | 🔒 `depuis?` | `[CheckIn]` | — |
 | POST | `/patients/me/sos` | 🔒 | `{sos_id, annulable_jusqu_a}` — déclenche l'alerte silencieuse après la fenêtre de 30s | `AUCUN_CONTACT_URGENCE` |
 | POST | `/sos/{id}/annuler` | 🔒 | `{message}` | `SOS_TROP_TARD`, `SOS_NOT_FOUND` |

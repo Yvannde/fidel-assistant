@@ -235,10 +235,10 @@ Exécution               medicaments → medicament_horaires → prises
 | phase | enum | `debut`, `en_cours`, `maintenance`, `inconnu` |
 | en_traitement | boolean | |
 | date_debut | date | **obligatoire** si `en_traitement=true` (règle API) |
-| date_fin_prevue | date | nullable |
+| date_fin_prevue | date | nullable — si dépassée et `statut=actif`, le backend auto-termine (cascade meds) |
 | maladie_libelle | string | nullable — si maladie = `autre` |
 | lieu_suivi | string | nullable — hôpital / CMS |
-| statut | enum | `actif`, `suspendu`, `termine` — indexé |
+| statut | enum | `actif`, `suspendu`, `termine` — indexé ; `termine` via `PATCH /patients/me/traitements/{id}` (consentement patient) |
 | created_at / updated_at | timestamp | |
 
 Un patient peut avoir plusieurs traitements actifs simultanément (plusieurs maladies).  
@@ -394,7 +394,7 @@ Utilisé par le bouton SOS et l'escalade du Volet 1/3.
 | id | UUID | |
 | patient_id | UUID (FK → Patient) | |
 | date | date | unique avec `patient_id` — un check-in par jour |
-| statut | enum | `ca_va`, `pas_top`, `sans_reponse` |
+| statut | enum | `tres_mal`, `pas_top`, `ca_va`, `super`, `sans_reponse` |
 | created_at | timestamp | |
 
 Un check-in par jour et par patient.

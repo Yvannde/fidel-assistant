@@ -21,6 +21,7 @@ import '../../features/home/presentation/aidant_patient_detail_screen.dart';
 import '../../features/home/presentation/aidants_invite_screen.dart';
 import '../../features/home/presentation/aidants_list_screen.dart';
 import '../../features/home/presentation/home_notifications_screen.dart';
+import '../../features/home/presentation/health_detail_screen.dart';
 import '../../features/home/presentation/home_shell.dart';
 import '../../features/home/presentation/profile_account_screen.dart';
 import '../../features/home/presentation/alarm_health_screen.dart';
@@ -266,6 +267,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           state: state,
           child: const AddTraitementScreen(),
         ),
+      ),
+      GoRoute(
+        path: '/home/sante/:typeCode',
+        pageBuilder: (context, state) {
+          final typeCode = state.pathParameters['typeCode'] ?? '';
+          return _softPage(
+            state: state,
+            child: HealthDetailScreen(typeCode: typeCode),
+          );
+        },
       ),
       GoRoute(
         path: '/home/sync',

@@ -415,7 +415,55 @@ class AppLocalizationsFr extends AppLocalizations {
   String get navHome => 'Accueil';
 
   @override
-  String get navCare => 'Soins';
+  String get navCare => 'Santé';
+
+  @override
+  String get healthSubtitle => 'Tes indicateurs — poids, tension, glycémie…';
+
+  @override
+  String get healthRecommended => 'Recommandé pour toi';
+
+  @override
+  String get healthAllMetrics => 'Tous tes indicateurs';
+
+  @override
+  String get healthRecent => 'Mesures récentes';
+
+  @override
+  String get healthRecentEmpty =>
+      'Aucune mesure pour l’instant. Commence par en ajouter une.';
+
+  @override
+  String get healthAddCta => 'Ajouter une mesure';
+
+  @override
+  String get healthEmptyHero =>
+      'Commence par une mesure. Une fois de temps en temps suffit.';
+
+  @override
+  String get healthNoData => 'Pas encore de mesure';
+
+  @override
+  String healthDaysAgo(int count) {
+    return 'il y a $count j';
+  }
+
+  @override
+  String get healthViewAll => 'Voir dans Santé';
+
+  @override
+  String get healthRecommendedBadge => 'Recommandé';
+
+  @override
+  String get healthLatestMeasure => 'Dernière mesure';
+
+  @override
+  String get healthHistory => 'Historique';
+
+  @override
+  String healthNoDataForType(String type) {
+    return 'Aucune mesure de $type pour l’instant.';
+  }
 
   @override
   String get navPeople => 'Cercle';
@@ -906,6 +954,49 @@ class AppLocalizationsFr extends AppLocalizations {
   String get homeCheckInThanks => 'Merci, c’est noté.';
 
   @override
+  String get homeCheckInLevelTresMal => 'Très mal';
+
+  @override
+  String get homeCheckInLevelPasTop => 'Pas top';
+
+  @override
+  String get homeCheckInLevelCaVa => 'Ça va';
+
+  @override
+  String get homeCheckInLevelSuper => 'Super';
+
+  @override
+  String get homeCheckInDoneTresMal => 'Aujourd’hui : très mal';
+
+  @override
+  String get homeCheckInDonePasTop => 'Aujourd’hui : pas top';
+
+  @override
+  String get homeCheckInDoneCaVa => 'Aujourd’hui : ça va';
+
+  @override
+  String get homeCheckInDoneSuper => 'Aujourd’hui : super';
+
+  @override
+  String get homeCheckInReminderTitle => 'Comment tu te sens aujourd’hui ?';
+
+  @override
+  String get homeCheckInReminderBody =>
+      'Un geste, quatre choix — ça aide à suivre ton suivi.';
+
+  @override
+  String get homeCheckInActionTresMal => 'Très mal';
+
+  @override
+  String get homeCheckInActionPasTop => 'Pas top';
+
+  @override
+  String get homeCheckInActionCaVa => 'Ça va';
+
+  @override
+  String get homeCheckInActionSuper => 'Super';
+
+  @override
   String homeTreatmentDay(int day) {
     return 'Jour $day';
   }
@@ -920,6 +1011,32 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get homeTreatmentOngoing => 'Traitement en cours';
+
+  @override
+  String get homeTreatmentEndAction => 'Marquer terminé';
+
+  @override
+  String get homeTreatmentEndTitle => 'Terminer ce traitement ?';
+
+  @override
+  String get homeTreatmentEndBody =>
+      'Les rappels médicaments pour cette maladie s’arrêtent. Tu pourras toujours en ajouter un nouveau plus tard.';
+
+  @override
+  String get homeTreatmentEndConfirm => 'Oui, terminer';
+
+  @override
+  String get homeTreatmentEndedToast => 'Traitement terminé — rappels arrêtés.';
+
+  @override
+  String get configDateFinLabel => 'Date de fin prévue (optionnel)';
+
+  @override
+  String get configDateFinHint =>
+      'Si tu la connais, on arrêtera automatiquement les rappels après cette date.';
+
+  @override
+  String get configDateFinClear => 'Pas de date de fin';
 
   @override
   String get homePhaseDebut => 'Début';

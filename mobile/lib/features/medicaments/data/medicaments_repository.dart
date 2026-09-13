@@ -88,21 +88,52 @@ class MedicamentsRepository {
     required String maladieId,
     required String phase,
     DateTime? dateDebut,
+    DateTime? dateFinPrevue,
   }) async {
     try {
+      String? fmt(DateTime? d) {
+        if (d == null) return null;
+        return '${d.year.toString().padLeft(4, '0')}-'
+            '${d.month.toString().padLeft(2, '0')}-'
+            '${d.day.toString().padLeft(2, '0')}';
+      }
+
       final res = await _api.post<Map<String, dynamic>>(
         '/patients/me/traitements',
         data: {
           'maladie_id': maladieId,
           'phase': phase,
-          if (dateDebut != null)
-            'date_debut':
-                '${dateDebut.year.toString().padLeft(4, '0')}-'
-                '${dateDebut.month.toString().padLeft(2, '0')}-'
-                '${dateDebut.day.toString().padLeft(2, '0')}',
+          if (dateDebut != null) 'date_debut': fmt(dateDebut),
+          if (dateFinPrevue != null) 'date_fin_prevue': fmt(dateFinPrevue),
         },
       );
       return res.data?['id']?.toString() ?? '';
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<void> updateTraitement({
+    required String traitementId,
+    String? statut,
+    DateTime? dateFinPrevue,
+    bool clearDateFin = false,
+  }) async {
+    try {
+      final data = <String, dynamic>{};
+      if (statut != null) data['statut'] = statut;
+      if (clearDateFin) {
+        data['date_fin_prevue'] = null;
+      } else if (dateFinPrevue != null) {
+        data['date_fin_prevue'] =
+            '${dateFinPrevue.year.toString().padLeft(4, '0')}-'
+            '${dateFinPrevue.month.toString().padLeft(2, '0')}-'
+            '${dateFinPrevue.day.toString().padLeft(2, '0')}';
+      }
+      await _api.patch<Map<String, dynamic>>(
+        '/patients/me/traitements/$traitementId',
+        data: data,
+      );
     } on DioException catch (e) {
       ApiClient.throwApi(e);
     }

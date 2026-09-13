@@ -11,6 +11,7 @@ class Sparkline extends StatelessWidget {
     this.secondary,
     this.secondaryColor,
     this.height = 88,
+    this.compact = false,
   });
 
   final List<double> values;
@@ -21,6 +22,9 @@ class Sparkline extends StatelessWidget {
   /// Couleur de la carte — sert d’anneau autour du dernier point.
   final Color surface;
   final double height;
+
+  /// Marges et traits réduits pour les mini-graphes Santé.
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +46,7 @@ class Sparkline extends StatelessWidget {
               secondaryColor: secondaryColor ?? color.withValues(alpha: 0.45),
               surface: surface,
               progress: t,
+              compact: compact,
             ),
           ),
         );
@@ -58,6 +63,7 @@ class _SparklinePainter extends CustomPainter {
     required this.secondaryColor,
     required this.surface,
     required this.progress,
+    required this.compact,
   });
 
   final List<double> values;
@@ -66,6 +72,7 @@ class _SparklinePainter extends CustomPainter {
   final Color secondaryColor;
   final Color surface;
   final double progress;
+  final bool compact;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -81,7 +88,11 @@ class _SparklinePainter extends CustomPainter {
       max += pad;
     }
 
-    const inset = 8.0;
+    final inset = compact ? 2.0 : 8.0;
+    final strokeWidth = compact ? 2.0 : 3.0;
+    final dotRadius = compact ? 1.5 : 2.5;
+    final lastDotOuter = compact ? 4.0 : 6.5;
+    final lastDotInner = compact ? 2.5 : 4.5;
     final usable = size.height - inset * 2;
 
     Offset pointAt(List<double> series, int i) {
@@ -106,18 +117,20 @@ class _SparklinePainter extends CustomPainter {
     canvas.save();
     canvas.clipRect(Rect.fromLTWH(0, 0, size.width * progress, size.height));
 
-    canvas.drawPath(
-      fill,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            color.withValues(alpha: 0.22),
-            color.withValues(alpha: 0),
-          ],
-        ).createShader(Offset.zero & size),
-    );
+    if (values.length > 1) {
+      canvas.drawPath(
+        fill,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              color.withValues(alpha: compact ? 0.32 : 0.22),
+              color.withValues(alpha: 0),
+            ],
+          ).createShader(Offset.zero & size),
+      );
+    }
 
     final secondaryValues = secondary;
     if (secondaryValues != null && secondaryValues.length == values.length) {
@@ -129,25 +142,41 @@ class _SparklinePainter extends CustomPainter {
         _smoothPath(secondaryPoints),
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 2
+          ..strokeWidth = compact ? 1.5 : 2
           ..strokeCap = StrokeCap.round
           ..color = secondaryColor,
       );
     }
 
-    canvas.drawPath(
-      linePath,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round
-        ..color = color,
-    );
+    if (values.length == 1) {
+      final y = points.first.dy;
+      canvas.drawLine(
+        Offset(size.width * 0.08, y),
+        Offset(size.width * 0.92, y),
+        Paint()
+          ..strokeWidth = strokeWidth
+          ..strokeCap = StrokeCap.round
+          ..color = color,
+      );
+    } else {
+      canvas.drawPath(
+        linePath,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = strokeWidth
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round
+          ..color = color,
+      );
+    }
 
-    if (points.length <= 8) {
+    if (!compact && points.length <= 8) {
       for (final p in points) {
-        canvas.drawCircle(p, 2.5, Paint()..color = color.withValues(alpha: 0.4));
+        canvas.drawCircle(
+          p,
+          dotRadius,
+          Paint()..color = color.withValues(alpha: 0.4),
+        );
       }
     }
 
@@ -155,8 +184,8 @@ class _SparklinePainter extends CustomPainter {
 
     if (progress > 0.98) {
       final last = points.last;
-      canvas.drawCircle(last, 6.5, Paint()..color = surface);
-      canvas.drawCircle(last, 4.5, Paint()..color = color);
+      canvas.drawCircle(last, lastDotOuter, Paint()..color = surface);
+      canvas.drawCircle(last, lastDotInner, Paint()..color = color);
     }
   }
 

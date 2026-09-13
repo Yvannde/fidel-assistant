@@ -18,6 +18,7 @@ class TodaySummaryCard extends StatelessWidget {
     required this.known,
     required this.onAdd,
     required this.onViewAll,
+    this.onTileTap,
     this.subtitle,
   });
 
@@ -25,6 +26,7 @@ class TodaySummaryCard extends StatelessWidget {
   final bool known;
   final VoidCallback onAdd;
   final VoidCallback onViewAll;
+  final ValueChanged<ConstanteType>? onTileTap;
   final String? subtitle;
 
   @override
@@ -92,7 +94,7 @@ class TodaySummaryCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        l10n.homeTodaySummaryViewAll,
+                        l10n.healthViewAll,
                         style: TextStyle(
                           fontFamily: AppTheme.fontFamily,
                           fontSize: 12,
@@ -169,7 +171,14 @@ class TodaySummaryCard extends StatelessWidget {
               children: [
                 for (var i = 0; i < tiles.length; i++) ...[
                   if (i > 0) const SizedBox(width: 8),
-                  Expanded(child: _VitalTile(series: tiles[i])),
+                  Expanded(
+                    child: _VitalTile(
+                      series: tiles[i],
+                      onTap: onTileTap == null
+                          ? null
+                          : () => onTileTap!(tiles[i].type),
+                    ),
+                  ),
                 ],
                 // Remplir la rangée si moins de 3 pour garder l’alignement.
                 for (var i = tiles.length; i < 3; i++) ...[
@@ -185,9 +194,10 @@ class TodaySummaryCard extends StatelessWidget {
 }
 
 class _VitalTile extends StatelessWidget {
-  const _VitalTile({required this.series});
+  const _VitalTile({required this.series, this.onTap});
 
   final ConstanteSeries series;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -196,7 +206,17 @@ class _VitalTile extends StatelessWidget {
     final latest = series.latest;
     final accent = _accent(series.type);
 
-    return Container(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap == null
+            ? null
+            : () {
+                HapticFeedback.selectionClick();
+                onTap!();
+              },
+        borderRadius: BorderRadius.circular(Premium.radiusSm),
+        child: Container(
       padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(Premium.radiusSm),
@@ -235,6 +255,8 @@ class _VitalTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
+        ),
       ),
     );
   }

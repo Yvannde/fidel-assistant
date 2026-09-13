@@ -49,6 +49,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/mood/
     - assets/lottie/
     - assets/config/app.json
     - assets/sounds/

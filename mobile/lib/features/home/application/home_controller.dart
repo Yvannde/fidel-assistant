@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -13,6 +14,7 @@ import '../../auth/application/auth_providers.dart';
 import '../../../services/reminder_sync.dart';
 import '../../../services/sync_engine.dart';
 import '../../../services/sync_outbox.dart';
+import '../../medicaments/data/medicaments_repository.dart';
 import '../data/home_profile_cache.dart';
 import '../data/home_repository.dart';
 import '../domain/constante_models.dart';
@@ -136,6 +138,10 @@ class HomeUiState {
 
   bool get needsCheckIn => checkInKnown && todayCheckIn == null;
 
+  /// Au moins une maladie configurée (traitement actif sur le dashboard).
+  bool get hasConfiguredMaladie =>
+      (dashboard?.traitements.isNotEmpty ?? false);
+
   HomeUiState copyWith({
     bool? loading,
     bool? busy,
@@ -186,6 +192,7 @@ class HomeController extends StateNotifier<HomeUiState> {
   HomeController(this._ref) : super(const HomeUiState());
 
   final Ref _ref;
+  bool _ensureLoadInFlight = false;
 
   HomeRepository get _repo => _ref.read(homeRepositoryProvider);
   AppDatabase get _db => _ref.read(appDatabaseProvider);
@@ -218,7 +225,6 @@ class HomeController extends StateNotifier<HomeUiState> {
     final prefs = _ref.read(sharedPreferencesProvider);
     final cached = HomeProfileCache.read(prefs);
     if (cached != null) return cached;
-
     final session = _ref.read(authSessionProvider);
     if (session == null && dashboard == null) return null;
 
@@ -247,6 +253,14 @@ class HomeController extends StateNotifier<HomeUiState> {
   }
 
   Future<void> load({bool secondary = true}) async {
+    // Peindre immédiatement depuis caches locaux (profil + Drift).
+    final cachedProfile = HomeProfileCache.read(
+      _ref.read(sharedPreferencesProvider),
+    );
+    if (cachedProfile != null && state.profile == null && mounted) {
+      state = state.copyWith(profile: cachedProfile, clearError: true);
+    }
+
     final hadCache = state.dashboard != null;
     if (!hadCache) {
       state = state.copyWith(loading: true, clearError: true);
@@ -254,12 +268,12 @@ class HomeController extends StateNotifier<HomeUiState> {
 
     PatientDashboard? localDashboard;
 
-    // Hydrate locale d’abord (offline-first) — UI immédiate si cache.
     try {
       final local = await _projectFromLocal();
       if (local != null && mounted) {
         localDashboard = local;
-        final profile = state.profile ?? _offlineProfile(local);
+        final profile =
+            state.profile ?? cachedProfile ?? _offlineProfile(local);
         state = state.copyWith(
           loading: false,
           profile: profile,
@@ -312,7 +326,9 @@ class HomeController extends StateNotifier<HomeUiState> {
       }
     } catch (e) {
       // Garde projection + profil locaux si le réseau échoue.
-      final profile = state.profile ?? _offlineProfile(localDashboard);
+      final profile = state.profile ??
+          cachedProfile ??
+          _offlineProfile(localDashboard);
       if (state.dashboard != null || localDashboard != null) {
         state = state.copyWith(
           loading: false,
@@ -337,6 +353,24 @@ class HomeController extends StateNotifier<HomeUiState> {
     }
   }
 
+  /// Recharge si l’UI est vide après hot-reload / race auth (anti-boucle).
+  Future<void> ensureLoaded() async {
+    if (_ensureLoadInFlight) return;
+    final s = state;
+    final session = _ref.read(authSessionProvider);
+    final needsPatientData = session?.hasPatientProfile == true ||
+        s.profile?.hasPatientProfile == true;
+    if (s.loading) return;
+    if (s.dashboard != null && s.profile != null) return;
+    if (!needsPatientData && s.profile != null) return;
+    _ensureLoadInFlight = true;
+    try {
+      await load();
+    } finally {
+      _ensureLoadInFlight = false;
+    }
+  }
+
   /// Semaine, traitements et check-in — jamais bloquants, jamais d’erreur
   /// affichée : l’accueil doit rester lisible sur un réseau faible.
   Future<void> _loadSecondary() async {
@@ -347,6 +381,18 @@ class HomeController extends StateNotifier<HomeUiState> {
       _loadCheckIn(),
       _loadConstantes(),
     ]);
+    unawaited(_syncCheckInReminder());
+  }
+
+  Future<void> _syncCheckInReminder() async {
+    try {
+      await _ref.read(checkInReminderServiceProvider).syncSchedule(
+            hasMaladie: state.hasConfiguredMaladie,
+            alreadyCheckedInToday: state.todayCheckIn != null,
+          );
+    } catch (e) {
+      debugPrint('HomeController: check-in reminder sync failed: $e');
+    }
   }
 
   static const _constantesWindow = Duration(days: 30);
@@ -563,6 +609,7 @@ class HomeController extends StateNotifier<HomeUiState> {
         checkInKnown: true,
       );
       unawaited(_engine.flush(force: true));
+      unawaited(_syncCheckInReminder());
     } catch (e) {
       state = state.copyWith(checkInBusy: false);
       if (e is ApiException && e.code == 'CHECK_IN_DEJA_FAIT_AUJOURDHUI') {
@@ -578,6 +625,25 @@ class HomeController extends StateNotifier<HomeUiState> {
     try {
       await _repo.activatePatient();
       await load();
+    } catch (e) {
+      state = state.copyWith(
+        busy: false,
+        error: e is ApiException ? e.message : e.toString(),
+      );
+      rethrow;
+    }
+  }
+
+  /// Marque un traitement terminé (API) puis resync alarmes / check-in.
+  Future<void> terminateTraitement(String traitementId) async {
+    state = state.copyWith(busy: true, clearError: true);
+    try {
+      await _ref.read(medicamentsRepositoryProvider).updateTraitement(
+            traitementId: traitementId,
+            statut: 'termine',
+          );
+      await load();
+      state = state.copyWith(busy: false);
     } catch (e) {
       state = state.copyWith(
         busy: false,

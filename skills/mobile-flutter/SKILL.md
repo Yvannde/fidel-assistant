@@ -66,6 +66,10 @@ Chaque feature suit le même découpage interne : `presentation/` (écrans, widg
 
 C'est la partie la plus critique techniquement. **Tout est local** (offline, même avion) : FastAPI ne sonne pas et ne poll pas les doses. Les notifications push serveur (FCM, plus tard) restent réservées à l’aidant / engagement — **ne pas confondre** avec l’alarme patient.
 
+**Check-in quotidien (15:00 local)** : si le patient a au moins une maladie **active**, `CheckInReminderService` planifie une notif récurrente (`DateTimeComponents.time`) avec 4 actions (`tres_mal` → `super`). Réponse → Drift + outbox `create_check_in` + flush (immédiat si online). Distinct des alarmes doses (`DoseSlot`). Annulé quand plus aucun `PatientTraitement` actif (après « Marquer terminé » / auto-expire `date_fin_prevue`).
+
+**Fin de traitement** : `PATCH /patients/me/traitements/{id}` `{statut: termine}` — cascade meds/horaires + prises `en_attente` → `manquee` ; dashboard vide pour ce traitement → `rescheduleAll` annule les DoseSlots ; check-in si dernier actif.
+
 ### Trois moments distincts par **DoseSlot** (maladie × heure)
 
 L’unité de planification n’est **pas** la prise individuelle, mais le **créneau thérapeutique** :
@@ -128,6 +132,8 @@ L’utilisateur configure dans Fidel (écran Réglages / Alarmes), au minimum V1
 - Mode **discret** : pas de nom de maladie / médicament (confidentialité), **heure toujours visible** ; l’alarme **sonne toujours** (discret ≠ silencieux)
 - Mode normal : titre = **maladie** (puis liste medocs), corps = détail + heure prévue
 - Accueil Aujourd’hui : Matin / Après-midi / Soir → **cartes créneau** (heure + maladie + état N/M) → sous-lignes medocs ; confirm rapide = **créneau entier**
+- **Onglet Santé** (`HealthScreen`) : gestion des **constantes** (poids, tension, glycémie, etc.) — grille par type, hero dernière mesure, historique, détail `/home/sante/:typeCode`. Priorités selon `maladieCode` actif (`HealthPriorities`). **Pas** de traitements ni prises sur cet onglet.
+- **Onglet Accueil** : action du jour (DoseSlot), KPIs, aperçu constantes → lien « Voir dans Santé », traitements / médicaments
 - **Voix personnalisée** : lue au moment de l’**alarme H0** (pas sur le préavis)
 
 ## Onboarding et auth (référence)

@@ -851,8 +851,92 @@ abstract class AppLocalizations {
   /// No description provided for @navCare.
   ///
   /// In en, this message translates to:
-  /// **'Care'**
+  /// **'Health'**
   String get navCare;
+
+  /// No description provided for @healthSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your vitals — weight, blood pressure, blood sugar…'**
+  String get healthSubtitle;
+
+  /// No description provided for @healthRecommended.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended for you'**
+  String get healthRecommended;
+
+  /// No description provided for @healthAllMetrics.
+  ///
+  /// In en, this message translates to:
+  /// **'All your vitals'**
+  String get healthAllMetrics;
+
+  /// No description provided for @healthRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent measurements'**
+  String get healthRecent;
+
+  /// No description provided for @healthRecentEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No measurements yet. Add your first one.'**
+  String get healthRecentEmpty;
+
+  /// No description provided for @healthAddCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a measurement'**
+  String get healthAddCta;
+
+  /// No description provided for @healthEmptyHero.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with one measurement. Now and then is enough.'**
+  String get healthEmptyHero;
+
+  /// No description provided for @healthNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'No measurement yet'**
+  String get healthNoData;
+
+  /// No description provided for @healthDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} d ago'**
+  String healthDaysAgo(int count);
+
+  /// No description provided for @healthViewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View in Health'**
+  String get healthViewAll;
+
+  /// No description provided for @healthRecommendedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended'**
+  String get healthRecommendedBadge;
+
+  /// No description provided for @healthLatestMeasure.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest measurement'**
+  String get healthLatestMeasure;
+
+  /// No description provided for @healthHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get healthHistory;
+
+  /// No description provided for @healthNoDataForType.
+  ///
+  /// In en, this message translates to:
+  /// **'No {type} measurements yet.'**
+  String healthNoDataForType(String type);
 
   /// No description provided for @navPeople.
   ///
@@ -1676,6 +1760,90 @@ abstract class AppLocalizations {
   /// **'Thanks, noted.'**
   String get homeCheckInThanks;
 
+  /// No description provided for @homeCheckInLevelTresMal.
+  ///
+  /// In en, this message translates to:
+  /// **'Very bad'**
+  String get homeCheckInLevelTresMal;
+
+  /// No description provided for @homeCheckInLevelPasTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Not great'**
+  String get homeCheckInLevelPasTop;
+
+  /// No description provided for @homeCheckInLevelCaVa.
+  ///
+  /// In en, this message translates to:
+  /// **'Okay'**
+  String get homeCheckInLevelCaVa;
+
+  /// No description provided for @homeCheckInLevelSuper.
+  ///
+  /// In en, this message translates to:
+  /// **'Great'**
+  String get homeCheckInLevelSuper;
+
+  /// No description provided for @homeCheckInDoneTresMal.
+  ///
+  /// In en, this message translates to:
+  /// **'Today: very bad'**
+  String get homeCheckInDoneTresMal;
+
+  /// No description provided for @homeCheckInDonePasTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Today: not great'**
+  String get homeCheckInDonePasTop;
+
+  /// No description provided for @homeCheckInDoneCaVa.
+  ///
+  /// In en, this message translates to:
+  /// **'Today: okay'**
+  String get homeCheckInDoneCaVa;
+
+  /// No description provided for @homeCheckInDoneSuper.
+  ///
+  /// In en, this message translates to:
+  /// **'Today: great'**
+  String get homeCheckInDoneSuper;
+
+  /// No description provided for @homeCheckInReminderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How are you feeling today?'**
+  String get homeCheckInReminderTitle;
+
+  /// No description provided for @homeCheckInReminderBody.
+  ///
+  /// In en, this message translates to:
+  /// **'One tap, four choices — helps keep your follow-up on track.'**
+  String get homeCheckInReminderBody;
+
+  /// No description provided for @homeCheckInActionTresMal.
+  ///
+  /// In en, this message translates to:
+  /// **'Very bad'**
+  String get homeCheckInActionTresMal;
+
+  /// No description provided for @homeCheckInActionPasTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Not great'**
+  String get homeCheckInActionPasTop;
+
+  /// No description provided for @homeCheckInActionCaVa.
+  ///
+  /// In en, this message translates to:
+  /// **'Okay'**
+  String get homeCheckInActionCaVa;
+
+  /// No description provided for @homeCheckInActionSuper.
+  ///
+  /// In en, this message translates to:
+  /// **'Great'**
+  String get homeCheckInActionSuper;
+
   /// No description provided for @homeTreatmentDay.
   ///
   /// In en, this message translates to:
@@ -1699,6 +1867,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Treatment in progress'**
   String get homeTreatmentOngoing;
+
+  /// No description provided for @homeTreatmentEndAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as finished'**
+  String get homeTreatmentEndAction;
+
+  /// No description provided for @homeTreatmentEndTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'End this treatment?'**
+  String get homeTreatmentEndTitle;
+
+  /// No description provided for @homeTreatmentEndBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Medicine reminders for this condition will stop. You can always add a new treatment later.'**
+  String get homeTreatmentEndBody;
+
+  /// No description provided for @homeTreatmentEndConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, end it'**
+  String get homeTreatmentEndConfirm;
+
+  /// No description provided for @homeTreatmentEndedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Treatment ended — reminders stopped.'**
+  String get homeTreatmentEndedToast;
+
+  /// No description provided for @configDateFinLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected end date (optional)'**
+  String get configDateFinLabel;
+
+  /// No description provided for @configDateFinHint.
+  ///
+  /// In en, this message translates to:
+  /// **'If you know it, we’ll stop reminders automatically after that day.'**
+  String get configDateFinHint;
+
+  /// No description provided for @configDateFinClear.
+  ///
+  /// In en, this message translates to:
+  /// **'No end date'**
+  String get configDateFinClear;
 
   /// No description provided for @homePhaseDebut.
   ///

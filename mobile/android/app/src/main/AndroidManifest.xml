@@ -61,6 +61,12 @@
                 <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
             </intent-filter>
         </receiver>
+        <receiver
+            android:name=".CheckInActionReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".CheckInAlarmReceiver"
+            android:exported="false" />
     </application>
     <queries>
         <intent>

@@ -84,6 +84,7 @@ class HomeDashboardScreen extends ConsumerWidget {
     final prises = state.visiblePrises;
     final cta = _onboardingCta(context, state, l10n);
     final showCheckIn = state.isTodaySelected &&
+        state.hasConfiguredMaladie &&
         (state.needsCheckIn || state.todayCheckIn != null);
     final traitements = dash?.traitements ?? const <DashboardTraitement>[];
     final dashLoading = state.loading && state.dashboard == null;
@@ -192,8 +193,16 @@ class HomeDashboardScreen extends ConsumerWidget {
                 TreatmentBlock(
                   traitement: traitements[i],
                   detail: state.traitementDetails[traitements[i].id],
-                  onTap: () =>
-                      ref.read(homeTabIndexProvider.notifier).state = 1,
+                  onTap: () => context.push(
+                    '/home/medicaments',
+                    extra: traitements[i].id,
+                  ),
+                  onTerminate: () => _confirmTerminateTraitement(
+                    context,
+                    ref,
+                    traitements[i],
+                    l10n,
+                  ),
                 ),
               ],
             ],
@@ -212,6 +221,7 @@ class HomeDashboardScreen extends ConsumerWidget {
           onAdd: () => AddConstanteSheet.show(context),
           onViewAll: () =>
               ref.read(homeTabIndexProvider.notifier).state = 1,
+          onTileTap: (type) => context.push('/home/sante/${type.code}'),
           subtitle: _summarySubtitle(state, l10n),
         ),
       ] else if (state.isTodaySelected && !state.constantesKnown) ...[
@@ -229,7 +239,7 @@ class HomeDashboardScreen extends ConsumerWidget {
   static String? _summarySubtitle(HomeUiState state, AppLocalizations l10n) {
     final checkIn = state.todayCheckIn;
     if (checkIn != null) {
-      return checkIn.isOk ? l10n.homeCheckInDoneOk : l10n.homeCheckInDoneBad;
+      return CheckInRow.doneLabelFor(l10n, checkIn.statut);
     }
     return null;
   }
@@ -303,6 +313,49 @@ class HomeDashboardScreen extends ConsumerWidget {
     try {
       await ref.read(homeControllerProvider.notifier).confirmPrises(pending);
       if (context.mounted) AppToast.success(context, l10n.homeTakenToast);
+    } catch (e) {
+      if (context.mounted) {
+        AppToast.error(
+          context,
+          e is ApiException ? e.message : l10n.genericError,
+        );
+      }
+    }
+  }
+
+  Future<void> _confirmTerminateTraitement(
+    BuildContext context,
+    WidgetRef ref,
+    DashboardTraitement traitement,
+    AppLocalizations l10n,
+  ) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.homeTreatmentEndTitle),
+        content: Text(
+          '${traitement.maladieNom}\n\n${l10n.homeTreatmentEndBody}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(MaterialLocalizations.of(ctx).cancelButtonLabel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n.homeTreatmentEndConfirm),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    try {
+      await ref
+          .read(homeControllerProvider.notifier)
+          .terminateTraitement(traitement.id);
+      if (context.mounted) {
+        AppToast.success(context, l10n.homeTreatmentEndedToast);
+      }
     } catch (e) {
       if (context.mounted) {
         AppToast.error(

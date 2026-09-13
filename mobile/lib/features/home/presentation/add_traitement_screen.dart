@@ -26,6 +26,7 @@ class _AddTraitementScreenState extends ConsumerState<AddTraitementScreen> {
   String? _maladieId;
   String _phase = 'en_cours';
   DateTime _dateDebut = DateTime.now();
+  DateTime? _dateFin;
   int _step = 0;
   bool _loading = true;
   bool _busy = false;
@@ -57,15 +58,26 @@ class _AddTraitementScreenState extends ConsumerState<AddTraitementScreen> {
     }
   }
 
-  Future<void> _pickDate() async {
+  Future<void> _pickDate({required bool fin}) async {
     final now = DateTime.now();
+    final initial = fin ? (_dateFin ?? _dateDebut) : _dateDebut;
     final picked = await showDatePicker(
       context: context,
-      initialDate: _dateDebut,
-      firstDate: DateTime(now.year - 5),
-      lastDate: DateTime(now.year + 1),
+      initialDate: initial,
+      firstDate: fin ? _dateDebut : DateTime(now.year - 5),
+      lastDate: DateTime(now.year + 5),
     );
-    if (picked != null) setState(() => _dateDebut = picked);
+    if (picked == null) return;
+    setState(() {
+      if (fin) {
+        _dateFin = picked;
+      } else {
+        _dateDebut = picked;
+        if (_dateFin != null && _dateFin!.isBefore(_dateDebut)) {
+          _dateFin = null;
+        }
+      }
+    });
   }
 
   Future<void> _submit() async {
@@ -80,6 +92,7 @@ class _AddTraitementScreenState extends ConsumerState<AddTraitementScreen> {
             maladieId: _maladieId!,
             phase: _phase,
             dateDebut: _dateDebut,
+            dateFinPrevue: _dateFin,
           );
       await ref.read(homeControllerProvider.notifier).load();
       if (!mounted) return;
@@ -187,7 +200,7 @@ class _AddTraitementScreenState extends ConsumerState<AddTraitementScreen> {
                 ),
                 const SizedBox(height: 8),
                 OutlinedButton(
-                  onPressed: _busy ? null : _pickDate,
+                  onPressed: _busy ? null : () => _pickDate(fin: false),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
                     alignment: Alignment.centerLeft,
@@ -201,6 +214,48 @@ class _AddTraitementScreenState extends ConsumerState<AddTraitementScreen> {
                 const SizedBox(height: 6),
                 Text(
                   l10n.configDateDebutHint,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: ThemeTokens.of(context).textSecondary,
+                      ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.configDateFinLabel,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  onPressed: _busy ? null : () => _pickDate(fin: true),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text(
+                    _dateFin == null
+                        ? l10n.configDateFinClear
+                        : dateFmt.format(_dateFin!),
+                  ),
+                ),
+                if (_dateFin != null) ...[
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: _busy
+                          ? null
+                          : () => setState(() => _dateFin = null),
+                      child: Text(l10n.configDateFinClear),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 6),
+                Text(
+                  l10n.configDateFinHint,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: ThemeTokens.of(context).textSecondary,
                       ),

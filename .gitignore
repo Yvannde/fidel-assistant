@@ -40,6 +40,8 @@ backend/*.egg
 backend/media/
 
 # --- Flutter / mobile ---
+# Scratch export (unused; breaks hot restart if present then removed)
+mobile/assets/images/Content.png
 mobile/.dart_tool/
 mobile/.flutter-plugins
 mobile/.flutter-plugins-dependencies

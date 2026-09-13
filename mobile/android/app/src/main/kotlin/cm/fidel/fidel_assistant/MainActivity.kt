@@ -11,13 +11,17 @@ import android.os.PowerManager
 import android.provider.Settings
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.embedding.engine.FlutterEngineCache
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     private val channelName = "cm.fidel.assistant/alarm_health"
+    private val checkInChannelName = CheckInActionReceiver.CHANNEL
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        FlutterEngineCache.getInstance().put(CheckInActionReceiver.ENGINE_ID, flutterEngine)
+
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channelName)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
@@ -40,6 +44,70 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, checkInChannelName)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "show" -> {
+                        val title = call.argument<String>("title") ?: return@setMethodCallHandler result.error(
+                            "arg",
+                            "title required",
+                            null,
+                        )
+                        val body = call.argument<String>("body") ?: ""
+                        val id = call.argument<Int>("id")
+                            ?: CheckInNotificationHelper.DEBUG_NOTIFICATION_ID
+                        CheckInNotificationHelper.show(this, title, body, id)
+                        result.success(true)
+                    }
+                    "cancel" -> {
+                        val id = call.argument<Int>("id")
+                        CheckInNotificationHelper.cancel(this, id)
+                        result.success(true)
+                    }
+                    "scheduleDaily" -> {
+                        val title = call.argument<String>("title") ?: return@setMethodCallHandler result.error(
+                            "arg",
+                            "title required",
+                            null,
+                        )
+                        val body = call.argument<String>("body") ?: ""
+                        val hour = call.argument<Int>("hour") ?: 15
+                        val minute = call.argument<Int>("minute") ?: 0
+                        val skip = call.argument<Boolean>("skipIfSameDayPast") ?: false
+                        CheckInNotificationHelper.scheduleDaily(
+                            this,
+                            title,
+                            body,
+                            hour,
+                            minute,
+                            skip,
+                        )
+                        result.success(true)
+                    }
+                    "cancelSchedule" -> {
+                        CheckInNotificationHelper.cancelSchedule(this)
+                        result.success(true)
+                    }
+                    "consumePendingAction" -> {
+                        result.success(CheckInNotificationHelper.consumePendingAction(this))
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        // App déjà vivante : pousse l’action vers Dart (handler déjà branché).
+        val action = intent.getStringExtra(CheckInNotificationHelper.EXTRA_ACTION_ID)
+            ?: return
+        intent.removeExtra(CheckInNotificationHelper.EXTRA_ACTION_ID)
+        MethodChannel(
+            flutterEngine!!.dartExecutor.binaryMessenger,
+            checkInChannelName,
+        ).invokeMethod("onAction", action)
     }
 
     private fun collectStatus(): Map<String, Any?> {

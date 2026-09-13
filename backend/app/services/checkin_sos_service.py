@@ -15,7 +15,7 @@ from app.models import CheckIn, ContactUrgence, SosAlerte, User
 from app.services import notification_service
 from app.services.onboarding_service import _require_patient
 
-VALID_CHECKIN = {"ca_va", "pas_top"}
+VALID_CHECKIN = {"tres_mal", "pas_top", "ca_va", "super"}
 
 
 def _patient_tz(user: User) -> ZoneInfo:
@@ -48,7 +48,7 @@ async def create_check_in(
     if statut not in VALID_CHECKIN:
         raise AppException(
             "TYPE_INVALIDE",
-            "Statut de check-in invalide. Choisis « ça va » ou « pas top ».",
+            "Statut de check-in invalide. Choisis un niveau parmi les quatre proposés.",
             status_code=400,
         )
     patient = _require_patient(user)
