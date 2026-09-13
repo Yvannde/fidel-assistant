@@ -31,13 +31,7 @@ class HomeProjection {
             statut: 'confirmee',
           );
         } else {
-          byId[entry.entityId] = PriseDuJour(
-            id: current.id,
-            medicamentNom: current.medicamentNom,
-            dosage: current.dosage,
-            heurePrevue: current.heurePrevue,
-            statut: 'confirmee',
-          );
+          byId[entry.entityId] = current.copyWith(statut: 'confirmee');
         }
       } else if (entry.op == 'report') {
         final raw = entry.payload['nouvelle_heure'] as String?;
@@ -54,12 +48,10 @@ class HomeProjection {
             statut: 'en_attente',
           );
         } else {
-          byId[entry.entityId] = PriseDuJour(
-            id: current.id,
-            medicamentNom: current.medicamentNom,
-            dosage: current.dosage,
+          byId[entry.entityId] = current.copyWith(
             heurePrevue: when,
-            statut: current.statut == 'confirmee' ? 'confirmee' : 'en_attente',
+            statut:
+                current.statut == 'confirmee' ? 'confirmee' : 'en_attente',
           );
         }
       }

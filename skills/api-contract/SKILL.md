@@ -119,7 +119,7 @@ Pas de `POST /onboarding/role`. Voir `auth-onboarding/SKILL.md`.
 
 | Méthode | Chemin | Entrée | Sortie | Erreurs possibles |
 |---|---|---|---|---|
-| GET | `/patients/me/prises` | 🔒 `date?` (défaut: aujourd'hui) | `[Prise]` | — |
+| GET | `/patients/me/prises` | 🔒 `date?` (défaut: aujourd'hui) | `[Prise]` — inclut `traitement_id`, `maladie_id`, `maladie_nom` (groupement DoseSlot mobile) | — |
 | POST | `/prises/{id}/confirmer` | 🔒 `canal` (`app`\|`sms`), `client_mutation_id?` (UUID — **requis** dès Phase 1 mobile) | `Prise` mise à jour (`statut: confirmee`) ; si `client_mutation_id` déjà appliqué → même `Prise` (idempotent, pas d’erreur) | `PRISE_NOT_FOUND`, `PRISE_DEJA_CONFIRMEE` |
 | POST | `/prises/{id}/reporter` | 🔒 `nouvelle_heure`, `client_mutation_id?` (UUID — **requis** dès Phase 1 mobile) | `Prise` mise à jour ; idempotent si `client_mutation_id` déjà vu | `PRISE_NOT_FOUND` |
 | POST | `/prises/sync-offline` | 🔒 `[{id, statut, confirmee_at, client_mutation_id?}]` | `{synced: [...], conflicts: [...], duplicates?: [...]}` — lot hors-ligne ; `duplicates` = mutations déjà appliquées | — |
@@ -128,14 +128,14 @@ Pas de `POST /onboarding/role`. Voir `auth-onboarding/SKILL.md`.
 
 ---
 
-## 5bis. Sync V2 (Phase 4 — implémentée)
+## 5bis. Sync V2 (Phases 4–5 — implémentée)
 
-> **Contrat figé en Phase 0.** Implémentation : `POST /sync/push`, `GET /sync/pull` ; `Prise.server_version` ; mobile SyncEngine batch + cursor `"{updated_at_iso}|{prise_id}"` (prefs `sync_pull_cursor_v1`). Détail moteur : `offline-sync/SKILL.md`.
+> **Contrat figé en Phase 0.** Implémentation : `POST /sync/push`, `GET /sync/pull` ; ops prise + `create_constante` / `create_check_in` ; cursor `"{ts}|{type}|{id}"` (legacy 2 segments = prise) ; prefs `sync_pull_cursor_v1`. Pull : prises **30 j** + constantes + check-ins. Détail : `offline-sync/SKILL.md`.
 
 | Méthode | Chemin | Entrée | Sortie | Erreurs possibles |
 |---|---|---|---|---|
-| POST | `/sync/push` | 🔒 `{mutations: [{mutation_id, entity, entity_id, op, payload, client_ts}]}` | `{results: [{mutation_id, status: applied\|duplicate\|rejected, reason?}]}` — traitement ordonné ; une mutation `rejected` n’annule pas les autres | `MUTATION_REJECTED`, `SYNC_CONFLICT` |
-| GET | `/sync/pull` | 🔒 `since?` (cursor opaque `{updated_at}|{prise_id}`) | `{entities: [...], next_cursor, server_time}` — delta ; MVP `type: prise\|traitement` + `id`, `server_version`, `updated_at` | — |
+| POST | `/sync/push` | 🔒 `{mutations: [{mutation_id, entity, entity_id?, op, payload, client_ts}]}` — ops : `confirm`\|`report`\|`create_constante`\|`create_check_in` | `{results: [{mutation_id, status: applied\|duplicate\|rejected, reason?}]}` — traitement ordonné ; une mutation `rejected` n’annule pas les autres | `MUTATION_REJECTED`, `SYNC_CONFLICT`, `CHECK_IN_DEJA_FAIT_AUJOURDHUI` |
+| GET | `/sync/pull` | 🔒 `since?` (cursor opaque `{ts}\|{type}\|{id}`) | `{entities: [...], next_cursor, server_time}` — `type: prise\|traitement\|constante\|check_in` + `id`, `server_version`, `updated_at` | — |
 
 Notes :
 
@@ -151,7 +151,7 @@ Notes :
 | Méthode | Chemin | Entrée | Sortie | Erreurs possibles |
 |---|---|---|---|---|
 | GET | `/patients/me/constantes` | 🔒 `type?, depuis?, jusqu_a?` | `[Constante]` | — |
-| POST | `/patients/me/constantes` | 🔒 `type, valeur, unite, mesure_at, source` | `Constante` créée + `{tendance, message}` (résultat de l'analyse comparative du Volet 2) | `TYPE_INVALIDE` |
+| POST | `/patients/me/constantes` | 🔒 `type, valeur, unite, mesure_at, source, client_mutation_id?` | `Constante` créée + `{tendance, message}` (résultat de l'analyse comparative du Volet 2) | `TYPE_INVALIDE` |
 
 ---
 
@@ -159,7 +159,7 @@ Notes :
 
 | Méthode | Chemin | Entrée | Sortie | Erreurs possibles |
 |---|---|---|---|---|
-| POST | `/patients/me/check-in` | 🔒 `statut` (`ca_va`\|`pas_top`) | `CheckIn` créé | `CHECK_IN_DEJA_FAIT_AUJOURDHUI` |
+| POST | `/patients/me/check-in` | 🔒 `statut` (`ca_va`\|`pas_top`), `client_mutation_id?` | `CheckIn` créé | `CHECK_IN_DEJA_FAIT_AUJOURDHUI` |
 | GET | `/patients/me/check-in` | 🔒 `depuis?` | `[CheckIn]` | — |
 | POST | `/patients/me/sos` | 🔒 | `{sos_id, annulable_jusqu_a}` — déclenche l'alerte silencieuse après la fenêtre de 30s | `AUCUN_CONTACT_URGENCE` |
 | POST | `/sos/{id}/annuler` | 🔒 | `{message}` | `SOS_TROP_TARD`, `SOS_NOT_FOUND` |

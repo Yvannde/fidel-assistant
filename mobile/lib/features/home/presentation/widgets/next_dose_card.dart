@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/premium.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../services/dose_slot.dart';
 import '../../domain/dashboard_models.dart';
 import 'day_ring.dart';
 
@@ -20,11 +21,12 @@ String homeFormatDuration(AppLocalizations l10n, int minutes) {
   return l10n.homeDurationHm('$h', m.toString().padLeft(2, '0'));
 }
 
-/// Seul panneau coloré de l’accueil — prochaine prise + actions.
-class NextDoseCard extends StatefulWidget {
+/// Seul panneau coloré de l’accueil — prochain créneau + actions.
+class NextDoseCard extends StatelessWidget {
   const NextDoseCard({
     super.key,
-    required this.next,
+    required this.slot,
+    required this.prises,
     required this.done,
     required this.total,
     required this.busy,
@@ -32,7 +34,8 @@ class NextDoseCard extends StatefulWidget {
     required this.onSnooze,
   });
 
-  final PriseDuJour? next;
+  final DoseSlot? slot;
+  final List<PriseDuJour> prises;
   final int done;
   final int total;
   final bool busy;
@@ -40,81 +43,42 @@ class NextDoseCard extends StatefulWidget {
   final VoidCallback onSnooze;
 
   @override
-  State<NextDoseCard> createState() => _NextDoseCardState();
-}
-
-class _NextDoseCardState extends State<NextDoseCard> {
-  Timer? _ticker;
-  DateTime _now = DateTime.now();
-
-  @override
-  void initState() {
-    super.initState();
-    _ticker = Timer.periodic(const Duration(seconds: 30), (_) {
-      if (mounted) setState(() => _now = DateTime.now());
-    });
-  }
-
-  @override
-  void dispose() {
-    _ticker?.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final next = widget.next;
-    final allDone = next == null && widget.total > 0;
-    final late = next != null && next.heurePrevue.toLocal().isBefore(_now);
+    final allDone = slot == null && total > 0;
 
-    final List<Color> colors;
     if (allDone) {
-      colors = const [AppColors.success, AppColors.successDark];
-    } else if (late) {
-      colors = const [Color(0xFFFBBF24), Color(0xFFD97706)];
-    } else {
-      colors = const [AppColors.primarySoft, AppColors.primaryDark];
+      return _HeroShell(
+        variant: _HeroVariant.done,
+        child: _doneBody(context, l10n),
+      );
     }
 
-    final dark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(Premium.radius),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: colors,
-        ),
-        boxShadow: dark
-            ? null
-            : [
-                BoxShadow(
-                  color: colors.last.withValues(alpha: 0.28),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-      child: allDone
-          ? _doneBody(context, l10n)
-          : _nextBody(context, l10n, next!, late: late),
+    return _TimedHeroShell(
+      scheduled: slot!.heurePrevue.toLocal(),
+      childBuilder: (now) {
+        final late = slot!.heurePrevue.toLocal().isBefore(now);
+        return _HeroShell(
+          variant: late ? _HeroVariant.late : _HeroVariant.upcoming,
+          child: _nextBody(context, l10n, slot!, now: now, late: late),
+        );
+      },
     );
   }
 
   Widget _nextBody(
     BuildContext context,
     AppLocalizations l10n,
-    PriseDuJour next, {
+    DoseSlot slot, {
+    required DateTime now,
     required bool late,
   }) {
-    final scheduled = next.heurePrevue.toLocal();
-    final delta =
-        late ? _now.difference(scheduled) : scheduled.difference(_now);
-    final countdown = _countdownText(l10n, delta, late);
+    final scheduled = slot.heurePrevue.toLocal();
     final actionFg = late ? const Color(0xFF92400E) : AppColors.primaryDark;
+    final title = slot.displayTitle(l10n);
+    const maxListed = 3;
+    final listed = slot.items.take(maxListed).toList();
+    final extra = slot.items.length - listed.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -145,36 +109,30 @@ class _NextDoseCardState extends State<NextDoseCard> {
                     ),
                   ),
                   const SizedBox(height: 8),
+                  _SlotCountdown(
+                    scheduled: scheduled,
+                    now: now,
+                    late: late,
+                    l10n: l10n,
+                  ),
+                  const SizedBox(height: 8),
                   Text(
-                    countdown,
+                    title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontFamily: AppTheme.fontFamily,
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       height: 1.2,
                       letterSpacing: -0.3,
-                      color: Colors.white.withValues(alpha: 0.94),
+                      color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    next.medicamentNom,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: AppTheme.fontFamily,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      height: 1.2,
-                      color: Colors.white.withValues(alpha: 0.92),
-                    ),
-                  ),
-                  if (next.dosage.isNotEmpty) ...[
+                  if (slot.items.length == 1 && slot.items.first.dosage.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(
-                      next.dosage,
+                      slot.items.first.dosage,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -184,14 +142,41 @@ class _NextDoseCardState extends State<NextDoseCard> {
                         color: Colors.white.withValues(alpha: 0.78),
                       ),
                     ),
+                  ] else ...[
+                    const SizedBox(height: 4),
+                    for (final item in listed)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 2),
+                        child: Text(
+                          item.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: AppTheme.fontFamily,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white.withValues(alpha: 0.85),
+                          ),
+                        ),
+                      ),
+                    if (extra > 0)
+                      Text(
+                        '+$extra',
+                        style: TextStyle(
+                          fontFamily: AppTheme.fontFamily,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white.withValues(alpha: 0.72),
+                        ),
+                      ),
                   ],
                 ],
               ),
             ),
             const SizedBox(width: 12),
             DayRing(
-              done: widget.done,
-              total: widget.total,
+              done: done,
+              total: total,
               trackColor: Colors.white.withValues(alpha: 0.22),
               progressColor: Colors.white,
               labelColor: Colors.white,
@@ -206,12 +191,12 @@ class _NextDoseCardState extends State<NextDoseCard> {
             Expanded(
               flex: 3,
               child: _SolidAction(
-                key: ValueKey(next.id),
+                key: ValueKey(slot.slotId),
                 label: l10n.homeTakeCta,
                 icon: IconsaxPlusLinear.tick_circle,
                 foreground: actionFg,
-                enabled: !widget.busy,
-                onTap: widget.onConfirm,
+                enabled: !busy,
+                onTap: onConfirm,
               ),
             ),
             const SizedBox(width: 8),
@@ -219,7 +204,7 @@ class _NextDoseCardState extends State<NextDoseCard> {
               flex: 2,
               child: _GhostAction(
                 label: l10n.homeSnoozeCta,
-                onTap: widget.busy ? null : widget.onSnooze,
+                onTap: busy ? null : onSnooze,
               ),
             ),
           ],
@@ -264,8 +249,8 @@ class _NextDoseCardState extends State<NextDoseCard> {
         ),
         const SizedBox(width: 12),
         DayRing(
-          done: widget.done,
-          total: widget.total,
+          done: done,
+          total: total,
           trackColor: Colors.white.withValues(alpha: 0.22),
           progressColor: Colors.white,
           labelColor: Colors.white,
@@ -276,7 +261,131 @@ class _NextDoseCardState extends State<NextDoseCard> {
     );
   }
 
-  static String _countdownText(
+  static const TextStyle _label = TextStyle(
+    fontFamily: AppTheme.fontFamily,
+    fontSize: 11,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 1.0,
+    color: Color(0xCCFFFFFF),
+  );
+}
+
+/// Gradient hero + tick pour l’état « en retard ».
+class _TimedHeroShell extends StatefulWidget {
+  const _TimedHeroShell({
+    required this.scheduled,
+    required this.childBuilder,
+  });
+
+  final DateTime scheduled;
+  final Widget Function(DateTime now) childBuilder;
+
+  @override
+  State<_TimedHeroShell> createState() => _TimedHeroShellState();
+}
+
+class _TimedHeroShellState extends State<_TimedHeroShell> {
+  Timer? _ticker;
+  DateTime _now = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _ticker = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) setState(() => _now = DateTime.now());
+    });
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.childBuilder(_now);
+}
+
+enum _HeroVariant { done, late, upcoming }
+
+class _HeroShell extends StatelessWidget {
+  const _HeroShell({required this.variant, required this.child});
+
+  final _HeroVariant variant;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Color> gradientColors = switch (variant) {
+      _HeroVariant.done => const [AppColors.success, AppColors.successDark],
+      _HeroVariant.late => const [Color(0xFFFBBF24), Color(0xFFD97706)],
+      _HeroVariant.upcoming =>
+        const [AppColors.primarySoft, AppColors.primaryDark],
+    };
+
+    final dark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(Premium.radius),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: gradientColors,
+        ),
+        boxShadow: dark
+            ? null
+            : [
+                BoxShadow(
+                  color: gradientColors.last.withValues(alpha: 0.28),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      child: child,
+    );
+  }
+}
+
+/// Countdown texte — rebuild via [_TimedHeroShell] toutes les 30 s.
+class _SlotCountdown extends StatelessWidget {
+  const _SlotCountdown({
+    required this.scheduled,
+    required this.now,
+    required this.late,
+    required this.l10n,
+  });
+
+  final DateTime scheduled;
+  final DateTime now;
+  final bool late;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final delta = late
+        ? now.difference(scheduled)
+        : scheduled.difference(now);
+    final countdown = _countdownText(l10n, delta, late);
+
+    return Text(
+      countdown,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        fontFamily: AppTheme.fontFamily,
+        fontSize: 16,
+        fontWeight: FontWeight.w700,
+        height: 1.2,
+        letterSpacing: -0.3,
+        color: Colors.white.withValues(alpha: 0.94),
+      ),
+    );
+  }
+
+  String _countdownText(
     AppLocalizations l10n,
     Duration delta,
     bool late,
@@ -286,14 +395,6 @@ class _NextDoseCardState extends State<NextDoseCard> {
     final value = homeFormatDuration(l10n, minutes);
     return late ? l10n.homeCountdownLate(value) : l10n.homeCountdownIn(value);
   }
-
-  static const TextStyle _label = TextStyle(
-    fontFamily: AppTheme.fontFamily,
-    fontSize: 11,
-    fontWeight: FontWeight.w700,
-    letterSpacing: 1.0,
-    color: Color(0xCCFFFFFF),
-  );
 }
 
 /// Quiet / all-clear — même silhouette gradient que le hero « journée terminée ».

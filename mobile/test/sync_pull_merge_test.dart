@@ -33,6 +33,23 @@ class _BatchFake implements SyncPriseGateway, SyncBatchGateway {
   }
 
   @override
+  Future<void> createConstante({
+    required String type,
+    required Object valeur,
+    required String unite,
+    required DateTime mesureAt,
+    String source = 'manuel',
+    String? clientMutationId,
+  }) async {
+    fail('unitary createConstante should not be used when batch is available');
+  }
+
+  @override
+  Future<void> createCheckIn(String statut, {String? clientMutationId}) async {
+    fail('unitary createCheckIn should not be used when batch is available');
+  }
+
+  @override
   Future<SyncPushResponse> syncPush(List<Map<String, dynamic>> mutations) async {
     pushed.add(mutations);
     return SyncPushResponse(results: pushResults);
@@ -191,5 +208,101 @@ void main() {
     row = await db.getPrise('p-a');
     expect(row!.statut, 'confirmee');
     expect(row.serverVersion, 3);
+  });
+
+  test('merge pull constante + check_in; pending outbox protects', () async {
+    await db.mergePullEntities([
+      {
+        'type': 'constante',
+        'id': 'c1',
+        'type_constante': 'poids',
+        'valeur': 70.0,
+        'unite': 'kg',
+        'mesure_at': '2026-09-11T09:00:00.000Z',
+        'created_at': '2026-09-11T09:00:00.000Z',
+        'source': 'manuel',
+        'server_version': 1,
+      },
+      {
+        'type': 'check_in',
+        'id': 'ci1',
+        'date': '2026-09-11',
+        'statut': 'ca_va',
+        'created_at': '2026-09-11T08:00:00.000Z',
+      },
+    ]);
+
+    final consts = await db.listConstantesSince(DateTime.utc(2026, 9, 1));
+    expect(consts, isNotEmpty);
+    expect(consts.first.type.code, 'poids');
+
+    final check = await db.getCheckInForDateKey('2026-09-11');
+    expect(check, isNotNull);
+    expect(check!.statut, 'ca_va');
+
+    await db.insertOutboxEntry(
+      SyncOutboxEntry(
+        mutationId: 'm-ci',
+        entity: 'check_in',
+        entityId: '2026-09-11',
+        op: 'create_check_in',
+        payload: {'statut': 'pas_top'},
+        clientTs: DateTime.utc(2026, 9, 11, 9),
+      ),
+    );
+    await db.mergePullEntities([
+      {
+        'type': 'check_in',
+        'id': 'ci2',
+        'date': '2026-09-11',
+        'statut': 'pas_top',
+        'created_at': '2026-09-11T10:00:00.000Z',
+      },
+    ]);
+    final protected = await db.getCheckInForDateKey('2026-09-11');
+    expect(protected!.statut, 'ca_va');
+  });
+
+  test('batch push create_constante + create_check_in ack', () async {
+    final prefs = await SharedPreferences.getInstance();
+    final box = SyncOutbox(db, prefs: prefs);
+    final mConst = await box.enqueue(
+      entity: 'constante',
+      entityId: '11111111-1111-1111-1111-111111111111',
+      op: 'create_constante',
+      payload: {
+        'type': 'poids',
+        'valeur': 71,
+        'unite': 'kg',
+        'mesure_at': '2026-09-11T10:00:00.000Z',
+        'source': 'manuel',
+      },
+      mutationId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    );
+    final mCheck = await box.enqueue(
+      entity: 'check_in',
+      entityId: '2026-09-11',
+      op: 'create_check_in',
+      payload: {'statut': 'ca_va'},
+      mutationId: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+    );
+
+    final fake = _BatchFake(
+      pushResults: [
+        SyncPushResultItem(mutationId: mConst.mutationId, status: 'applied'),
+        SyncPushResultItem(mutationId: mCheck.mutationId, status: 'duplicate'),
+      ],
+    );
+    final engine = SyncEngine(
+      outbox: box,
+      db: db,
+      prefs: prefs,
+      gatewayFactory: () => fake,
+    );
+    await engine.flush(force: true);
+
+    expect(fake.pushed.single, hasLength(2));
+    expect(fake.pushed.single[1]['entity_id'], isNull);
+    expect(await db.listAllOutbox(), isEmpty);
   });
 }

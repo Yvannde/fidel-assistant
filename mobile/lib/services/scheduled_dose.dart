@@ -1,24 +1,31 @@
 import 'dart:convert';
 
-/// Dose planifiée : préavis + alarme H0 + notification de marquage H0+5.
+/// Dose planifiée individuelle (ligne medoc) — regroupée en [DoseSlot] pour
+/// la planification locale.
 class ScheduledDose {
   const ScheduledDose({
     required this.priseId,
     required this.medicamentNom,
     required this.dosage,
     required this.heurePrevue,
+    this.traitementId,
+    this.maladieNom,
   });
 
   final String priseId;
   final String medicamentNom;
   final String dosage;
   final DateTime heurePrevue;
+  final String? traitementId;
+  final String? maladieNom;
 
   Map<String, dynamic> toJson() => {
         'priseId': priseId,
         'medicamentNom': medicamentNom,
         'dosage': dosage,
         'heurePrevue': heurePrevue.toUtc().toIso8601String(),
+        if (traitementId != null) 'traitementId': traitementId,
+        if (maladieNom != null) 'maladieNom': maladieNom,
       };
 
   factory ScheduledDose.fromJson(Map<String, dynamic> json) {
@@ -27,6 +34,8 @@ class ScheduledDose {
       medicamentNom: '${json['medicamentNom'] ?? ''}',
       dosage: '${json['dosage'] ?? ''}',
       heurePrevue: DateTime.parse('${json['heurePrevue']}').toLocal(),
+      traitementId: json['traitementId']?.toString(),
+      maladieNom: json['maladieNom']?.toString(),
     );
   }
 
@@ -57,10 +66,7 @@ class ScheduledDose {
     }
   }
 
-  /// Signature stable pour le reschedule différentiel.
-  ///
-  /// Inclut l’heure, le libellé, le délai de préavis, le mode discret et la
-  /// clé audio — tout ce qui impose une replanification locale.
+  /// Signature stable pour une dose seule (tests / fingerprints legacy).
   static String signature({
     required ScheduledDose dose,
     required int preavisMinutes,
@@ -68,18 +74,19 @@ class ScheduledDose {
     required String audioKey,
   }) {
     final ms = dose.heurePrevue.toUtc().millisecondsSinceEpoch;
-    return '$ms|${dose.medicamentNom}|${dose.dosage}|$preavisMinutes|'
+    return '$ms|${dose.traitementId ?? ''}|${dose.maladieNom ?? ''}|'
+        '${dose.medicamentNom}|${dose.dosage}|$preavisMinutes|'
         '${discreet ? 1 : 0}|$audioKey';
   }
 
   /// Fingerprint global d’un ensemble de signatures (ordre indépendant).
-  static String globalFingerprint(Map<String, String> priseIdToSignature) {
-    final keys = priseIdToSignature.keys.toList()..sort();
+  static String globalFingerprint(Map<String, String> idToSignature) {
+    final keys = idToSignature.keys.toList()..sort();
     final buf = StringBuffer();
     for (final k in keys) {
       buf.write(k);
       buf.write('=');
-      buf.write(priseIdToSignature[k]);
+      buf.write(idToSignature[k]);
       buf.write(';');
     }
     return buf.toString();

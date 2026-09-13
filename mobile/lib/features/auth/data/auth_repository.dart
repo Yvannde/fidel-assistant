@@ -4,6 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/storage/session_meta.dart';
 import '../../../core/storage/token_storage.dart';
 import '../domain/auth_session.dart';
 
@@ -263,7 +264,7 @@ class AuthRepository {
     try {
       final res = await _api.get<Map<String, dynamic>>('/auth/me');
       final me = res.data ?? {};
-      return AuthSession(
+      final session = AuthSession(
         accessToken: access ?? '',
         refreshToken: refresh ?? '',
         expiresIn: 0,
@@ -275,23 +276,52 @@ class AuthRepository {
         needsConsentementSante:
             me['needs_consentement_sante'] as bool? ?? false,
       );
+      await persistSessionSnapshot(session);
+      return session;
     } on DioException catch (e) {
       if (!await _tokens.hasSession()) return null;
       final status = e.response?.statusCode ?? 0;
       if (e.response == null || status >= 500) {
-        return AuthSession(
-          accessToken: access ?? '',
-          refreshToken: refresh ?? '',
-          expiresIn: 0,
+        return _offlineSessionFromTokens(
+          access: access,
+          refresh: refresh,
           sessionId: sessionId,
-          onboardingStep: 'infos',
-          hasPatientProfile: false,
-          isAidant: false,
         );
       }
       await _tokens.clear();
       return null;
     }
+  }
+
+  /// Persiste onboarding / profil pour le boot offline (hors JWT).
+  Future<void> persistSessionSnapshot(AuthSession session) async {
+    await _tokens.saveSessionMeta(SessionMeta.fromSession(session));
+  }
+
+  Future<AuthSession> _offlineSessionFromTokens({
+    required String? access,
+    required String? refresh,
+    required String sessionId,
+  }) async {
+    final meta = await _tokens.readSessionMeta();
+    if (meta != null) {
+      return meta.applyTo(
+        accessToken: access ?? '',
+        refreshToken: refresh ?? '',
+        sessionId: sessionId,
+      );
+    }
+    // Upgrade sans cache : ne pas renvoyer vers « infos » si l’utilisateur
+    // avait déjà une session valide.
+    return AuthSession(
+      accessToken: access ?? '',
+      refreshToken: refresh ?? '',
+      expiresIn: 0,
+      sessionId: sessionId,
+      onboardingStep: 'termine',
+      hasPatientProfile: true,
+      isAidant: false,
+    );
   }
 
   Future<void> logout() async {
@@ -320,6 +350,7 @@ class AuthRepository {
       refreshToken: session.refreshToken,
       sessionId: session.sessionId,
     );
+    await persistSessionSnapshot(session);
     return session;
   }
 }

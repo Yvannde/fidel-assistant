@@ -475,6 +475,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeNextDoseLabel => 'Next dose';
 
   @override
+  String homeSlotMedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count medications',
+      one: '1 medication',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get homeAllClearTitle => 'You’re up to date';
 
   @override

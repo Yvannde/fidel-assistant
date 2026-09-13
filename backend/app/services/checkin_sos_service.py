@@ -31,7 +31,20 @@ def _aware(dt: datetime) -> datetime:
     return dt
 
 
-async def create_check_in(db: AsyncSession, *, user: User, statut: str) -> dict:
+async def create_check_in(
+    db: AsyncSession,
+    *,
+    user: User,
+    statut: str,
+    client_mutation_id: UUID | None = None,
+) -> dict:
+    from app.services import patient_suivi_service as suivi
+
+    if client_mutation_id is not None:
+        existing = await suivi._get_client_mutation(db, mutation_id=client_mutation_id)
+        if existing is not None:
+            return _replay_check_in(existing.result_snapshot)
+
     if statut not in VALID_CHECKIN:
         raise AppException(
             "TYPE_INVALIDE",
@@ -53,9 +66,60 @@ async def create_check_in(db: AsyncSession, *, user: User, statut: str) -> dict:
 
     row = CheckIn(patient_id=patient.user_id, date=today, statut=statut)
     db.add(row)
+    await db.flush()
+    result = _serialize_check_in(row)
+    if client_mutation_id is not None:
+        await suivi._record_client_mutation(
+            db,
+            mutation_id=client_mutation_id,
+            user_id=user.id,
+            entity="check_in",
+            entity_id=row.id,
+            op="create_check_in",
+            result=_snapshot_check_in(result),
+        )
     await db.commit()
     await db.refresh(row)
     return _serialize_check_in(row)
+
+
+def _snapshot_check_in(result: dict) -> dict:
+    out: dict = {}
+    for k, v in result.items():
+        if isinstance(v, UUID):
+            out[k] = str(v)
+        elif isinstance(v, datetime):
+            out[k] = v.isoformat()
+        elif isinstance(v, date) and not isinstance(v, datetime):
+            out[k] = v.isoformat()
+        else:
+            out[k] = v
+    return out
+
+
+def _replay_check_in(snapshot: dict | None) -> dict:
+    if not snapshot:
+        return {}
+    out: dict = {}
+    for k, v in snapshot.items():
+        if k == "id" and isinstance(v, str):
+            try:
+                out[k] = UUID(v)
+            except ValueError:
+                out[k] = v
+        elif k == "date" and isinstance(v, str):
+            try:
+                out[k] = date.fromisoformat(v)
+            except ValueError:
+                out[k] = v
+        elif k == "created_at" and isinstance(v, str):
+            try:
+                out[k] = datetime.fromisoformat(v)
+            except ValueError:
+                out[k] = v
+        else:
+            out[k] = v
+    return out
 
 
 async def list_check_ins(

@@ -6,11 +6,12 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/premium.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../services/dose_slot.dart';
 import '../../domain/dashboard_models.dart';
 
 enum _Moment { morning, afternoon, evening }
 
-/// Timeline des prises — contenu à placer dans un panneau parent.
+/// Timeline des prises — groupée maladie × heure sous Matin / Après-midi / Soir.
 /// [embedded] : pas de carte autour (défaut true pour le panneau Aujourd’hui).
 class DoseTimeline extends StatelessWidget {
   const DoseTimeline({
@@ -18,15 +19,21 @@ class DoseTimeline extends StatelessWidget {
     required this.prises,
     required this.now,
     required this.busy,
-    required this.onConfirm,
+    required this.onConfirmSlot,
     this.embedded = true,
+    this.heroHandlesNext = false,
   });
 
   final List<PriseDuJour> prises;
   final DateTime now;
   final bool busy;
-  final ValueChanged<PriseDuJour> onConfirm;
+
+  /// Confirm V1 = tout le créneau (prises encore `en_attente`).
+  final ValueChanged<DoseSlot> onConfirmSlot;
   final bool embedded;
+
+  /// Si true, le hero Accueil gère le CTA du prochain slot (pas de doublon).
+  final bool heroHandlesNext;
 
   @override
   Widget build(BuildContext context) {
@@ -59,34 +66,37 @@ class DoseTimeline extends StatelessWidget {
       return PremiumCard(child: empty);
     }
 
-    final sorted = [...prises]
-      ..sort((a, b) => a.heurePrevue.compareTo(b.heurePrevue));
+    final slots = DoseSlot.groupPrises(prises);
+    final nextSlotId = DoseSlot.findNextUntaken(prises, now)?.slotId;
 
-    final nextId = _nextUntakenId(sorted, now);
-
-    final groups = <_Moment, List<PriseDuJour>>{};
-    for (final p in sorted) {
-      groups.putIfAbsent(_momentOf(p.heurePrevue.toLocal()), () => []).add(p);
+    final groups = <_Moment, List<DoseSlot>>{};
+    for (final s in slots) {
+      groups.putIfAbsent(_momentOf(s.heurePrevue), () => []).add(s);
     }
 
     final rows = <Widget>[];
     var index = 0;
-    final lastIndex = sorted.length - 1;
+    final lastIndex = slots.length - 1;
 
     for (final moment in _Moment.values) {
       final items = groups[moment];
       if (items == null || items.isEmpty) continue;
       rows.add(_MomentHeader(moment: moment, l10n: l10n, tokens: tokens));
-      for (final prise in items) {
+      for (final slot in items) {
+        final pendingIds = _pendingIds(slot, prises);
+        final isNext = slot.slotId == nextSlotId;
         rows.add(
-          _DoseRow(
-            prise: prise,
+          _SlotCard(
+            slot: slot,
+            prises: prises,
             now: now,
             busy: busy,
             isFirst: index == 0,
             isLast: index == lastIndex,
-            isNext: prise.id == nextId,
-            onConfirm: () => onConfirm(prise),
+            isNext: isNext,
+            onConfirm: pendingIds.isEmpty || (heroHandlesNext && isNext)
+                ? null
+                : () => onConfirmSlot(slot),
           ),
         );
         index++;
@@ -104,21 +114,8 @@ class DoseTimeline extends StatelessWidget {
     );
   }
 
-  /// Prochaine prise non confirmée : overdue la plus ancienne, sinon la plus proche.
-  static String? _nextUntakenId(List<PriseDuJour> sorted, DateTime now) {
-    PriseDuJour? overdue;
-    PriseDuJour? upcoming;
-    for (final p in sorted) {
-      if (p.isTaken) continue;
-      final t = p.heurePrevue.toLocal();
-      if (t.isBefore(now) || t.isAtSameMomentAs(now)) {
-        overdue ??= p;
-      } else {
-        upcoming ??= p;
-        break;
-      }
-    }
-    return (overdue ?? upcoming)?.id;
+  static List<String> _pendingIds(DoseSlot slot, List<PriseDuJour> prises) {
+    return DoseSlot.pendingPriseIds(slot, prises);
   }
 
   static _Moment _momentOf(DateTime time) {
@@ -171,9 +168,10 @@ class _MomentHeader extends StatelessWidget {
   }
 }
 
-class _DoseRow extends StatelessWidget {
-  const _DoseRow({
-    required this.prise,
+class _SlotCard extends StatelessWidget {
+  const _SlotCard({
+    required this.slot,
+    required this.prises,
     required this.now,
     required this.busy,
     required this.isFirst,
@@ -182,32 +180,48 @@ class _DoseRow extends StatelessWidget {
     required this.onConfirm,
   });
 
-  final PriseDuJour prise;
+  final DoseSlot slot;
+  final List<PriseDuJour> prises;
   final DateTime now;
   final bool busy;
   final bool isFirst;
   final bool isLast;
   final bool isNext;
-  final VoidCallback onConfirm;
-
-  static const double _height = 56;
+  final VoidCallback? onConfirm;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final tokens = ThemeTokens.of(context);
-    final taken = prise.isTaken;
-    final late = !taken && prise.isLate(now);
-    final accent = taken
+    final byId = {for (final p in prises) p.id: p};
+    final allTaken = slot.items.every((i) => byId[i.priseId]?.isTaken == true);
+    final anyLate = slot.items.any((i) {
+      final p = byId[i.priseId];
+      return p != null && !p.isTaken && p.isLate(now);
+    });
+    final takenCount = slot.items
+        .where((i) => byId[i.priseId]?.isTaken == true)
+        .length;
+    final total = slot.items.length;
+
+    final accent = allTaken
         ? AppColors.success
-        : late
+        : anyLate
             ? AppColors.warning
             : AppColors.primary;
 
+    final maladie = slot.maladieNom.trim();
+    final title = maladie.isNotEmpty
+        ? maladie
+        : (slot.items.length == 1
+            ? slot.items.first.medicamentNom
+            : (l10n.localeName.startsWith('en')
+                ? '$total medications'
+                : '$total médicaments'));
+
     return Container(
-      height: _height,
-      margin: const EdgeInsets.symmetric(vertical: 1),
-      padding: const EdgeInsets.symmetric(horizontal: 6),
+      margin: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.fromLTRB(6, 8, 6, 8),
       decoration: BoxDecoration(
         color: isNext
             ? AppColors.primary.withValues(alpha: tokens.isDark ? 0.12 : 0.05)
@@ -215,81 +229,131 @@ class _DoseRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(Premium.radiusSm),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _Rail(
-            accent: accent,
-            filled: taken,
-            emphasized: isNext,
-            isFirst: isFirst,
-            isLast: isLast,
-            tokens: tokens,
+          SizedBox(
+            height: 56.0 + (slot.items.length > 1 ? (slot.items.length - 1) * 18.0 : 0),
+            child: _Rail(
+              accent: accent,
+              filled: allTaken,
+              emphasized: isNext,
+              isFirst: isFirst,
+              isLast: isLast,
+              tokens: tokens,
+            ),
           ),
           SizedBox(
             width: 46,
-            child: Text(
-              DateFormat.Hm().format(prise.heurePrevue.toLocal()),
-              style: TextStyle(
-                fontFamily: AppTheme.fontFamily,
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.3,
-                color: taken
-                    ? tokens.textSecondary
-                    : isNext
-                        ? AppColors.primary
-                        : tokens.textPrimary,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                DateFormat.Hm().format(slot.heurePrevue),
+                style: TextStyle(
+                  fontFamily: AppTheme.fontFamily,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.3,
+                  color: allTaken
+                      ? tokens.textSecondary
+                      : isNext
+                          ? AppColors.primary
+                          : tokens.textPrimary,
+                ),
               ),
             ),
           ),
           Expanded(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  prise.medicamentNom,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: AppTheme.fontFamily,
-                    fontSize: 14,
-                    fontWeight: isNext ? FontWeight.w700 : FontWeight.w600,
-                    height: 1.2,
-                    color: taken ? tokens.textSecondary : tokens.textPrimary,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: AppTheme.fontFamily,
+                          fontSize: 14,
+                          fontWeight:
+                              isNext ? FontWeight.w700 : FontWeight.w600,
+                          height: 1.2,
+                          color: allTaken
+                              ? tokens.textSecondary
+                              : tokens.textPrimary,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '$takenCount/$total',
+                      style: TextStyle(
+                        fontFamily: AppTheme.fontFamily,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: allTaken
+                            ? AppColors.success
+                            : tokens.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  late ? '${prise.dosage} · ${l10n.homeStatLate}' : prise.dosage,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: AppTheme.fontFamily,
-                    fontSize: 12,
-                    fontWeight: late ? FontWeight.w700 : FontWeight.w500,
-                    color: late ? AppColors.warning : tokens.textSecondary,
+                if (anyLate && !allTaken)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      l10n.homeStatLate,
+                      style: const TextStyle(
+                        fontFamily: AppTheme.fontFamily,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.warning,
+                      ),
+                    ),
                   ),
-                ),
+                const SizedBox(height: 4),
+                for (final item in slot.items)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: Text(
+                      item.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: AppTheme.fontFamily,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: byId[item.priseId]?.isTaken == true
+                            ? tokens.textSecondary
+                            : tokens.textPrimary.withValues(alpha: 0.85),
+                        decoration: byId[item.priseId]?.isTaken == true
+                            ? TextDecoration.lineThrough
+                            : null,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
           const SizedBox(width: 6),
-          if (taken)
-            Text(
-              l10n.homeTakenBadge,
-              style: const TextStyle(
-                fontFamily: AppTheme.fontFamily,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: AppColors.success,
-              ),
-            )
-          else
-            _ConfirmButton(
-              accent: accent,
-              tooltip: l10n.homeTakeCta,
-              onTap: busy ? null : onConfirm,
-            ),
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: allTaken
+                ? Text(
+                    l10n.homeTakenBadge,
+                    style: const TextStyle(
+                      fontFamily: AppTheme.fontFamily,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.success,
+                    ),
+                  )
+                : _ConfirmButton(
+                    accent: accent,
+                    tooltip: l10n.homeTakeCta,
+                    onTap: busy || onConfirm == null ? null : onConfirm,
+                  ),
+          ),
         ],
       ),
     );

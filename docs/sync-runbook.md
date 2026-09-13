@@ -1,0 +1,69 @@
+# Runbook sync offline (Phase 6)
+
+Diagnostic rapide des pannes SyncEngine / outbox / pull — contexte connexion instable.
+
+## Prérequis
+
+- App Flutter avec Drift + prefs
+- Backend `POST /api/v1/sync/push` + `GET /api/v1/sync/pull`
+- Logs debug : filtre `SyncMetrics` / `NetworkStatus` / `SyncEngine`
+
+## Clés prefs utiles
+
+| Clé | Rôle |
+|---|---|
+| `sync_last_pass_v1` | JSON dernière passe (pass_id, pushed, applied, duplicate, rejected, pulled, outbox_remaining, skipped_reason, error) |
+| `sync_pull_cursor_v1` | Cursor opaque pull `{ts}\|{type}\|{id}` |
+| `server_clock_offset_ms_v1` | Offset horloge serveur (ms) |
+
+## Symptômes → actions
+
+### Outbox qui ne se vide pas
+
+1. Lire `sync_last_pass_v1` : `error` ? `skipped_reason` (`offline` / `circuit` / `cooldown`) ?
+2. Si `circuit` : attendre 2 min (breaker) ou redémarrer après résolution 5xx backend.
+3. Si `offline` / `degraded` : vérifier `/health` et Wi‑Fi réel (pas seulement connectivité OS).
+4. Entrées `failed_permanent` : conflit métier (ex. report sur prise déjà `confirmee`) — ne bloquent pas le reste.
+
+### Doublons perçus côté UI
+
+- Rejeu du même `mutation_id` → serveur `duplicate` (un seul effet). Vérifier tests `test_sync_push_mutation_id_replay_x3`.
+- Constante append-only : deux saisies = deux lignes normales.
+
+### Check-in refusé
+
+- `CHECK_IN_DEJA_FAIT_AUJOURDHUI` : déjà un check-in ce jour (autre device ou retry). Pull pour réhydrater.
+
+### Horloge device fausse
+
+- `client_ts` doit venir de `ServerClock.now()` (header HTTP `Date`), pas de l’horloge locale brute.
+- Vérifier `server_clock_offset_ms_v1` après une requête API réussie.
+
+### Accueil pas à jour après sync autre device
+
+1. Flush a-t-il fait un pull ? (`pulled` > 0 dans `sync_last_pass_v1`)
+2. Cursor corrompu : effacer `sync_pull_cursor_v1` → prochain pull full fenêtre.
+3. Outbox pending sur la même `entity_id` protège le snapshot local (volontaire).
+
+## Checklist QA (automatisée)
+
+| # | Critère | Test |
+|---|---|---|
+| 1 | Rejeu `mutation_id` ×3 | `backend/app/tests/test_sync_api.py::test_sync_push_mutation_id_replay_x3` |
+| 2 | Coupure mid-push + retry | `mobile/test/sync_engine_test.dart` QA#2 |
+| 3 | Flapping ≤2 flush / 60s | `mobile/test/sync_flapping_test.dart` |
+| 4 | Horloge device −3 h | `mobile/test/sync_engine_test.dart` QA#4 |
+| 5 | Anti-downgrade `confirmee` | `backend/.../test_sync_offline_no_downgrade_confirmee` |
+
+```bash
+# Backend
+cd backend && .venv/Scripts/python.exe -m pytest app/tests/test_sync_api.py -q
+
+# Mobile
+cd mobile && flutter test test/sync_engine_test.dart test/sync_flapping_test.dart test/sync_pull_merge_test.dart
+```
+
+## Commandes support (device)
+
+- Hot restart après clear prefs de sync (cursor / last_pass) si état incohérent.
+- Ne pas supprimer l’outbox Drift manuellement hors debug — risque de perdre des mutations non poussées.

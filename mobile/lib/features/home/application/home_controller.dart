@@ -1,15 +1,19 @@
 import 'dart:async';
 
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/database/providers.dart';
+import '../../../core/locale/locale_controller.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/network/providers.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../../services/reminder_sync.dart';
 import '../../../services/sync_engine.dart';
 import '../../../services/sync_outbox.dart';
+import '../data/home_profile_cache.dart';
 import '../data/home_repository.dart';
 import '../domain/constante_models.dart';
 import '../domain/dashboard_models.dart';
@@ -82,7 +86,12 @@ class HomeUiState {
   List<ConstanteSeries> get constanteSeries =>
       ConstanteSeries.group(constantes);
 
-  bool get hasPatient => profile?.hasPatientProfile == true;
+  bool get hasPatient {
+    if (profile?.hasPatientProfile == true) return true;
+    final dash = dashboard;
+    if (dash == null) return false;
+    return dash.traitements.isNotEmpty || dash.prisesAujourdhui.isNotEmpty;
+  }
 
   DateTime get day => homeDateOnly(selectedDay ?? DateTime.now());
 
@@ -190,36 +199,81 @@ class HomeController extends StateNotifier<HomeUiState> {
     return HomeProjection.projectDashboard(base: base, outbox: pending);
   }
 
-  Future<void> _applyProjectedDashboard(PatientDashboard dashboard) async {
+  Future<void> reloadProjection() async {
+    final projected = await _projectFromLocal();
+    if (projected == null || !mounted) return;
+    final profile = state.profile ?? _offlineProfile(projected);
     state = state.copyWith(
       loading: false,
-      dashboard: dashboard,
+      profile: profile,
+      dashboard: projected,
       selectedDay: homeDateOnly(DateTime.now()),
       clearDayPrises: true,
       clearError: true,
     );
-  }
-
-  Future<void> reloadProjection() async {
-    final projected = await _projectFromLocal();
-    if (projected == null || !mounted) return;
-    await _applyProjectedDashboard(projected);
     unawaited(syncRemindersFromHome(_ref.read, projected));
   }
 
-  Future<void> load({bool secondary = true}) async {
-    state = state.copyWith(loading: true, clearError: true);
+  HomeProfile? _offlineProfile(PatientDashboard? dashboard) {
+    final prefs = _ref.read(sharedPreferencesProvider);
+    final cached = HomeProfileCache.read(prefs);
+    if (cached != null) return cached;
 
-    // Hydrate locale d’abord (offline-first).
+    final session = _ref.read(authSessionProvider);
+    if (session == null && dashboard == null) return null;
+
+    final hasPatient = session?.hasPatientProfile == true ||
+        (dashboard != null &&
+            (dashboard.traitements.isNotEmpty ||
+                dashboard.prisesAujourdhui.isNotEmpty));
+
+    return HomeProfile(
+      nomComplet: '',
+      hasPatientProfile: hasPatient,
+      isAidant: session?.isAidant ?? false,
+    );
+  }
+
+  Future<void> _persistProfile(HomeProfile profile) async {
+    await HomeProfileCache.save(_ref.read(sharedPreferencesProvider), profile);
+  }
+
+  void _scheduleSecondaryLoad() {
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) unawaited(_loadSecondary());
+      });
+    });
+  }
+
+  Future<void> load({bool secondary = true}) async {
+    final hadCache = state.dashboard != null;
+    if (!hadCache) {
+      state = state.copyWith(loading: true, clearError: true);
+    }
+
+    PatientDashboard? localDashboard;
+
+    // Hydrate locale d’abord (offline-first) — UI immédiate si cache.
     try {
       final local = await _projectFromLocal();
       if (local != null && mounted) {
-        await _applyProjectedDashboard(local);
+        localDashboard = local;
+        final profile = state.profile ?? _offlineProfile(local);
+        state = state.copyWith(
+          loading: false,
+          profile: profile,
+          dashboard: local,
+          selectedDay: homeDateOnly(DateTime.now()),
+          clearDayPrises: true,
+          clearError: true,
+        );
       }
     } catch (_) {}
 
     try {
       final profile = await _repo.fetchProfile();
+      await _persistProfile(profile);
       final session = _ref.read(authSessionProvider);
       if (session != null) {
         _ref.read(authSessionProvider.notifier).updateOnboarding(
@@ -243,26 +297,41 @@ class HomeController extends StateNotifier<HomeUiState> {
       state = state.copyWith(
         loading: false,
         profile: profile,
-        dashboard: dashboard,
+        dashboard: dashboard ?? localDashboard,
         selectedDay: homeDateOnly(DateTime.now()),
-        clearDashboard: dashboard == null,
+        clearDashboard: dashboard == null && localDashboard == null,
         clearDayPrises: true,
         clearError: true,
       );
-      if (dashboard != null) {
-        unawaited(syncRemindersFromHome(_ref.read, dashboard));
+      final dash = state.dashboard;
+      if (dash != null) {
+        unawaited(syncRemindersFromHome(_ref.read, dash));
       }
-      if (secondary && dashboard != null) {
-        unawaited(_loadSecondary());
+      if (secondary && dash != null) {
+        _scheduleSecondaryLoad();
       }
     } catch (e) {
-      // Garde la projection locale si présente.
-      if (state.dashboard != null) {
-        state = state.copyWith(loading: false, clearError: true);
+      // Garde projection + profil locaux si le réseau échoue.
+      final profile = state.profile ?? _offlineProfile(localDashboard);
+      if (state.dashboard != null || localDashboard != null) {
+        state = state.copyWith(
+          loading: false,
+          profile: profile,
+          dashboard: state.dashboard ?? localDashboard,
+          clearError: true,
+        );
+        final dash = state.dashboard;
+        if (dash != null) {
+          unawaited(syncRemindersFromHome(_ref.read, dash));
+        }
+        if (secondary && dash != null) {
+          _scheduleSecondaryLoad();
+        }
         return;
       }
       state = state.copyWith(
         loading: false,
+        profile: profile,
         error: e is ApiException ? e.message : e.toString(),
       );
     }
@@ -283,14 +352,29 @@ class HomeController extends StateNotifier<HomeUiState> {
   static const _constantesWindow = Duration(days: 30);
 
   Future<void> _loadConstantes() async {
+    final depuis = DateTime.now().subtract(_constantesWindow);
     try {
-      final values = await _repo.listConstantes(
-        depuis: DateTime.now().subtract(_constantesWindow),
-      );
+      final local = await _db.listConstantesSince(depuis);
+      if (mounted && local.isNotEmpty) {
+        state = state.copyWith(constantes: local, constantesKnown: true);
+      }
+    } catch (_) {}
+    try {
+      final values = await _repo.listConstantes(depuis: depuis);
       if (!mounted) return;
+      await _db.replaceConstantes(values);
       state = state.copyWith(constantes: values, constantesKnown: true);
     } catch (_) {
-      // Le suivi des constantes est secondaire : on masque la carte.
+      if (!mounted) return;
+      if (!state.constantesKnown) {
+        try {
+          final local = await _db.listConstantesSince(depuis);
+          state = state.copyWith(
+            constantes: local,
+            constantesKnown: local.isNotEmpty,
+          );
+        } catch (_) {}
+      }
     }
   }
 
@@ -302,15 +386,36 @@ class HomeController extends StateNotifier<HomeUiState> {
   }) async {
     state = state.copyWith(busy: true, clearError: true);
     try {
-      final created = await _repo.createConstante(
-        type: type,
-        valeur: valeur,
-        unite: unite,
-        mesureAt: mesureAt,
+      final clientId = const Uuid().v4();
+      await _db.transaction(() async {
+        await _db.upsertConstanteLocal(
+          id: clientId,
+          typeCode: type.code,
+          valeur: valeur,
+          unite: unite,
+          mesureAt: mesureAt,
+        );
+        await _engine.enqueueCreateConstante(
+          clientId: clientId,
+          type: type.code,
+          valeur: valeur,
+          unite: unite,
+          mesureAt: mesureAt,
+        );
+      });
+      final local = await _db.listConstantesSince(
+        DateTime.now().subtract(_constantesWindow),
       );
-      state = state.copyWith(busy: false);
-      await _loadConstantes();
-      return created;
+      state = state.copyWith(
+        busy: false,
+        constantes: local,
+        constantesKnown: true,
+      );
+      unawaited(_engine.flush(force: true));
+      return const ConstanteCreated(
+        tendance: 'stable',
+        message: 'Mesure enregistrée. Elle sera synchronisée dès que possible.',
+      );
     } catch (e) {
       state = state.copyWith(busy: false);
       rethrow;
@@ -322,27 +427,42 @@ class HomeController extends StateNotifier<HomeUiState> {
     final start = homeWeekStart(today);
     final targets = [
       for (var i = 0; i < 7; i++) start.add(Duration(days: i)),
-    ].where((d) => d.isBefore(today)).toList();
+    ].where((d) => !d.isAfter(today)).toList();
 
     if (targets.isEmpty) {
       state = state.copyWith(weekLoading: false);
       return;
     }
 
+    final merged = Map<String, DayAdherence>.from(state.weekDays);
+    for (final d in targets) {
+      if (homeSameDay(d, today)) continue;
+      try {
+        final local = await _db.listPrisesForDate(homeDayKey(d));
+        if (local.isNotEmpty) {
+          merged[homeDayKey(d)] = DayAdherence.fromPrises(d, local);
+        }
+      } catch (_) {}
+    }
+    if (mounted) {
+      state = state.copyWith(weekDays: merged);
+    }
+
     final results = await Future.wait(
       targets.map((d) async {
+        if (homeSameDay(d, today)) return null;
         try {
-          return MapEntry(homeDayKey(d), DayAdherence.fromPrises(
-            d,
-            await _repo.listPrises(date: d),
-          ));
+          final prises = await _repo.listPrises(date: d);
+          try {
+            await _db.upsertPrises(prises);
+          } catch (_) {}
+          return MapEntry(homeDayKey(d), DayAdherence.fromPrises(d, prises));
         } catch (_) {
           return null;
         }
       }),
     );
 
-    final merged = Map<String, DayAdherence>.from(state.weekDays);
     for (final entry in results) {
       if (entry != null) merged[entry.key] = entry.value;
     }
@@ -370,6 +490,16 @@ class HomeController extends StateNotifier<HomeUiState> {
 
   Future<void> _loadCheckIn() async {
     final today = homeDateOnly(DateTime.now());
+    final key = homeDayKey(today);
+    try {
+      final local = await _db.getCheckInForDateKey(key);
+      if (mounted && local != null) {
+        state = state.copyWith(
+          todayCheckIn: local,
+          checkInKnown: true,
+        );
+      }
+    } catch (_) {}
     try {
       final entries = await _repo.listCheckIns(depuis: today);
       if (!mounted) return;
@@ -377,25 +507,62 @@ class HomeController extends StateNotifier<HomeUiState> {
       for (final e in entries) {
         if (homeSameDay(e.date, today)) todays = e;
       }
+      if (todays != null) {
+        await _db.upsertCheckInLocal(
+          id: 'server-$key',
+          date: todays.date,
+          statut: todays.statut,
+        );
+      }
       state = state.copyWith(
         todayCheckIn: todays,
         checkInKnown: true,
         clearCheckIn: todays == null,
       );
     } catch (_) {
-      // Sans réponse, on n’affiche pas la carte plutôt que d’en proposer deux.
+      if (!mounted) return;
+      if (!state.checkInKnown) {
+        try {
+          final local = await _db.getCheckInForDateKey(key);
+          state = state.copyWith(
+            todayCheckIn: local,
+            checkInKnown: local != null,
+            clearCheckIn: local == null,
+          );
+        } catch (_) {}
+      }
     }
   }
 
   Future<void> submitCheckIn(String statut) async {
     state = state.copyWith(checkInBusy: true, clearError: true);
     try {
-      final entry = await _repo.submitCheckIn(statut);
+      final today = homeDateOnly(DateTime.now());
+      final key = homeDayKey(today);
+      final existing = await _db.getCheckInForDateKey(key);
+      if (existing != null || state.todayCheckIn != null) {
+        state = state.copyWith(
+          checkInBusy: false,
+          todayCheckIn: existing ?? state.todayCheckIn,
+          checkInKnown: true,
+        );
+        return;
+      }
+      final clientId = const Uuid().v4();
+      await _db.transaction(() async {
+        await _db.upsertCheckInLocal(
+          id: clientId,
+          date: today,
+          statut: statut,
+        );
+        await _engine.enqueueCreateCheckIn(dateKey: key, statut: statut);
+      });
       state = state.copyWith(
         checkInBusy: false,
-        todayCheckIn: entry,
+        todayCheckIn: CheckInEntry(date: today, statut: statut),
         checkInKnown: true,
       );
+      unawaited(_engine.flush(force: true));
     } catch (e) {
       state = state.copyWith(checkInBusy: false);
       if (e is ApiException && e.code == 'CHECK_IN_DEJA_FAIT_AUJOURDHUI') {
@@ -443,6 +610,34 @@ class HomeController extends StateNotifier<HomeUiState> {
     }
   }
 
+  /// Confirme toutes les prises encore `en_attente` d’un créneau (DoseSlot).
+  Future<void> confirmPrises(List<String> ids) async {
+    final unique = ids.where((id) => id.isNotEmpty).toSet().toList();
+    if (unique.isEmpty) return;
+    if (unique.length == 1) {
+      await confirmPrise(unique.first);
+      return;
+    }
+    state = state.copyWith(busy: true, clearError: true);
+    try {
+      await _db.transaction(() async {
+        for (final id in unique) {
+          await _db.updatePriseLocal(id: id, statut: 'confirmee');
+          await _engine.enqueueConfirm(priseId: id);
+        }
+      });
+      await reloadProjection();
+      state = state.copyWith(busy: false);
+      unawaited(_engine.flush(force: true));
+    } catch (e) {
+      state = state.copyWith(
+        busy: false,
+        error: e is ApiException ? e.message : e.toString(),
+      );
+      rethrow;
+    }
+  }
+
   Future<void> reportPrise(String id, DateTime nouvelleHeure) async {
     state = state.copyWith(busy: true, clearError: true);
     try {
@@ -453,6 +648,41 @@ class HomeController extends StateNotifier<HomeUiState> {
           statut: 'en_attente',
         );
         await _engine.enqueueReport(priseId: id, nouvelleHeure: nouvelleHeure);
+      });
+      await reloadProjection();
+      state = state.copyWith(busy: false);
+      unawaited(_engine.flush(force: true));
+    } catch (e) {
+      state = state.copyWith(
+        busy: false,
+        error: e is ApiException ? e.message : e.toString(),
+      );
+      rethrow;
+    }
+  }
+
+  /// Reporte toutes les prises d’un créneau à la même heure (DoseSlot).
+  Future<void> reportPrises(List<String> ids, DateTime nouvelleHeure) async {
+    final unique = ids.where((id) => id.isNotEmpty).toSet().toList();
+    if (unique.isEmpty) return;
+    if (unique.length == 1) {
+      await reportPrise(unique.first, nouvelleHeure);
+      return;
+    }
+    state = state.copyWith(busy: true, clearError: true);
+    try {
+      await _db.transaction(() async {
+        for (final id in unique) {
+          await _db.updatePriseLocal(
+            id: id,
+            heurePrevue: nouvelleHeure,
+            statut: 'en_attente',
+          );
+          await _engine.enqueueReport(
+            priseId: id,
+            nouvelleHeure: nouvelleHeure,
+          );
+        }
       });
       await reloadProjection();
       state = state.copyWith(busy: false);

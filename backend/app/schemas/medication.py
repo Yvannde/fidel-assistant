@@ -119,6 +119,9 @@ class PriseOut(BaseModel):
     statut: str
     confirmee_at: datetime | None = None
     canal: str | None = None
+    traitement_id: UUID | None = None
+    maladie_id: UUID | None = None
+    maladie_nom: str | None = None
 
 
 class DashboardOut(BaseModel):

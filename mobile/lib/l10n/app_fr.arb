@@ -159,6 +159,10 @@
   "homeNotifReadyBody": "Fidel te préviendra ici, sur l’appareil — pas de score, pas de jugement.",
   "homeTodayTitle": "Aujourd’hui",
   "homeNextDoseLabel": "Prochaine prise",
+  "homeSlotMedCount": "{count, plural, one{1 médicament} other{{count} médicaments}}",
+  "@homeSlotMedCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "homeAllClearTitle": "Tu es à jour",
   "homeAllClearBody": "Aucune prise en attente pour le moment. Repose-toi.",
   "homeStatPending": "À prendre",

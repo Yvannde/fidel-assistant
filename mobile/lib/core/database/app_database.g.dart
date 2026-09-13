@@ -1600,6 +1600,711 @@ class DashboardSnapshotsCompanion extends UpdateCompanion<DashboardSnapshot> {
   }
 }
 
+class $ConstanteSnapshotsTable extends ConstanteSnapshots
+    with TableInfo<$ConstanteSnapshotsTable, ConstanteSnapshot> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ConstanteSnapshotsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _typeCodeMeta =
+      const VerificationMeta('typeCode');
+  @override
+  late final GeneratedColumn<String> typeCode = GeneratedColumn<String>(
+      'type_code', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _valeurJsonMeta =
+      const VerificationMeta('valeurJson');
+  @override
+  late final GeneratedColumn<String> valeurJson = GeneratedColumn<String>(
+      'valeur_json', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _uniteMeta = const VerificationMeta('unite');
+  @override
+  late final GeneratedColumn<String> unite = GeneratedColumn<String>(
+      'unite', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _mesureAtMeta =
+      const VerificationMeta('mesureAt');
+  @override
+  late final GeneratedColumn<DateTime> mesureAt = GeneratedColumn<DateTime>(
+      'mesure_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+      'source', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('manuel'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _serverVersionMeta =
+      const VerificationMeta('serverVersion');
+  @override
+  late final GeneratedColumn<int> serverVersion = GeneratedColumn<int>(
+      'server_version', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        typeCode,
+        valeurJson,
+        unite,
+        mesureAt,
+        source,
+        createdAt,
+        serverVersion
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'constante_snapshots';
+  @override
+  VerificationContext validateIntegrity(Insertable<ConstanteSnapshot> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('type_code')) {
+      context.handle(_typeCodeMeta,
+          typeCode.isAcceptableOrUnknown(data['type_code']!, _typeCodeMeta));
+    } else if (isInserting) {
+      context.missing(_typeCodeMeta);
+    }
+    if (data.containsKey('valeur_json')) {
+      context.handle(
+          _valeurJsonMeta,
+          valeurJson.isAcceptableOrUnknown(
+              data['valeur_json']!, _valeurJsonMeta));
+    } else if (isInserting) {
+      context.missing(_valeurJsonMeta);
+    }
+    if (data.containsKey('unite')) {
+      context.handle(
+          _uniteMeta, unite.isAcceptableOrUnknown(data['unite']!, _uniteMeta));
+    } else if (isInserting) {
+      context.missing(_uniteMeta);
+    }
+    if (data.containsKey('mesure_at')) {
+      context.handle(_mesureAtMeta,
+          mesureAt.isAcceptableOrUnknown(data['mesure_at']!, _mesureAtMeta));
+    } else if (isInserting) {
+      context.missing(_mesureAtMeta);
+    }
+    if (data.containsKey('source')) {
+      context.handle(_sourceMeta,
+          source.isAcceptableOrUnknown(data['source']!, _sourceMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('server_version')) {
+      context.handle(
+          _serverVersionMeta,
+          serverVersion.isAcceptableOrUnknown(
+              data['server_version']!, _serverVersionMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ConstanteSnapshot map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ConstanteSnapshot(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      typeCode: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}type_code'])!,
+      valeurJson: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}valeur_json'])!,
+      unite: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}unite'])!,
+      mesureAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}mesure_at'])!,
+      source: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}source'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at']),
+      serverVersion: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}server_version'])!,
+    );
+  }
+
+  @override
+  $ConstanteSnapshotsTable createAlias(String alias) {
+    return $ConstanteSnapshotsTable(attachedDatabase, alias);
+  }
+}
+
+class ConstanteSnapshot extends DataClass
+    implements Insertable<ConstanteSnapshot> {
+  final String id;
+  final String typeCode;
+  final String valeurJson;
+  final String unite;
+  final DateTime mesureAt;
+  final String source;
+  final DateTime? createdAt;
+  final int serverVersion;
+  const ConstanteSnapshot(
+      {required this.id,
+      required this.typeCode,
+      required this.valeurJson,
+      required this.unite,
+      required this.mesureAt,
+      required this.source,
+      this.createdAt,
+      required this.serverVersion});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['type_code'] = Variable<String>(typeCode);
+    map['valeur_json'] = Variable<String>(valeurJson);
+    map['unite'] = Variable<String>(unite);
+    map['mesure_at'] = Variable<DateTime>(mesureAt);
+    map['source'] = Variable<String>(source);
+    if (!nullToAbsent || createdAt != null) {
+      map['created_at'] = Variable<DateTime>(createdAt);
+    }
+    map['server_version'] = Variable<int>(serverVersion);
+    return map;
+  }
+
+  ConstanteSnapshotsCompanion toCompanion(bool nullToAbsent) {
+    return ConstanteSnapshotsCompanion(
+      id: Value(id),
+      typeCode: Value(typeCode),
+      valeurJson: Value(valeurJson),
+      unite: Value(unite),
+      mesureAt: Value(mesureAt),
+      source: Value(source),
+      createdAt: createdAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdAt),
+      serverVersion: Value(serverVersion),
+    );
+  }
+
+  factory ConstanteSnapshot.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ConstanteSnapshot(
+      id: serializer.fromJson<String>(json['id']),
+      typeCode: serializer.fromJson<String>(json['typeCode']),
+      valeurJson: serializer.fromJson<String>(json['valeurJson']),
+      unite: serializer.fromJson<String>(json['unite']),
+      mesureAt: serializer.fromJson<DateTime>(json['mesureAt']),
+      source: serializer.fromJson<String>(json['source']),
+      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
+      serverVersion: serializer.fromJson<int>(json['serverVersion']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'typeCode': serializer.toJson<String>(typeCode),
+      'valeurJson': serializer.toJson<String>(valeurJson),
+      'unite': serializer.toJson<String>(unite),
+      'mesureAt': serializer.toJson<DateTime>(mesureAt),
+      'source': serializer.toJson<String>(source),
+      'createdAt': serializer.toJson<DateTime?>(createdAt),
+      'serverVersion': serializer.toJson<int>(serverVersion),
+    };
+  }
+
+  ConstanteSnapshot copyWith(
+          {String? id,
+          String? typeCode,
+          String? valeurJson,
+          String? unite,
+          DateTime? mesureAt,
+          String? source,
+          Value<DateTime?> createdAt = const Value.absent(),
+          int? serverVersion}) =>
+      ConstanteSnapshot(
+        id: id ?? this.id,
+        typeCode: typeCode ?? this.typeCode,
+        valeurJson: valeurJson ?? this.valeurJson,
+        unite: unite ?? this.unite,
+        mesureAt: mesureAt ?? this.mesureAt,
+        source: source ?? this.source,
+        createdAt: createdAt.present ? createdAt.value : this.createdAt,
+        serverVersion: serverVersion ?? this.serverVersion,
+      );
+  ConstanteSnapshot copyWithCompanion(ConstanteSnapshotsCompanion data) {
+    return ConstanteSnapshot(
+      id: data.id.present ? data.id.value : this.id,
+      typeCode: data.typeCode.present ? data.typeCode.value : this.typeCode,
+      valeurJson:
+          data.valeurJson.present ? data.valeurJson.value : this.valeurJson,
+      unite: data.unite.present ? data.unite.value : this.unite,
+      mesureAt: data.mesureAt.present ? data.mesureAt.value : this.mesureAt,
+      source: data.source.present ? data.source.value : this.source,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      serverVersion: data.serverVersion.present
+          ? data.serverVersion.value
+          : this.serverVersion,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ConstanteSnapshot(')
+          ..write('id: $id, ')
+          ..write('typeCode: $typeCode, ')
+          ..write('valeurJson: $valeurJson, ')
+          ..write('unite: $unite, ')
+          ..write('mesureAt: $mesureAt, ')
+          ..write('source: $source, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('serverVersion: $serverVersion')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, typeCode, valeurJson, unite, mesureAt,
+      source, createdAt, serverVersion);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ConstanteSnapshot &&
+          other.id == this.id &&
+          other.typeCode == this.typeCode &&
+          other.valeurJson == this.valeurJson &&
+          other.unite == this.unite &&
+          other.mesureAt == this.mesureAt &&
+          other.source == this.source &&
+          other.createdAt == this.createdAt &&
+          other.serverVersion == this.serverVersion);
+}
+
+class ConstanteSnapshotsCompanion extends UpdateCompanion<ConstanteSnapshot> {
+  final Value<String> id;
+  final Value<String> typeCode;
+  final Value<String> valeurJson;
+  final Value<String> unite;
+  final Value<DateTime> mesureAt;
+  final Value<String> source;
+  final Value<DateTime?> createdAt;
+  final Value<int> serverVersion;
+  final Value<int> rowid;
+  const ConstanteSnapshotsCompanion({
+    this.id = const Value.absent(),
+    this.typeCode = const Value.absent(),
+    this.valeurJson = const Value.absent(),
+    this.unite = const Value.absent(),
+    this.mesureAt = const Value.absent(),
+    this.source = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.serverVersion = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ConstanteSnapshotsCompanion.insert({
+    required String id,
+    required String typeCode,
+    required String valeurJson,
+    required String unite,
+    required DateTime mesureAt,
+    this.source = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.serverVersion = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        typeCode = Value(typeCode),
+        valeurJson = Value(valeurJson),
+        unite = Value(unite),
+        mesureAt = Value(mesureAt);
+  static Insertable<ConstanteSnapshot> custom({
+    Expression<String>? id,
+    Expression<String>? typeCode,
+    Expression<String>? valeurJson,
+    Expression<String>? unite,
+    Expression<DateTime>? mesureAt,
+    Expression<String>? source,
+    Expression<DateTime>? createdAt,
+    Expression<int>? serverVersion,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (typeCode != null) 'type_code': typeCode,
+      if (valeurJson != null) 'valeur_json': valeurJson,
+      if (unite != null) 'unite': unite,
+      if (mesureAt != null) 'mesure_at': mesureAt,
+      if (source != null) 'source': source,
+      if (createdAt != null) 'created_at': createdAt,
+      if (serverVersion != null) 'server_version': serverVersion,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ConstanteSnapshotsCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? typeCode,
+      Value<String>? valeurJson,
+      Value<String>? unite,
+      Value<DateTime>? mesureAt,
+      Value<String>? source,
+      Value<DateTime?>? createdAt,
+      Value<int>? serverVersion,
+      Value<int>? rowid}) {
+    return ConstanteSnapshotsCompanion(
+      id: id ?? this.id,
+      typeCode: typeCode ?? this.typeCode,
+      valeurJson: valeurJson ?? this.valeurJson,
+      unite: unite ?? this.unite,
+      mesureAt: mesureAt ?? this.mesureAt,
+      source: source ?? this.source,
+      createdAt: createdAt ?? this.createdAt,
+      serverVersion: serverVersion ?? this.serverVersion,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (typeCode.present) {
+      map['type_code'] = Variable<String>(typeCode.value);
+    }
+    if (valeurJson.present) {
+      map['valeur_json'] = Variable<String>(valeurJson.value);
+    }
+    if (unite.present) {
+      map['unite'] = Variable<String>(unite.value);
+    }
+    if (mesureAt.present) {
+      map['mesure_at'] = Variable<DateTime>(mesureAt.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (serverVersion.present) {
+      map['server_version'] = Variable<int>(serverVersion.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ConstanteSnapshotsCompanion(')
+          ..write('id: $id, ')
+          ..write('typeCode: $typeCode, ')
+          ..write('valeurJson: $valeurJson, ')
+          ..write('unite: $unite, ')
+          ..write('mesureAt: $mesureAt, ')
+          ..write('source: $source, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('serverVersion: $serverVersion, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CheckInSnapshotsTable extends CheckInSnapshots
+    with TableInfo<$CheckInSnapshotsTable, CheckInSnapshot> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CheckInSnapshotsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _dateKeyMeta =
+      const VerificationMeta('dateKey');
+  @override
+  late final GeneratedColumn<String> dateKey = GeneratedColumn<String>(
+      'date_key', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _statutMeta = const VerificationMeta('statut');
+  @override
+  late final GeneratedColumn<String> statut = GeneratedColumn<String>(
+      'statut', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [id, dateKey, statut, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'check_in_snapshots';
+  @override
+  VerificationContext validateIntegrity(Insertable<CheckInSnapshot> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('date_key')) {
+      context.handle(_dateKeyMeta,
+          dateKey.isAcceptableOrUnknown(data['date_key']!, _dateKeyMeta));
+    } else if (isInserting) {
+      context.missing(_dateKeyMeta);
+    }
+    if (data.containsKey('statut')) {
+      context.handle(_statutMeta,
+          statut.isAcceptableOrUnknown(data['statut']!, _statutMeta));
+    } else if (isInserting) {
+      context.missing(_statutMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CheckInSnapshot map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CheckInSnapshot(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      dateKey: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}date_key'])!,
+      statut: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}statut'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at']),
+    );
+  }
+
+  @override
+  $CheckInSnapshotsTable createAlias(String alias) {
+    return $CheckInSnapshotsTable(attachedDatabase, alias);
+  }
+}
+
+class CheckInSnapshot extends DataClass implements Insertable<CheckInSnapshot> {
+  final String id;
+  final String dateKey;
+  final String statut;
+  final DateTime? createdAt;
+  const CheckInSnapshot(
+      {required this.id,
+      required this.dateKey,
+      required this.statut,
+      this.createdAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['date_key'] = Variable<String>(dateKey);
+    map['statut'] = Variable<String>(statut);
+    if (!nullToAbsent || createdAt != null) {
+      map['created_at'] = Variable<DateTime>(createdAt);
+    }
+    return map;
+  }
+
+  CheckInSnapshotsCompanion toCompanion(bool nullToAbsent) {
+    return CheckInSnapshotsCompanion(
+      id: Value(id),
+      dateKey: Value(dateKey),
+      statut: Value(statut),
+      createdAt: createdAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdAt),
+    );
+  }
+
+  factory CheckInSnapshot.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CheckInSnapshot(
+      id: serializer.fromJson<String>(json['id']),
+      dateKey: serializer.fromJson<String>(json['dateKey']),
+      statut: serializer.fromJson<String>(json['statut']),
+      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'dateKey': serializer.toJson<String>(dateKey),
+      'statut': serializer.toJson<String>(statut),
+      'createdAt': serializer.toJson<DateTime?>(createdAt),
+    };
+  }
+
+  CheckInSnapshot copyWith(
+          {String? id,
+          String? dateKey,
+          String? statut,
+          Value<DateTime?> createdAt = const Value.absent()}) =>
+      CheckInSnapshot(
+        id: id ?? this.id,
+        dateKey: dateKey ?? this.dateKey,
+        statut: statut ?? this.statut,
+        createdAt: createdAt.present ? createdAt.value : this.createdAt,
+      );
+  CheckInSnapshot copyWithCompanion(CheckInSnapshotsCompanion data) {
+    return CheckInSnapshot(
+      id: data.id.present ? data.id.value : this.id,
+      dateKey: data.dateKey.present ? data.dateKey.value : this.dateKey,
+      statut: data.statut.present ? data.statut.value : this.statut,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CheckInSnapshot(')
+          ..write('id: $id, ')
+          ..write('dateKey: $dateKey, ')
+          ..write('statut: $statut, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, dateKey, statut, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CheckInSnapshot &&
+          other.id == this.id &&
+          other.dateKey == this.dateKey &&
+          other.statut == this.statut &&
+          other.createdAt == this.createdAt);
+}
+
+class CheckInSnapshotsCompanion extends UpdateCompanion<CheckInSnapshot> {
+  final Value<String> id;
+  final Value<String> dateKey;
+  final Value<String> statut;
+  final Value<DateTime?> createdAt;
+  final Value<int> rowid;
+  const CheckInSnapshotsCompanion({
+    this.id = const Value.absent(),
+    this.dateKey = const Value.absent(),
+    this.statut = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CheckInSnapshotsCompanion.insert({
+    required String id,
+    required String dateKey,
+    required String statut,
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        dateKey = Value(dateKey),
+        statut = Value(statut);
+  static Insertable<CheckInSnapshot> custom({
+    Expression<String>? id,
+    Expression<String>? dateKey,
+    Expression<String>? statut,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (dateKey != null) 'date_key': dateKey,
+      if (statut != null) 'statut': statut,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CheckInSnapshotsCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? dateKey,
+      Value<String>? statut,
+      Value<DateTime?>? createdAt,
+      Value<int>? rowid}) {
+    return CheckInSnapshotsCompanion(
+      id: id ?? this.id,
+      dateKey: dateKey ?? this.dateKey,
+      statut: statut ?? this.statut,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (dateKey.present) {
+      map['date_key'] = Variable<String>(dateKey.value);
+    }
+    if (statut.present) {
+      map['statut'] = Variable<String>(statut.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CheckInSnapshotsCompanion(')
+          ..write('id: $id, ')
+          ..write('dateKey: $dateKey, ')
+          ..write('statut: $statut, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1610,6 +2315,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $SyncOutboxEntriesTable(this);
   late final $DashboardSnapshotsTable dashboardSnapshots =
       $DashboardSnapshotsTable(this);
+  late final $ConstanteSnapshotsTable constanteSnapshots =
+      $ConstanteSnapshotsTable(this);
+  late final $CheckInSnapshotsTable checkInSnapshots =
+      $CheckInSnapshotsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1618,7 +2327,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         priseSnapshots,
         traitementMirrors,
         syncOutboxEntries,
-        dashboardSnapshots
+        dashboardSnapshots,
+        constanteSnapshots,
+        checkInSnapshots
       ];
 }
 
@@ -2446,6 +3157,386 @@ typedef $$DashboardSnapshotsTableProcessedTableManager = ProcessedTableManager<
     ),
     DashboardSnapshot,
     PrefetchHooks Function()>;
+typedef $$ConstanteSnapshotsTableCreateCompanionBuilder
+    = ConstanteSnapshotsCompanion Function({
+  required String id,
+  required String typeCode,
+  required String valeurJson,
+  required String unite,
+  required DateTime mesureAt,
+  Value<String> source,
+  Value<DateTime?> createdAt,
+  Value<int> serverVersion,
+  Value<int> rowid,
+});
+typedef $$ConstanteSnapshotsTableUpdateCompanionBuilder
+    = ConstanteSnapshotsCompanion Function({
+  Value<String> id,
+  Value<String> typeCode,
+  Value<String> valeurJson,
+  Value<String> unite,
+  Value<DateTime> mesureAt,
+  Value<String> source,
+  Value<DateTime?> createdAt,
+  Value<int> serverVersion,
+  Value<int> rowid,
+});
+
+class $$ConstanteSnapshotsTableFilterComposer
+    extends Composer<_$AppDatabase, $ConstanteSnapshotsTable> {
+  $$ConstanteSnapshotsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get typeCode => $composableBuilder(
+      column: $table.typeCode, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get valeurJson => $composableBuilder(
+      column: $table.valeurJson, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get unite => $composableBuilder(
+      column: $table.unite, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get mesureAt => $composableBuilder(
+      column: $table.mesureAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get serverVersion => $composableBuilder(
+      column: $table.serverVersion, builder: (column) => ColumnFilters(column));
+}
+
+class $$ConstanteSnapshotsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ConstanteSnapshotsTable> {
+  $$ConstanteSnapshotsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get typeCode => $composableBuilder(
+      column: $table.typeCode, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get valeurJson => $composableBuilder(
+      column: $table.valeurJson, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get unite => $composableBuilder(
+      column: $table.unite, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get mesureAt => $composableBuilder(
+      column: $table.mesureAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get serverVersion => $composableBuilder(
+      column: $table.serverVersion,
+      builder: (column) => ColumnOrderings(column));
+}
+
+class $$ConstanteSnapshotsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ConstanteSnapshotsTable> {
+  $$ConstanteSnapshotsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get typeCode =>
+      $composableBuilder(column: $table.typeCode, builder: (column) => column);
+
+  GeneratedColumn<String> get valeurJson => $composableBuilder(
+      column: $table.valeurJson, builder: (column) => column);
+
+  GeneratedColumn<String> get unite =>
+      $composableBuilder(column: $table.unite, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get mesureAt =>
+      $composableBuilder(column: $table.mesureAt, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<int> get serverVersion => $composableBuilder(
+      column: $table.serverVersion, builder: (column) => column);
+}
+
+class $$ConstanteSnapshotsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $ConstanteSnapshotsTable,
+    ConstanteSnapshot,
+    $$ConstanteSnapshotsTableFilterComposer,
+    $$ConstanteSnapshotsTableOrderingComposer,
+    $$ConstanteSnapshotsTableAnnotationComposer,
+    $$ConstanteSnapshotsTableCreateCompanionBuilder,
+    $$ConstanteSnapshotsTableUpdateCompanionBuilder,
+    (
+      ConstanteSnapshot,
+      BaseReferences<_$AppDatabase, $ConstanteSnapshotsTable, ConstanteSnapshot>
+    ),
+    ConstanteSnapshot,
+    PrefetchHooks Function()> {
+  $$ConstanteSnapshotsTableTableManager(
+      _$AppDatabase db, $ConstanteSnapshotsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ConstanteSnapshotsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ConstanteSnapshotsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ConstanteSnapshotsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> typeCode = const Value.absent(),
+            Value<String> valeurJson = const Value.absent(),
+            Value<String> unite = const Value.absent(),
+            Value<DateTime> mesureAt = const Value.absent(),
+            Value<String> source = const Value.absent(),
+            Value<DateTime?> createdAt = const Value.absent(),
+            Value<int> serverVersion = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ConstanteSnapshotsCompanion(
+            id: id,
+            typeCode: typeCode,
+            valeurJson: valeurJson,
+            unite: unite,
+            mesureAt: mesureAt,
+            source: source,
+            createdAt: createdAt,
+            serverVersion: serverVersion,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String typeCode,
+            required String valeurJson,
+            required String unite,
+            required DateTime mesureAt,
+            Value<String> source = const Value.absent(),
+            Value<DateTime?> createdAt = const Value.absent(),
+            Value<int> serverVersion = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ConstanteSnapshotsCompanion.insert(
+            id: id,
+            typeCode: typeCode,
+            valeurJson: valeurJson,
+            unite: unite,
+            mesureAt: mesureAt,
+            source: source,
+            createdAt: createdAt,
+            serverVersion: serverVersion,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$ConstanteSnapshotsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $ConstanteSnapshotsTable,
+    ConstanteSnapshot,
+    $$ConstanteSnapshotsTableFilterComposer,
+    $$ConstanteSnapshotsTableOrderingComposer,
+    $$ConstanteSnapshotsTableAnnotationComposer,
+    $$ConstanteSnapshotsTableCreateCompanionBuilder,
+    $$ConstanteSnapshotsTableUpdateCompanionBuilder,
+    (
+      ConstanteSnapshot,
+      BaseReferences<_$AppDatabase, $ConstanteSnapshotsTable, ConstanteSnapshot>
+    ),
+    ConstanteSnapshot,
+    PrefetchHooks Function()>;
+typedef $$CheckInSnapshotsTableCreateCompanionBuilder
+    = CheckInSnapshotsCompanion Function({
+  required String id,
+  required String dateKey,
+  required String statut,
+  Value<DateTime?> createdAt,
+  Value<int> rowid,
+});
+typedef $$CheckInSnapshotsTableUpdateCompanionBuilder
+    = CheckInSnapshotsCompanion Function({
+  Value<String> id,
+  Value<String> dateKey,
+  Value<String> statut,
+  Value<DateTime?> createdAt,
+  Value<int> rowid,
+});
+
+class $$CheckInSnapshotsTableFilterComposer
+    extends Composer<_$AppDatabase, $CheckInSnapshotsTable> {
+  $$CheckInSnapshotsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get dateKey => $composableBuilder(
+      column: $table.dateKey, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get statut => $composableBuilder(
+      column: $table.statut, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$CheckInSnapshotsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CheckInSnapshotsTable> {
+  $$CheckInSnapshotsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get dateKey => $composableBuilder(
+      column: $table.dateKey, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get statut => $composableBuilder(
+      column: $table.statut, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$CheckInSnapshotsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CheckInSnapshotsTable> {
+  $$CheckInSnapshotsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get dateKey =>
+      $composableBuilder(column: $table.dateKey, builder: (column) => column);
+
+  GeneratedColumn<String> get statut =>
+      $composableBuilder(column: $table.statut, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$CheckInSnapshotsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $CheckInSnapshotsTable,
+    CheckInSnapshot,
+    $$CheckInSnapshotsTableFilterComposer,
+    $$CheckInSnapshotsTableOrderingComposer,
+    $$CheckInSnapshotsTableAnnotationComposer,
+    $$CheckInSnapshotsTableCreateCompanionBuilder,
+    $$CheckInSnapshotsTableUpdateCompanionBuilder,
+    (
+      CheckInSnapshot,
+      BaseReferences<_$AppDatabase, $CheckInSnapshotsTable, CheckInSnapshot>
+    ),
+    CheckInSnapshot,
+    PrefetchHooks Function()> {
+  $$CheckInSnapshotsTableTableManager(
+      _$AppDatabase db, $CheckInSnapshotsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CheckInSnapshotsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CheckInSnapshotsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CheckInSnapshotsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> dateKey = const Value.absent(),
+            Value<String> statut = const Value.absent(),
+            Value<DateTime?> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CheckInSnapshotsCompanion(
+            id: id,
+            dateKey: dateKey,
+            statut: statut,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String dateKey,
+            required String statut,
+            Value<DateTime?> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CheckInSnapshotsCompanion.insert(
+            id: id,
+            dateKey: dateKey,
+            statut: statut,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CheckInSnapshotsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $CheckInSnapshotsTable,
+    CheckInSnapshot,
+    $$CheckInSnapshotsTableFilterComposer,
+    $$CheckInSnapshotsTableOrderingComposer,
+    $$CheckInSnapshotsTableAnnotationComposer,
+    $$CheckInSnapshotsTableCreateCompanionBuilder,
+    $$CheckInSnapshotsTableUpdateCompanionBuilder,
+    (
+      CheckInSnapshot,
+      BaseReferences<_$AppDatabase, $CheckInSnapshotsTable, CheckInSnapshot>
+    ),
+    CheckInSnapshot,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2458,4 +3549,8 @@ class $AppDatabaseManager {
       $$SyncOutboxEntriesTableTableManager(_db, _db.syncOutboxEntries);
   $$DashboardSnapshotsTableTableManager get dashboardSnapshots =>
       $$DashboardSnapshotsTableTableManager(_db, _db.dashboardSnapshots);
+  $$ConstanteSnapshotsTableTableManager get constanteSnapshots =>
+      $$ConstanteSnapshotsTableTableManager(_db, _db.constanteSnapshots);
+  $$CheckInSnapshotsTableTableManager get checkInSnapshots =>
+      $$CheckInSnapshotsTableTableManager(_db, _db.checkInSnapshots);
 }

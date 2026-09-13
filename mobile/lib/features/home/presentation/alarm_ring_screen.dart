@@ -9,27 +9,82 @@ import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../services/dose_slot.dart';
 import '../../../services/reminder_alarm_service.dart';
 import '../../../services/reminder_sync.dart';
-import '../../../services/scheduled_dose.dart';
 import '../../../services/sync_engine.dart';
 import '../application/home_controller.dart';
+
+/// Args pour `/alarm-ring` (multi-medocs + maladie).
+class AlarmRingArgs {
+  const AlarmRingArgs({
+    required this.slot,
+    this.alarmId,
+  });
+
+  final DoseSlot slot;
+  final int? alarmId;
+
+  factory AlarmRingArgs.fromPayload(
+    Map<String, dynamic> payload, {
+    int? alarmId,
+  }) {
+    return AlarmRingArgs(
+      slot: DoseSlot.fromPayload(payload),
+      alarmId: alarmId,
+    );
+  }
+}
 
 /// Écran plein affiché quand l’alarme H0 sonne.
 class AlarmRingScreen extends ConsumerStatefulWidget {
   const AlarmRingScreen({
     super.key,
-    required this.priseId,
-    this.medicamentNom = '',
-    this.dosage = '',
-    this.heurePrevueIso,
+    required this.slot,
     this.alarmId,
   });
 
-  final String priseId;
-  final String medicamentNom;
-  final String dosage;
-  final String? heurePrevueIso;
+  /// Compat constructeur legacy (1 prise).
+  factory AlarmRingScreen.legacy({
+    Key? key,
+    required String priseId,
+    String medicamentNom = '',
+    String dosage = '',
+    String? heurePrevueIso,
+    int? alarmId,
+    String? maladieNom,
+    String? slotId,
+    String? traitementId,
+  }) {
+    DateTime heure = DateTime.now();
+    if (heurePrevueIso != null && heurePrevueIso.isNotEmpty) {
+      heure = DateTime.tryParse(heurePrevueIso)?.toLocal() ?? heure;
+    }
+    final tid = traitementId;
+    final sid = (slotId != null && slotId.isNotEmpty)
+        ? slotId
+        : DoseSlot.buildSlotId(traitementId: tid, heurePrevue: heure);
+    return AlarmRingScreen(
+      key: key,
+      alarmId: alarmId,
+      slot: DoseSlot(
+        slotId: sid,
+        traitementId: tid,
+        maladieNom: maladieNom ?? '',
+        heurePrevue: heure,
+        items: [
+          if (priseId.isNotEmpty)
+            DoseSlotItem(
+              priseId: priseId,
+              medicamentNom: medicamentNom,
+              dosage: dosage,
+            ),
+        ],
+      ),
+    );
+  }
+
+  final DoseSlot slot;
   final int? alarmId;
 
   @override
@@ -41,11 +96,17 @@ class _AlarmRingScreenState extends ConsumerState<AlarmRingScreen> {
   bool _busy = false;
 
   int get _alarmId =>
-      widget.alarmId ?? ReminderAlarmService.alarmNotificationId(widget.priseId);
+      widget.alarmId ??
+      ReminderAlarmService.alarmNotificationId(widget.slot.slotId);
 
   @override
   void initState() {
     super.initState();
+    // Cancel préavis du slot dès que l’alarme H0 affiche l’UI.
+    unawaited(
+      ReminderAlarmService.cancelPreavisStatic(widget.slot.slotId),
+    );
+
     _sub = Alarm.ringing.listen((set) {
       if (!mounted) return;
       final still = set.alarms.any((a) => a.id == _alarmId);
@@ -82,7 +143,7 @@ class _AlarmRingScreenState extends ConsumerState<AlarmRingScreen> {
   }
 
   Future<void> _snooze() async {
-    if (_busy || widget.priseId.isEmpty) return;
+    if (_busy || widget.slot.priseIds.isEmpty) return;
     setState(() => _busy = true);
     final l10n = AppLocalizations.of(context);
     try {
@@ -91,20 +152,15 @@ class _AlarmRingScreenState extends ConsumerState<AlarmRingScreen> {
       final engine = ref.read(syncEngineProvider);
       final when = DateTime.now().add(Duration(minutes: prefs.snoozeMinutes));
 
-      await alarms.cancelPrise(widget.priseId);
-      await engine.enqueueReport(priseId: widget.priseId, nouvelleHeure: when);
+      await alarms.cancelSlot(widget.slot.slotId);
+      for (final priseId in widget.slot.priseIds) {
+        await engine.enqueueReport(priseId: priseId, nouvelleHeure: when);
+      }
       try {
         await engine.flush(force: true);
       } catch (_) {}
 
-      await alarms.scheduleOneShot(
-        ScheduledDose(
-          priseId: widget.priseId,
-          medicamentNom: widget.medicamentNom,
-          dosage: widget.dosage,
-          heurePrevue: when,
-        ),
-      );
+      await alarms.scheduleOneShotSlot(widget.slot.copyWithHeure(when));
       try {
         await ref.read(homeControllerProvider.notifier).reloadProjection();
       } catch (_) {}
@@ -131,32 +187,48 @@ class _AlarmRingScreenState extends ConsumerState<AlarmRingScreen> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final discreet = ref.watch(reminderAlarmServiceProvider).discreet;
-    final clock = () {
-      if (widget.heurePrevueIso != null && widget.heurePrevueIso!.isNotEmpty) {
-        try {
-          final dt = DateTime.parse(widget.heurePrevueIso!).toLocal();
-          return DateFormat.Hm(l10n.localeName).format(dt);
-        } catch (_) {}
-      }
-      return DateFormat.Hm(l10n.localeName).format(DateTime.now());
-    }();
+    final slot = widget.slot;
+    final clock = DateFormat.Hm(l10n.localeName).format(slot.heurePrevue);
 
+    final maladie = slot.maladieNom.trim();
     final title = discreet
         ? 'Fidel · $clock'
-        : () {
-            final nom = widget.medicamentNom.trim();
-            final dosage = widget.dosage.trim();
-            if (nom.isEmpty && dosage.isEmpty) {
-              return l10n.alarmRingTitleFallback(clock);
-            }
-            if (dosage.isEmpty) return nom;
-            if (nom.isEmpty) return dosage;
-            return '$nom · $dosage';
-          }();
+        : (maladie.isNotEmpty
+            ? maladie
+            : () {
+                if (slot.items.isEmpty) {
+                  return l10n.alarmRingTitleFallback(clock);
+                }
+                if (slot.items.length == 1) {
+                  final i = slot.items.first;
+                  final nom = i.medicamentNom.trim();
+                  final dosage = i.dosage.trim();
+                  if (nom.isEmpty && dosage.isEmpty) {
+                    return l10n.alarmRingTitleFallback(clock);
+                  }
+                  if (dosage.isEmpty) return nom;
+                  if (nom.isEmpty) return dosage;
+                  return '$nom · $dosage';
+                }
+                return l10n.localeName.startsWith('en')
+                    ? '${slot.items.length} medications'
+                    : '${slot.items.length} médicaments';
+              }());
 
     final body = discreet
         ? l10n.alarmRingBodyDiscreet(clock)
-        : l10n.alarmRingBody(clock);
+        : (maladie.isNotEmpty
+            ? (l10n.localeName.startsWith('en')
+                ? "It's time — $clock"
+                : "C'est l'heure — $clock")
+            : l10n.alarmRingBody(clock));
+
+    final medLines = discreet
+        ? const <String>[]
+        : [
+            for (final i in slot.items)
+              if (i.label.isNotEmpty) i.label,
+          ];
 
     return PopScope(
       canPop: false,
@@ -196,6 +268,25 @@ class _AlarmRingScreenState extends ConsumerState<AlarmRingScreen> {
                     height: 1.4,
                   ),
                 ),
+                if (medLines.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  ...medLines.map(
+                    (line) => Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Text(
+                        line,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: AppTheme.fontFamily,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onPrimary
+                              .withValues(alpha: 0.95),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
                 const Spacer(),
                 SizedBox(
                   width: double.infinity,
@@ -241,20 +332,14 @@ void bindAlarmRingingNavigation(GoRouter router) {
     if (set.alarms.isEmpty) return;
     final alarm = set.alarms.first;
     final payload = parseReminderPayload(alarm.payload);
-    final priseId = payload['priseId'] as String? ?? '';
-    final nom = payload['medicamentNom'] as String? ?? '';
-    final dosage = payload['dosage'] as String? ?? '';
-    final heure = payload['heurePrevue'] as String? ?? '';
-    final q = <String, String>{
-      'priseId': priseId,
-      'alarmId': '${alarm.id}',
-      if (nom.isNotEmpty) 'nom': nom,
-      if (dosage.isNotEmpty) 'dosage': dosage,
-      if (heure.isNotEmpty) 'heure': heure,
-    };
-    final uri = Uri(path: '/alarm-ring', queryParameters: q);
+    final slot = DoseSlot.fromPayload(payload);
+
+    // Cancel préavis dès le ring H0 (même sans UI encore montée).
+    unawaited(ReminderAlarmService.cancelPreavisStatic(slot.slotId));
+
+    final args = AlarmRingArgs(slot: slot, alarmId: alarm.id);
     final loc = router.routerDelegate.currentConfiguration.uri.path;
     if (loc == '/alarm-ring') return;
-    router.go(uri.toString());
+    router.go('/alarm-ring', extra: args);
   });
 }

@@ -1,5 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import 'session_meta.dart';
+
 /// Jetons JWT maison — Keychain / Keystore uniquement (jamais SharedPreferences).
 class TokenStorage {
   TokenStorage({FlutterSecureStorage? storage})
@@ -11,6 +13,7 @@ class TokenStorage {
   static const _accessKey = 'fa_access_token';
   static const _refreshKey = 'fa_refresh_token';
   static const _sessionKey = 'fa_session_id';
+  static const _sessionMetaKey = 'fa_session_meta';
 
   final FlutterSecureStorage _storage;
 
@@ -36,11 +39,21 @@ class TokenStorage {
     await _storage.write(key: _accessKey, value: accessToken);
   }
 
+  Future<void> saveSessionMeta(SessionMeta meta) async {
+    await _storage.write(key: _sessionMetaKey, value: meta.encode());
+  }
+
+  Future<SessionMeta?> readSessionMeta() async {
+    final raw = await _storage.read(key: _sessionMetaKey);
+    return SessionMeta.decode(raw);
+  }
+
   Future<void> clear() async {
     await Future.wait([
       _storage.delete(key: _accessKey),
       _storage.delete(key: _refreshKey),
       _storage.delete(key: _sessionKey),
+      _storage.delete(key: _sessionMetaKey),
     ]);
   }
 

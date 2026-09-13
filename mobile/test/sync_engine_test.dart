@@ -5,12 +5,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:fidel_assistant/core/database/app_database.dart';
+import 'package:fidel_assistant/features/home/data/home_repository.dart';
 import 'package:fidel_assistant/services/network_status.dart';
+import 'package:fidel_assistant/services/server_clock.dart';
 import 'package:fidel_assistant/services/sync_engine.dart';
 import 'package:fidel_assistant/services/sync_outbox.dart';
 
 class _FakeGateway implements SyncPriseGateway {
-  _FakeGateway(this.log, {this.gate, this.throwOnConfirm = false});
+  _FakeGateway(
+    this.log, {
+    this.gate,
+    this.throwOnConfirm = false,
+  });
 
   final List<String> log;
   final Completer<void>? gate;
@@ -40,6 +46,79 @@ class _FakeGateway implements SyncPriseGateway {
   }) async {
     if (gate != null) await gate!.future;
     log.add('report:$priseId:${clientMutationId ?? ''}');
+  }
+
+  @override
+  Future<void> createConstante({
+    required String type,
+    required Object valeur,
+    required String unite,
+    required DateTime mesureAt,
+    String source = 'manuel',
+    String? clientMutationId,
+  }) async {
+    log.add('constante:$type:${clientMutationId ?? ''}');
+  }
+
+  @override
+  Future<void> createCheckIn(String statut, {String? clientMutationId}) async {
+    log.add('checkin:$statut:${clientMutationId ?? ''}');
+  }
+}
+
+class _CutoffBatchFake implements SyncPriseGateway, SyncBatchGateway {
+  _CutoffBatchFake();
+
+  int pushCalls = 0;
+  String? lastMutationId;
+
+  @override
+  Future<void> confirmPrise(String priseId, {String? clientMutationId}) async {}
+
+  @override
+  Future<void> reportPrise(
+    String priseId,
+    DateTime nouvelleHeure, {
+    String? clientMutationId,
+  }) async {}
+
+  @override
+  Future<void> createConstante({
+    required String type,
+    required Object valeur,
+    required String unite,
+    required DateTime mesureAt,
+    String source = 'manuel',
+    String? clientMutationId,
+  }) async {}
+
+  @override
+  Future<void> createCheckIn(String statut, {String? clientMutationId}) async {}
+
+  @override
+  Future<SyncPushResponse> syncPush(List<Map<String, dynamic>> mutations) async {
+    pushCalls++;
+    lastMutationId = mutations.first['mutation_id'] as String?;
+    if (pushCalls == 1) {
+      throw DioException(
+        requestOptions: RequestOptions(path: '/sync/push'),
+        type: DioExceptionType.connectionTimeout,
+      );
+    }
+    return SyncPushResponse(
+      results: [
+        for (final m in mutations)
+          SyncPushResultItem(
+            mutationId: '${m['mutation_id']}',
+            status: 'duplicate',
+          ),
+      ],
+    );
+  }
+
+  @override
+  Future<SyncPullResponse> syncPull({String? since}) async {
+    return const SyncPullResponse(entities: []);
   }
 }
 
@@ -156,5 +235,68 @@ void main() {
       await engine.flush(force: true);
     }
     expect(net.circuitOpen, isTrue);
+  });
+
+  test('QA#2 cut-off mid-push: retry same mutation_id then duplicate ack', () async {
+    final prefs = await SharedPreferences.getInstance();
+    final box = SyncOutbox(db, prefs: prefs);
+    final fake = _CutoffBatchFake();
+    final engine = SyncEngine(
+      outbox: box,
+      db: db,
+      prefs: prefs,
+      gatewayFactory: () => fake,
+    );
+
+    final entry = await box.enqueue(
+      entity: 'prise',
+      entityId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      op: 'confirm',
+      payload: {'canal': 'app'},
+      mutationId: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+    );
+
+    await engine.flush(force: true);
+    expect(fake.pushCalls, 1);
+    final pending = await db.listAllOutbox();
+    expect(pending, hasLength(1));
+    expect(pending.single.mutationId, entry.mutationId);
+    // Backoff after timeout — make entry ready for immediate retry.
+    await db.updateOutboxEntry(
+      pending.single.copyWith(
+        nextAttemptAt: DateTime.now().toUtc().subtract(const Duration(seconds: 1)),
+        state: SyncOutboxState.pending,
+      ),
+    );
+
+    await engine.flush(force: true);
+    expect(fake.pushCalls, 2);
+    expect(fake.lastMutationId, entry.mutationId);
+    expect(await box.listReady(), isEmpty);
+  });
+
+  test('QA#4 ServerClock skew: client_ts uses corrected now', () async {
+    final prefs = await SharedPreferences.getInstance();
+    // Device "now" is 09:00; server is 3h ahead → offset +3h.
+    final deviceNow = DateTime.utc(2026, 9, 11, 9);
+    final clock = ServerClock(prefs, now: () => deviceNow);
+    clock.observeHttpDate('Fri, 11 Sep 2026 12:00:00 GMT');
+
+    final box = SyncOutbox(db, prefs: prefs);
+    final engine = SyncEngine(
+      outbox: box,
+      clock: clock,
+      gatewayFactory: () => _FakeGateway([]),
+    );
+
+    await engine.enqueueConfirm(priseId: 'p-clock');
+    final ready = await box.listReady();
+    expect(ready, hasLength(1));
+    final ts = ready.single.clientTs.toUtc();
+    expect(ts.hour, 12);
+    expect(
+      ts.difference(DateTime.utc(2026, 9, 11, 12)).inMinutes.abs(),
+      lessThan(2),
+    );
   });
 }
