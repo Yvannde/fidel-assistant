@@ -9,13 +9,9 @@ import 'package:fidel_assistant/services/sync_outbox.dart';
 class _BatchFake implements SyncPriseGateway, SyncBatchGateway {
   _BatchFake({
     required this.pushResults,
-    this.pullEntities = const [],
-    this.nextCursor,
   });
 
   final List<SyncPushResultItem> pushResults;
-  final List<Map<String, dynamic>> pullEntities;
-  final String? nextCursor;
   final List<List<Map<String, dynamic>>> pushed = [];
 
   @override
@@ -58,8 +54,8 @@ class _BatchFake implements SyncPriseGateway, SyncBatchGateway {
   @override
   Future<SyncPullResponse> syncPull({String? since}) async {
     return SyncPullResponse(
-      entities: pullEntities,
-      nextCursor: nextCursor ?? 'cursor-1',
+      entities: const [],
+      nextCursor: 'cursor-1',
       serverTime: DateTime.utc(2026, 9, 11),
     );
   }
