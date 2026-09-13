@@ -19,6 +19,9 @@
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32"/>
 
+    <uses-permission android:name="android.permission.CALL_PHONE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+
     <application
         android:label="Fidel Assistant"
         android:name="${applicationName}"
@@ -52,6 +55,22 @@
             android:name="flutterEmbedding"
             android:value="2" />
         <service android:name="com.gdelataillade.alarm.services.NotificationOnKillService" />
+        <service
+            android:name=".SosCountdownService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="SOS cancel countdown before alert send" />
+        </service>
+        <service
+            android:name=".SosEscalationService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="SOS escalation call fallback" />
+        </service>
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
             <intent-filter>
@@ -67,11 +86,22 @@
         <receiver
             android:name=".CheckInAlarmReceiver"
             android:exported="false" />
+        <receiver
+            android:name=".SosActionReceiver"
+            android:exported="false" />
     </application>
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.CALL"/>
+            <data android:scheme="tel"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.DIAL"/>
+            <data android:scheme="tel"/>
         </intent>
         <!-- OEM autostart / battery screens (Alarm health) -->
         <package android:name="com.miui.securitycenter"/>
@@ -87,3 +117,4 @@
         <package android:name="com.asus.mobilemanager"/>
     </queries>
 </manifest>
+

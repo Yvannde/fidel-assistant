@@ -9,6 +9,7 @@ from app.core.exceptions import register_exception_handlers
 from app.routers import (
     aidants,
     auth,
+    devices,
     health,
     horaires,
     medicaments,
@@ -59,4 +60,5 @@ app.include_router(prises.router, prefix=settings.api_v1_prefix)
 app.include_router(sync.router, prefix=settings.api_v1_prefix)
 app.include_router(sos.router, prefix=settings.api_v1_prefix)
 app.include_router(aidants.router, prefix=settings.api_v1_prefix)
+app.include_router(devices.router, prefix=settings.api_v1_prefix)
 app.include_router(notifications.router, prefix=settings.api_v1_prefix)

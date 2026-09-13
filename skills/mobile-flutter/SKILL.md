@@ -64,11 +64,17 @@ Chaque feature suit le même découpage interne : `presentation/` (écrans, widg
 
 ## Notifications et alarmes locales — le cœur du produit
 
-C'est la partie la plus critique techniquement. **Tout est local** (offline, même avion) : FastAPI ne sonne pas et ne poll pas les doses. Les notifications push serveur (FCM, plus tard) restent réservées à l’aidant / engagement — **ne pas confondre** avec l’alarme patient.
+C'est la partie la plus critique techniquement. **Tout est local** (offline, même avion) : FastAPI ne sonne pas et ne poll pas les doses. Les notifications push serveur (FCM) réveillent l’**aidant** pour SOS / engagement — **ne pas confondre** avec l’alarme patient.
 
 **Check-in quotidien (15:00 local)** : si le patient a au moins une maladie **active**, `CheckInReminderService` planifie une notif récurrente (`DateTimeComponents.time`) avec 4 actions (`tres_mal` → `super`). Réponse → Drift + outbox `create_check_in` + flush (immédiat si online). Distinct des alarmes doses (`DoseSlot`). Annulé quand plus aucun `PatientTraitement` actif (après « Marquer terminé » / auto-expire `date_fin_prevue`).
 
 **Fin de traitement** : `PATCH /patients/me/traitements/{id}` `{statut: termine}` — cascade meds/horaires + prises `en_attente` → `manquee` ; dashboard vide pour ce traitement → `rescheduleAll` annule les DoseSlots ; check-in si dernier actif.
+
+**SOS (lock + aidants + fallback appel)** :
+- Notif persistante Android (`cm.fidel.assistant/sos`) + Cercle → `SosService.startSosFlow` → countdown 30 s (annulable).
+- Online : `POST /patients/me/sos` puis `…/confirm` → FCM aidants liés ; attente ack 45 s (`SosEscalationService`) sinon `ACTION_CALL` 1er contact (cache `EmergencyContactCache`).
+- Offline : après countdown → `ACTION_CALL` / `ACTION_DIAL` (permission `CALL_PHONE`).
+- Aidant : FCM / poll `GET /aidants/me/sos/active` → notif + `/sos-aidant` → `POST …/ack`.
 
 ### Trois moments distincts par **DoseSlot** (maladie × heure)
 

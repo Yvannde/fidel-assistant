@@ -32,6 +32,8 @@ import '../../features/home/presentation/profile_delete_account_screen.dart';
 import '../../features/home/presentation/profile_patient_settings_screen.dart';
 import '../../features/home/presentation/profile_voix_screen.dart';
 import '../../features/home/presentation/alarm_ring_screen.dart';
+import '../../features/home/presentation/sos_aidant_alarm_screen.dart';
+import '../../features/home/domain/aidant_models.dart';
 import '../../features/home/presentation/sync_screens.dart';
 import '../../features/medicaments/presentation/medicament_wizard_screen.dart';
 import '../../features/onboarding/presentation/onboarding_besoin_suivi_screen.dart';
@@ -348,6 +350,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               maladieNom: q['maladie'],
               slotId: q['slotId'],
               traitementId: q['traitementId'],
+            ),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/sos-aidant',
+        pageBuilder: (context, state) {
+          final extra = state.extra;
+          if (extra is ActiveSosAlert) {
+            return _softPage(
+              state: state,
+              child: SosAidantAlarmScreen.fromAlert(extra),
+            );
+          }
+          final q = state.uri.queryParameters;
+          return _softPage(
+            state: state,
+            child: SosAidantAlarmScreen(
+              sosId: q['sosId'] ?? '',
+              patientId: q['patientId'] ?? '',
+              patientPrenom: q['prenom'] ?? 'Patient',
             ),
           );
         },

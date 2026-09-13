@@ -95,19 +95,106 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SosActionReceiver.CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "showPersistent" -> {
+                        val title = call.argument<String>("title") ?: "SOS Fidel"
+                        val body = call.argument<String>("body") ?: "Appuie pour déclencher"
+                        SosNotificationHelper.showPersistent(this, title, body)
+                        result.success(true)
+                    }
+                    "hidePersistent" -> {
+                        SosNotificationHelper.hidePersistent(this)
+                        result.success(true)
+                    }
+                    "consumePendingAction" -> {
+                        result.success(SosNotificationHelper.consumePendingAction(this))
+                    }
+                    "placeCall" -> {
+                        val phone = call.argument<String>("phone")
+                            ?: return@setMethodCallHandler result.error("arg", "phone required", null)
+                        result.success(SosCallHelper.placeCall(this, phone))
+                    }
+                    "hasCallPermission" -> {
+                        result.success(SosCallHelper.hasCallPermission(this))
+                    }
+                    "startCountdown" -> {
+                        val waitMs = call.argument<Int>("waitMs")?.toLong() ?: 30_000L
+                        val phone = call.argument<String>("phone") ?: ""
+                        val mode = call.argument<String>("mode") ?: SosCountdownService.MODE_ONLINE
+                        val sosId = call.argument<String>("sosId")
+                        val i = Intent(this, SosCountdownService::class.java).apply {
+                            action = SosCountdownService.ACTION_START
+                            putExtra(SosCountdownService.EXTRA_WAIT_MS, waitMs)
+                            putExtra(SosCountdownService.EXTRA_PHONE, phone)
+                            putExtra(SosCountdownService.EXTRA_MODE, mode)
+                            if (sosId != null) {
+                                putExtra(SosCountdownService.EXTRA_SOS_ID, sosId)
+                            }
+                        }
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            startForegroundService(i)
+                        } else {
+                            startService(i)
+                        }
+                        result.success(true)
+                    }
+                    "stopCountdown" -> {
+                        val i = Intent(this, SosCountdownService::class.java).apply {
+                            action = SosCountdownService.ACTION_STOP
+                        }
+                        startService(i)
+                        result.success(true)
+                    }
+                    "startEscalation" -> {
+                        val phone = call.argument<String>("phone")
+                            ?: return@setMethodCallHandler result.error("arg", "phone required", null)
+                        val waitMs = call.argument<Int>("waitMs")?.toLong() ?: 45_000L
+                        val i = Intent(this, SosEscalationService::class.java).apply {
+                            action = SosEscalationService.ACTION_START
+                            putExtra(SosEscalationService.EXTRA_PHONE, phone)
+                            putExtra(SosEscalationService.EXTRA_WAIT_MS, waitMs)
+                        }
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            startForegroundService(i)
+                        } else {
+                            startService(i)
+                        }
+                        result.success(true)
+                    }
+                    "stopEscalation" -> {
+                        val i = Intent(this, SosEscalationService::class.java).apply {
+                            action = SosEscalationService.ACTION_STOP
+                        }
+                        startService(i)
+                        result.success(true)
+                    }
+                    else -> result.notImplemented()
+                }
+            }
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        // App déjà vivante : pousse l’action vers Dart (handler déjà branché).
-        val action = intent.getStringExtra(CheckInNotificationHelper.EXTRA_ACTION_ID)
-            ?: return
-        intent.removeExtra(CheckInNotificationHelper.EXTRA_ACTION_ID)
-        MethodChannel(
-            flutterEngine!!.dartExecutor.binaryMessenger,
-            checkInChannelName,
-        ).invokeMethod("onAction", action)
+        val checkInAction = intent.getStringExtra(CheckInNotificationHelper.EXTRA_ACTION_ID)
+        if (checkInAction != null) {
+            intent.removeExtra(CheckInNotificationHelper.EXTRA_ACTION_ID)
+            MethodChannel(
+                flutterEngine!!.dartExecutor.binaryMessenger,
+                checkInChannelName,
+            ).invokeMethod("onAction", checkInAction)
+        }
+        val sosAction = intent.getStringExtra(SosNotificationHelper.EXTRA_ACTION)
+        if (sosAction != null) {
+            intent.removeExtra(SosNotificationHelper.EXTRA_ACTION)
+            MethodChannel(
+                flutterEngine!!.dartExecutor.binaryMessenger,
+                SosActionReceiver.CHANNEL,
+            ).invokeMethod("onAction", sosAction)
+        }
     }
 
     private fun collectStatus(): Map<String, Any?> {

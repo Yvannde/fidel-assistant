@@ -14,7 +14,9 @@ import 'dose_slot.dart';
 import 'reminder_alarm_service.dart';
 import 'reminder_sync_perf.dart';
 import 'scheduled_dose.dart';
+import 'sos_aidant_alarm.dart';
 import 'sync_engine.dart';
+import '../core/router/app_router.dart';
 
 final reminderAlarmServiceProvider = Provider<ReminderAlarmService>((ref) {
   return ReminderAlarmService(ref.watch(sharedPreferencesProvider));
@@ -45,6 +47,16 @@ class ReminderActionDispatcher {
 
     if (CheckInReminderService.isCheckInPayload(payload)) {
       await _handleCheckIn(response);
+      return;
+    }
+
+    final sosAlert = parseSosPayload(response.payload);
+    if (sosAlert != null) {
+      final router = _container.read(appRouterProvider);
+      router.push(
+        '/sos-aidant',
+        extra: sosAlert,
+      );
       return;
     }
 

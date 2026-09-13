@@ -14,7 +14,13 @@ from app.schemas.aidant import (
     AidantRelationOut,
     MessageOut,
 )
-from app.schemas.checkin_sos import CheckInIn, CheckInOut, SosTriggerOut
+from app.schemas.checkin_sos import (
+    CheckInIn,
+    CheckInOut,
+    SosConfirmOut,
+    SosStatusOut,
+    SosTriggerOut,
+)
 from app.schemas.constante import ConstanteCreateOut, ConstanteIn, ConstanteOut
 from app.schemas.contact_urgence import ContactUrgenceIn, ContactUrgenceOut
 from app.schemas.onboarding import (
@@ -181,6 +187,28 @@ async def trigger_sos(
     user: Annotated[User, Depends(get_current_user)],
 ) -> SosTriggerOut:
     return SosTriggerOut(**await checkin_sos_service.trigger_sos(db, user=user))
+
+
+@router.post("/me/sos/{sos_id}/confirm", response_model=SosConfirmOut)
+async def confirm_sos(
+    sos_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> SosConfirmOut:
+    return SosConfirmOut(
+        **await checkin_sos_service.confirm_sos(db, user=user, sos_id=sos_id)
+    )
+
+
+@router.get("/me/sos/{sos_id}", response_model=SosStatusOut)
+async def sos_status(
+    sos_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> SosStatusOut:
+    return SosStatusOut(
+        **await checkin_sos_service.get_sos_status(db, user=user, sos_id=sos_id)
+    )
 
 
 @router.get("/me/constantes", response_model=list[ConstanteOut])

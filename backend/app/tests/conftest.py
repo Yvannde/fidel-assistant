@@ -22,6 +22,7 @@ from app.models import (  # noqa: F401 — register metadata
     CheckIn,
     Constante,
     ContactUrgence,
+    DevicePushToken,
     Maladie,
     MaladieConfig,
     Medicament,

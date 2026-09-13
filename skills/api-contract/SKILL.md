@@ -162,8 +162,13 @@ Notes :
 |---|---|---|---|---|
 | POST | `/patients/me/check-in` | 🔒 `statut` (`tres_mal`\|`pas_top`\|`ca_va`\|`super`), `client_mutation_id?` | `CheckIn` créé | `CHECK_IN_DEJA_FAIT_AUJOURDHUI` |
 | GET | `/patients/me/check-in` | 🔒 `depuis?` | `[CheckIn]` | — |
-| POST | `/patients/me/sos` | 🔒 | `{sos_id, annulable_jusqu_a}` — déclenche l'alerte silencieuse après la fenêtre de 30s | `AUCUN_CONTACT_URGENCE` |
+| POST | `/patients/me/sos` | 🔒 | `{sos_id, annulable_jusqu_a}` — démarre la fenêtre d'annulation (30s) | `AUCUN_CONTACT_URGENCE` |
+| POST | `/patients/me/sos/{id}/confirm` | 🔒 | `{sos_id, statut, aidants_notifies, fallback_call_recommended, acked}` — finalise après countdown, FCM aidants liés | `SOS_NOT_FOUND`, `SOS_ANNULE` |
+| GET | `/patients/me/sos/{id}` | 🔒 | `{sos_id, statut, acked, envoye_at?, acked_at?}` | `SOS_NOT_FOUND` |
 | POST | `/sos/{id}/annuler` | 🔒 | `{message}` | `SOS_TROP_TARD`, `SOS_NOT_FOUND` |
+| GET | `/aidants/me/sos/active` | 🔒 | `[{sos_id, patient_id, patient_prenom, envoye_at?}]` non acquittés | — |
+| POST | `/aidants/me/sos/{id}/ack` | 🔒 | `{message}` | `NOT_AN_AIDANT`, `PERMISSION_REFUSEE`, `SOS_NON_ACTIF` |
+| POST | `/devices/push-token` | 🔒 `token`, `platform` (`android`\|`ios`\|`web`) | `{token, platform}` | `TOKEN_INVALIDE` |
 
 ---
 

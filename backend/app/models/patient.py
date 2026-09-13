@@ -295,6 +295,13 @@ class SosAlerte(Base):
     annulable_jusqu_a: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     envoye_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     annule_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    acked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    acked_by_aidant_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
