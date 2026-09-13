@@ -147,6 +147,14 @@ Un user **sans** ligne `Patient` peut quand même être aidant.
 | notifications_accordees | boolean | |
 | batterie_exemptee | boolean | |
 | notifications_discretes | boolean | défaut false — ex. VIH |
+| groupe_sanguin | string | nullable — enum `A`\|`B`\|`AB`\|`O` — fiche santé identité |
+| rhesus | string | nullable — enum `+`\|`-` |
+| electrophorese | string | nullable — enum `AA`\|`AS`\|`AC`\|`SS`\|`SC`\|`CC`\|`ne_sait_pas` |
+| taille_cm | integer | nullable — 120–220 |
+| groupe_sanguin_confirmed_at | timestamp | nullable — 2ᵉ validation patient |
+| rhesus_confirmed_at | timestamp | nullable |
+| electrophorese_confirmed_at | timestamp | nullable |
+| taille_cm_confirmed_at | timestamp | nullable |
 | created_at / updated_at | timestamp | |
 
 ---
@@ -411,10 +419,26 @@ Un check-in par jour et par patient.
 | annulable_jusqu_a | timestamp | fenêtre d’annulation (30 s par défaut) |
 | envoye_at | timestamp | nullable — moment où l’alerte est considérée envoyée |
 | annule_at | timestamp | nullable |
+| acked_at | timestamp | nullable — aidant a acquitté |
+| acked_by_aidant_id | UUID (FK → User) | nullable |
 | created_at | timestamp | |
 | updated_at | timestamp | |
 
-Le geste SOS **est** le consentement (voir `engagement-principle`). Après `annulable_jusqu_a`, le moteur journalise `sos_declenche` dans `NotificationLog` (contacts d’urgence dans `declencheur` ; envoi SMS réel = plus tard).
+Le geste SOS **est** le consentement (voir `engagement-principle`). Après confirm (post-fenêtre), le moteur journalise `sos_declenche` et pousse FCM aux **aidants liés** ; fallback patient = appel local 1er contact d’urgence.
+
+---
+
+## 16ter. `DevicePushToken`
+
+| Champ | Type | Contraintes / Notes |
+|---|---|---|
+| id | UUID | |
+| user_id | UUID (FK → User) | |
+| token | string | FCM registration token |
+| platform | string | `android` / `ios` / `web` |
+| created_at / updated_at | timestamp | |
+
+Unique `(user_id, token)`.
 
 ---
 

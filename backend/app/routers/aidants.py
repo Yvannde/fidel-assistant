@@ -9,10 +9,18 @@ from app.core.audio_validation import read_upload_limited
 from app.deps import get_current_user, get_db
 from app.models import User
 from app.schemas.aidant import AidantPatientOut, ObservanceOut
+from app.schemas.checkin_sos import MessageOut as SosMessageOut
+from app.schemas.checkin_sos import SosActiveAidantOut
 from app.schemas.constante import ConstanteOut
 from app.schemas.onboarding import AidantSyncIn, AidantSyncOut
 from app.schemas.voix_rappel import VoixRappelOut
-from app.services import aidant_service, constante_service, onboarding_service, voix_rappel_service
+from app.services import (
+    aidant_service,
+    checkin_sos_service,
+    constante_service,
+    onboarding_service,
+    voix_rappel_service,
+)
 
 router = APIRouter(prefix="/aidants", tags=["aidants"])
 
@@ -96,4 +104,24 @@ async def upload_patient_voix_rappel(
             content_type=fichier.content_type,
             data=data,
         )
+    )
+
+
+@router.get("/me/sos/active", response_model=list[SosActiveAidantOut])
+async def list_active_sos(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> list[SosActiveAidantOut]:
+    rows = await checkin_sos_service.list_active_sos_for_aidant(db, user=user)
+    return [SosActiveAidantOut(**row) for row in rows]
+
+
+@router.post("/me/sos/{sos_id}/ack", response_model=SosMessageOut)
+async def ack_sos(
+    sos_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> SosMessageOut:
+    return SosMessageOut(
+        **await checkin_sos_service.ack_sos_aidant(db, user=user, sos_id=sos_id)
     )

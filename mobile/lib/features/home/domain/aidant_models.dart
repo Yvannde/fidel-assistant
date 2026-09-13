@@ -162,3 +162,73 @@ class SosTicket {
     );
   }
 }
+
+class SosConfirmResult {
+  const SosConfirmResult({
+    required this.sosId,
+    required this.statut,
+    required this.aidantsNotifies,
+    required this.fallbackCallRecommended,
+    required this.acked,
+  });
+
+  final String sosId;
+  final String statut;
+  final int aidantsNotifies;
+  final bool fallbackCallRecommended;
+  final bool acked;
+
+  factory SosConfirmResult.fromJson(Map<String, dynamic> json) {
+    return SosConfirmResult(
+      sosId: json['sos_id']?.toString() ?? '',
+      statut: json['statut']?.toString() ?? '',
+      aidantsNotifies: (json['aidants_notifies'] as num?)?.toInt() ?? 0,
+      fallbackCallRecommended:
+          json['fallback_call_recommended'] as bool? ?? true,
+      acked: json['acked'] as bool? ?? false,
+    );
+  }
+}
+
+class SosStatusResult {
+  const SosStatusResult({
+    required this.sosId,
+    required this.statut,
+    required this.acked,
+  });
+
+  final String sosId;
+  final String statut;
+  final bool acked;
+
+  factory SosStatusResult.fromJson(Map<String, dynamic> json) {
+    return SosStatusResult(
+      sosId: json['sos_id']?.toString() ?? '',
+      statut: json['statut']?.toString() ?? '',
+      acked: json['acked'] as bool? ?? false,
+    );
+  }
+}
+
+class ActiveSosAlert {
+  const ActiveSosAlert({
+    required this.sosId,
+    required this.patientId,
+    required this.patientPrenom,
+    this.envoyeAt,
+  });
+
+  final String sosId;
+  final String patientId;
+  final String patientPrenom;
+  final DateTime? envoyeAt;
+
+  factory ActiveSosAlert.fromJson(Map<String, dynamic> json) {
+    return ActiveSosAlert(
+      sosId: json['sos_id']?.toString() ?? '',
+      patientId: json['patient_id']?.toString() ?? '',
+      patientPrenom: json['patient_prenom']?.toString() ?? 'Patient',
+      envoyeAt: DateTime.tryParse(json['envoye_at']?.toString() ?? '')?.toLocal(),
+    );
+  }
+}

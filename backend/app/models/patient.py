@@ -11,6 +11,7 @@ from sqlalchemy import (
     Date,
     DateTime,
     ForeignKey,
+    Integer,
     String,
     Text,
     UniqueConstraint,
@@ -51,6 +52,22 @@ class Patient(Base):
     )
     notifications_discretes: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("false")
+    )
+    groupe_sanguin: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    rhesus: Mapped[str | None] = mapped_column(String(4), nullable=True)
+    electrophorese: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    taille_cm: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    groupe_sanguin_confirmed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    rhesus_confirmed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    electrophorese_confirmed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    taille_cm_confirmed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
@@ -295,6 +312,13 @@ class SosAlerte(Base):
     annulable_jusqu_a: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     envoye_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     annule_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    acked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    acked_by_aidant_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

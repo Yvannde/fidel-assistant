@@ -80,11 +80,11 @@ Chaque `type_alerte` est déclaré une seule fois, avec son comportement par dé
 | `constante_amelioration` | Analyse tendance positive (Volet 2) | positif | Aucune (juste encouragement), option de partager quand même | Médecin / agent de santé (optionnel) |
 | `constante_degradation` | Analyse tendance négative (Volet 2) | à surveiller / préoccupant | Proposer de partager un résumé avec le professionnel choisi | Médecin / agent de santé |
 | `checkin_absence` | Pas de check-in après délai configuré | neutre puis préoccupant | Selon `regle_auto` du patient — peut déclencher automatiquement si pré-configuré | Cercle de soutien |
-| `sos_declenche` | Bouton SOS activé | urgent, silencieux pour le patient | Aucune (envoi direct au(x) contact(s) d'urgence, c'est le sens même du SOS — voir note ci-dessous) | Contact(s) d'urgence |
+| `sos_declenche` | Bouton SOS activé (confirm post-30s) | urgent ; alarme + push FCM chez **aidants liés** | Aucune (le geste SOS *est* le consentement) | Aidants liés (`PatientAidant`) ; fallback local = appel `ACTION_CALL` 1er contact d’urgence si offline / 0 token / pas d’ack sous 45 s |
 | `education_contextuelle` | Ajout d'un traitement correspondant à une fiche existante | informatif | Aucune, contenu informatif poussé une seule fois | — |
 | `depistage_recommande` | Échéance calendaire de prévention (Volet 6) | informatif | Proposer d'orienter vers un centre proche | — |
 
-> **Cas particulier `sos_declenche`** : c'est la seule alerte du registre qui n'attend pas de consentement avant d'agir, car le consentement a déjà été donné explicitement par le patient au moment où il a configuré son contact d'urgence et activé le geste SOS — déclencher le SOS *est* l'acte de consentement. Le moteur respecte quand même la fenêtre d'annulation de 30 secondes définie dans `api-contract/SKILL.md` (`POST /sos/{id}/annuler`) avant l'envoi effectif.
+> **Cas particulier `sos_declenche`** : consentement = geste SOS. Fenêtre d’annulation 30 s (`POST /sos/{id}/annuler`). Après `POST /patients/me/sos/{id}/confirm`, le moteur journalise + pousse FCM aux aidants liés. Côté patient : si offline ou `fallback_call_recommended` / timeout ack 45 s → appel système vers le 1er `ContactUrgence` (cache local).
 
 ## Templates de messages
 

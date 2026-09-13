@@ -1,0 +1,118 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../features/home/application/home_controller.dart';
+import '../features/home/data/home_repository.dart';
+import '../features/home/domain/aidant_models.dart';
+import 'sos_aidant_alarm.dart';
+
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  try {
+    await Firebase.initializeApp();
+  } catch (_) {}
+  final data = message.data;
+  if (data['kind'] != 'sos') return;
+  final sosId = data['sos_id']?.toString() ?? '';
+  if (sosId.isEmpty) return;
+  await SosAidantAlarm.show(
+    ActiveSosAlert(
+      sosId: sosId,
+      patientId: data['patient_id']?.toString() ?? '',
+      patientPrenom: data['patient_prenom']?.toString() ?? 'Patient',
+    ),
+  );
+}
+
+/// FCM + enregistrement token + poll SOS actifs.
+class PushMessagingService {
+  PushMessagingService(this._ref);
+
+  final Ref _ref;
+  StreamSubscription<String>? _tokenSub;
+  bool _initialized = false;
+
+  HomeRepository get _repo => _ref.read(homeRepositoryProvider);
+
+  Future<void> init() async {
+    if (_initialized) return;
+    if (!Platform.isAndroid && !Platform.isIOS) return;
+    try {
+      await Firebase.initializeApp();
+    } catch (e) {
+      debugPrint(
+        'PushMessaging: Firebase.initializeApp failed (add google-services.json): $e',
+      );
+      return;
+    }
+    _initialized = true;
+
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+    final messaging = FirebaseMessaging.instance;
+    await messaging.requestPermission(alert: true, sound: true, badge: true);
+
+    FirebaseMessaging.onMessage.listen((msg) {
+      unawaited(handleMessage(msg));
+    });
+    FirebaseMessaging.onMessageOpenedApp.listen((msg) {
+      unawaited(handleMessage(msg));
+    });
+
+    final token = await messaging.getToken();
+    await registerTokenIfPossible(token);
+    _tokenSub = messaging.onTokenRefresh.listen(registerTokenIfPossible);
+  }
+
+  Future<void> registerTokenIfPossible(String? token) async {
+    if (token == null || token.isEmpty) return;
+    try {
+      await _repo.registerPushToken(
+        token: token,
+        platform: Platform.isIOS ? 'ios' : 'android',
+      );
+    } catch (e) {
+      debugPrint('PushMessaging registerToken: $e');
+    }
+  }
+
+  Future<void> handleMessage(RemoteMessage message) async {
+    final data = message.data;
+    if (data['kind']?.toString() != 'sos') return;
+    final sosId = data['sos_id']?.toString() ?? '';
+    if (sosId.isEmpty) return;
+    await SosAidantAlarm.show(
+      ActiveSosAlert(
+        sosId: sosId,
+        patientId: data['patient_id']?.toString() ?? '',
+        patientPrenom: data['patient_prenom']?.toString() ?? 'Patient',
+      ),
+    );
+  }
+
+  Future<void> pollActiveSos() async {
+    try {
+      final active = await _repo.listActiveSosForAidant();
+      for (final alert in active) {
+        await SosAidantAlarm.show(alert);
+      }
+    } catch (e) {
+      debugPrint('PushMessaging pollActiveSos: $e');
+    }
+  }
+
+  void dispose() {
+    _tokenSub?.cancel();
+  }
+}
+
+final pushMessagingServiceProvider = Provider<PushMessagingService>((ref) {
+  final s = PushMessagingService(ref);
+  ref.onDispose(s.dispose);
+  return s;
+});

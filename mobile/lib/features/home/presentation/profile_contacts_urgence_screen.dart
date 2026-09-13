@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/premium.dart';
 import '../../../core/ui/app_toast.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../services/sos_service.dart';
 import '../application/home_controller.dart';
 import '../domain/profile_settings_models.dart';
 import 'widgets/home_skeleton.dart';
@@ -37,6 +38,7 @@ class _ProfileContactsUrgenceScreenState
     try {
       final list =
           await ref.read(homeRepositoryProvider).listContactsUrgence();
+      await ref.read(sosServiceProvider).cacheContacts(list);
       if (mounted) setState(() => _items = list);
     } catch (e) {
       if (!mounted) return;

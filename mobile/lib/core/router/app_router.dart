@@ -29,9 +29,12 @@ import '../../features/home/presentation/profile_alarm_settings_screen.dart';
 import '../../features/home/presentation/profile_consent_screen.dart';
 import '../../features/home/presentation/profile_contacts_urgence_screen.dart';
 import '../../features/home/presentation/profile_delete_account_screen.dart';
+import '../../features/home/presentation/profile_fiche_sante_screen.dart';
 import '../../features/home/presentation/profile_patient_settings_screen.dart';
 import '../../features/home/presentation/profile_voix_screen.dart';
 import '../../features/home/presentation/alarm_ring_screen.dart';
+import '../../features/home/presentation/sos_aidant_alarm_screen.dart';
+import '../../features/home/domain/aidant_models.dart';
 import '../../features/home/presentation/sync_screens.dart';
 import '../../features/medicaments/presentation/medicament_wizard_screen.dart';
 import '../../features/onboarding/presentation/onboarding_besoin_suivi_screen.dart';
@@ -353,6 +356,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: '/sos-aidant',
+        pageBuilder: (context, state) {
+          final extra = state.extra;
+          if (extra is ActiveSosAlert) {
+            return _softPage(
+              state: state,
+              child: SosAidantAlarmScreen.fromAlert(extra),
+            );
+          }
+          final q = state.uri.queryParameters;
+          return _softPage(
+            state: state,
+            child: SosAidantAlarmScreen(
+              sosId: q['sosId'] ?? '',
+              patientId: q['patientId'] ?? '',
+              patientPrenom: q['prenom'] ?? 'Patient',
+            ),
+          );
+        },
+      ),
+      GoRoute(
         path: '/home/profile/account',
         pageBuilder: (context, state) => _softPage(
           state: state,
@@ -364,6 +388,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => _softPage(
           state: state,
           child: const ProfilePatientSettingsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/profile/fiche-sante',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const ProfileFicheSanteScreen(),
         ),
       ),
       GoRoute(

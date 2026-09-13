@@ -523,6 +523,34 @@
   "profileTimezone": "Fuseau horaire",
   "profilePatientSettingsTitle": "Réglages du suivi",
   "profilePatientSettingsTileHint": "Notifications, batterie, mode discret",
+  "profileFicheSanteTitle": "Fiche santé",
+  "profileFicheSanteTileHint": "Groupe sanguin, électrophorèse, taille",
+  "profileFicheSanteHint": "Choisis parmi les propositions, puis confirme. Aucune saisie libre — pour éviter une erreur.",
+  "profileFicheSanteSection": "Identité médicale",
+  "profileFicheSanteGroupe": "Groupe sanguin",
+  "profileFicheSanteElectro": "Électrophorèse",
+  "profileFicheSanteTaille": "Taille",
+  "profileFicheSanteUnset": "À renseigner",
+  "profileFicheSanteNeSaitPas": "Je ne sais pas",
+  "profileFicheSanteGroupePick": "Choisis ton groupe",
+  "profileFicheSanteRhesusPick": "Choisis le rhésus",
+  "profileFicheSanteElectroPick": "Choisis ton électrophorèse",
+  "profileFicheSanteTaillePick": "Choisis ta taille",
+  "profileFicheSanteTailleValue": "{cm} cm",
+  "@profileFicheSanteTailleValue": {
+    "placeholders": {
+      "cm": {"type": "int"}
+    }
+  },
+  "profileFicheSanteConfirmTitle": "Tu confirmes ?",
+  "profileFicheSanteConfirmBody": "Enregistrer « {value} » sur ton profil.",
+  "@profileFicheSanteConfirmBody": {
+    "placeholders": {
+      "value": {"type": "String"}
+    }
+  },
+  "profileFicheSanteConfirmAction": "Confirmer",
+  "profileFicheSanteCorrectAction": "Corriger",
   "profilePatientSettingsHint": "Ces options concernent uniquement ton suivi patient sur cet appareil et ce compte.",
   "profileNotifGranted": "Notifications autorisées",
   "profileNotifGrantedHint": "Indique si Fidel peut te rappeler les prises",

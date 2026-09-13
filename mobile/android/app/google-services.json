@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "145300385273",
+    "project_id": "bionic-will-411715",
+    "storage_bucket": "bionic-will-411715.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:145300385273:android:676c4020614ba88976e128",
+        "android_client_info": {
+          "package_name": "cm.fidel.fidel_assistant"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmmp8IhsNSIoRK40bDGj1owP0eMdRlAUQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

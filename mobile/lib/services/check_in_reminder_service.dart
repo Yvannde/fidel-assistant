@@ -33,7 +33,6 @@ class CheckInReminderService {
 
   static const _nativeChannelName = 'cm.fidel.assistant/check_in_notif';
   static const _scheduledKey = 'check_in_reminder_scheduled_v1';
-  static const _debugFireDayKey = 'check_in_debug_fire_day_v5';
 
   static const MethodChannel _native = MethodChannel(_nativeChannelName);
 
@@ -132,7 +131,7 @@ class CheckInReminderService {
     );
   }
 
-  /// Affiche la notif tout de suite (test / debug).
+  /// Affiche la notif tout de suite (test manuel uniquement — ne pas appeler au boot).
   Future<void> showNow() async {
     final copy = _copy;
     if (Platform.isAndroid) {
@@ -155,6 +154,19 @@ class CheckInReminderService {
     debugPrint('CheckInReminderService: showNow() fired');
   }
 
+  /// Retire uniquement la notif debug (id distinct du rappel 15 h).
+  Future<void> dismissDebugNotification() async {
+    if (Platform.isAndroid) {
+      try {
+        await _native.invokeMethod<bool>('cancel', {'id': debugNotificationId});
+      } catch (_) {}
+      return;
+    }
+    try {
+      await _plugin.cancel(debugNotificationId);
+    } catch (_) {}
+  }
+
   /// Planifie le rappel quotidien si maladie configurée et pas encore répondu.
   Future<void> syncSchedule({
     required bool hasMaladie,
@@ -174,11 +186,6 @@ class CheckInReminderService {
       return;
     }
     await _scheduleDaily(skipIfSameDayPast: false);
-
-    // En debug : une notif dans ~20 s pour valider sans attendre 15 h.
-    if (kDebugMode) {
-      await _maybeScheduleDebugSoon();
-    }
   }
 
   Future<void> cancel() async {
@@ -286,21 +293,6 @@ class CheckInReminderService {
         debugPrint('CheckInReminderService: inexact also failed: $e2\n$st2');
       }
     }
-  }
-
-  Future<void> _maybeScheduleDebugSoon() async {
-    final now = DateTime.now();
-    final dayKey =
-        '${now.year.toString().padLeft(4, '0')}-'
-        '${now.month.toString().padLeft(2, '0')}-'
-        '${now.day.toString().padLeft(2, '0')}';
-    if (_prefs.getString(_debugFireDayKey) == dayKey) {
-      debugPrint('CheckInReminderService: debug fire already done for $dayKey');
-      return;
-    }
-
-    await _prefs.setString(_debugFireDayKey, dayKey);
-    await showNow();
   }
 
   static bool isCheckInPayload(Map<String, dynamic> payload) =>

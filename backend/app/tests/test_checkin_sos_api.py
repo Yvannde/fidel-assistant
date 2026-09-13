@@ -191,3 +191,140 @@ async def test_sos_requires_contact_cancel_and_too_late(
     ).scalars().all()
     assert len(logs) >= 1
     assert "Marie" in logs[-1].contenu
+
+
+@pytest.mark.asyncio
+async def test_sos_confirm_fallback_without_aidant_tokens(
+    client: AsyncClient,
+    auth_prefix: str,
+    onboarding_prefix: str,
+    otp_inbox: dict[str, str],
+    cgu_version: str,
+) -> None:
+    from app.core.config import settings
+
+    api = settings.api_v1_prefix
+    headers = await _onboard_patient(
+        client,
+        auth_prefix,
+        onboarding_prefix,
+        otp_inbox,
+        cgu_version,
+        email="sos.confirm@example.com",
+    )
+    await client.post(
+        f"{api}/patients/me/contacts-urgence",
+        headers=headers,
+        json={"nom": "Jean", "telephone": "+237690000011", "relation": "frere"},
+    )
+    r = await client.post(f"{api}/patients/me/sos", headers=headers)
+    assert r.status_code == 201
+    sos_id = r.json()["sos_id"]
+
+    r = await client.post(f"{api}/patients/me/sos/{sos_id}/confirm", headers=headers)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["statut"] == "envoye"
+    assert body["fallback_call_recommended"] is True
+    assert body["aidants_notifies"] == 0
+    assert body["acked"] is False
+
+    r = await client.get(f"{api}/patients/me/sos/{sos_id}", headers=headers)
+    assert r.status_code == 200
+    assert r.json()["statut"] == "envoye"
+    assert r.json()["acked"] is False
+
+
+@pytest.mark.asyncio
+async def test_sos_confirm_no_fallback_when_aidant_linked_without_fcm(
+    client: AsyncClient,
+    auth_prefix: str,
+    onboarding_prefix: str,
+    otp_inbox: dict[str, str],
+    cgu_version: str,
+) -> None:
+    """Aidant lié mais pas de FCM → attendre ack, pas d'appel immédiat."""
+    from app.core.config import settings
+    from app.tests.test_aidant_api import _patient_and_aidant
+
+    api = settings.api_v1_prefix
+    headers_p, _headers_a, _patient_id = await _patient_and_aidant(
+        client,
+        auth_prefix,
+        onboarding_prefix,
+        otp_inbox,
+        cgu_version,
+        patient_email="sos.nofallback.patient@example.com",
+        aidant_email="sos.nofallback.aidant@example.com",
+    )
+    await client.post(
+        f"{api}/patients/me/contacts-urgence",
+        headers=headers_p,
+        json={"nom": "Paul", "telephone": "+237690000033", "relation": "ami"},
+    )
+    r = await client.post(f"{api}/patients/me/sos", headers=headers_p)
+    assert r.status_code == 201
+    sos_id = r.json()["sos_id"]
+
+    r = await client.post(f"{api}/patients/me/sos/{sos_id}/confirm", headers=headers_p)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["statut"] == "envoye"
+    assert body["fallback_call_recommended"] is False
+    assert body["acked"] is False
+
+
+@pytest.mark.asyncio
+async def test_sos_aidant_ack_and_active_list(
+    client: AsyncClient,
+    auth_prefix: str,
+    onboarding_prefix: str,
+    otp_inbox: dict[str, str],
+    cgu_version: str,
+) -> None:
+    from app.core.config import settings
+    from app.tests.test_aidant_api import _patient_and_aidant
+
+    api = settings.api_v1_prefix
+    headers_p, headers_a, _patient_id = await _patient_and_aidant(
+        client,
+        auth_prefix,
+        onboarding_prefix,
+        otp_inbox,
+        cgu_version,
+        patient_email="sos.ack.patient@example.com",
+        aidant_email="sos.ack.aidant@example.com",
+    )
+    await client.post(
+        f"{api}/patients/me/contacts-urgence",
+        headers=headers_p,
+        json={"nom": "Claire", "telephone": "+237690000022", "relation": "soeur"},
+    )
+    r = await client.post(
+        f"{api}/devices/push-token",
+        headers=headers_a,
+        json={"token": "fake-fcm-token-aidant-ack-001", "platform": "android"},
+    )
+    assert r.status_code == 200, r.text
+
+    r = await client.post(f"{api}/patients/me/sos", headers=headers_p)
+    sos_id = r.json()["sos_id"]
+    r = await client.post(f"{api}/patients/me/sos/{sos_id}/confirm", headers=headers_p)
+    assert r.status_code == 200
+    # Sans FCM_SERVER_KEY → 0 notify mais SOS envoye ; aidant lié → pas de fallback immédiat
+    assert r.json()["statut"] == "envoye"
+    assert r.json()["fallback_call_recommended"] is False
+
+    r = await client.get(f"{api}/aidants/me/sos/active", headers=headers_a)
+    assert r.status_code == 200
+    active = r.json()
+    assert any(row["sos_id"] == sos_id for row in active)
+
+    r = await client.post(f"{api}/aidants/me/sos/{sos_id}/ack", headers=headers_a)
+    assert r.status_code == 200, r.text
+
+    r = await client.get(f"{api}/patients/me/sos/{sos_id}", headers=headers_p)
+    assert r.json()["acked"] is True
+
+    r = await client.get(f"{api}/aidants/me/sos/active", headers=headers_a)
+    assert all(row["sos_id"] != sos_id for row in r.json())

@@ -93,6 +93,93 @@ async def test_patch_patient_settings(
 
 
 @pytest.mark.asyncio
+async def test_fiche_sante_requires_confirm_and_rejects_invalid(
+    client: AsyncClient,
+    auth_prefix: str,
+    onboarding_prefix: str,
+    otp_inbox: dict[str, str],
+    cgu_version: str,
+) -> None:
+    from app.core.config import settings
+
+    api = settings.api_v1_prefix
+    headers = await _onboard_patient(
+        client,
+        auth_prefix,
+        onboarding_prefix,
+        otp_inbox,
+        cgu_version,
+        email="fiche.sante@example.com",
+    )
+
+    r = await client.patch(
+        f"{api}/patients/me",
+        headers=headers,
+        json={"groupe_sanguin": "O", "rhesus": "+"},
+    )
+    assert r.status_code == 400
+    assert r.json()["error"]["code"] == "FICHE_SANTE_CONFIRMATION_REQUISE"
+
+    r = await client.patch(
+        f"{api}/patients/me",
+        headers=headers,
+        json={
+            "groupe_sanguin": "Z",
+            "rhesus": "+",
+            "confirm_groupe_rhesus": True,
+        },
+    )
+    assert r.status_code == 400
+    assert r.json()["error"]["code"] == "FICHE_SANTE_INVALIDE"
+
+    r = await client.patch(
+        f"{api}/patients/me",
+        headers=headers,
+        json={
+            "groupe_sanguin": "O",
+            "rhesus": "+",
+            "confirm_groupe_rhesus": True,
+        },
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["groupe_sanguin"] == "O"
+    assert body["rhesus"] == "+"
+    assert body["groupe_sanguin_confirmed_at"] is not None
+    assert body["rhesus_confirmed_at"] is not None
+
+    r = await client.patch(
+        f"{api}/patients/me",
+        headers=headers,
+        json={"electrophorese": "AS", "confirm_electrophorese": True},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["electrophorese"] == "AS"
+
+    r = await client.patch(
+        f"{api}/patients/me",
+        headers=headers,
+        json={"taille_cm": 99, "confirm_taille": True},
+    )
+    assert r.status_code == 400
+
+    r = await client.patch(
+        f"{api}/patients/me",
+        headers=headers,
+        json={"taille_cm": 172, "confirm_taille": True},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["taille_cm"] == 172
+    assert r.json()["taille_cm_confirmed_at"] is not None
+
+    r = await client.get(f"{api}/patients/me", headers=headers)
+    assert r.status_code == 200
+    assert r.json()["groupe_sanguin"] == "O"
+    assert r.json()["electrophorese"] == "AS"
+    assert r.json()["taille_cm"] == 172
+
+
+@pytest.mark.asyncio
 async def test_medicament_seuil_and_stock_alert(
     client: AsyncClient,
     auth_prefix: str,

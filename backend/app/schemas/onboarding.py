@@ -93,6 +93,14 @@ class PatientOut(BaseModel):
     notifications_accordees: bool
     batterie_exemptee: bool
     notifications_discretes: bool = False
+    groupe_sanguin: str | None = None
+    rhesus: str | None = None
+    electrophorese: str | None = None
+    taille_cm: int | None = None
+    groupe_sanguin_confirmed_at: datetime | None = None
+    rhesus_confirmed_at: datetime | None = None
+    electrophorese_confirmed_at: datetime | None = None
+    taille_cm_confirmed_at: datetime | None = None
 
 
 class PatientUpdateIn(BaseModel):
@@ -102,3 +110,10 @@ class PatientUpdateIn(BaseModel):
     notifications_accordees: bool | None = None
     batterie_exemptee: bool | None = None
     notifications_discretes: bool | None = None
+    groupe_sanguin: str | None = None
+    rhesus: str | None = None
+    electrophorese: str | None = None
+    taille_cm: int | None = None
+    confirm_groupe_rhesus: bool | None = None
+    confirm_electrophorese: bool | None = None
+    confirm_taille: bool | None = None

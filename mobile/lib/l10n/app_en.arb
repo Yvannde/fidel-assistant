@@ -538,6 +538,34 @@
   "profileTimezone": "Time zone",
   "profilePatientSettingsTitle": "Follow-up settings",
   "profilePatientSettingsTileHint": "Notifications, battery, discreet mode",
+  "profileFicheSanteTitle": "Health profile",
+  "profileFicheSanteTileHint": "Blood type, electrophoresis, height",
+  "profileFicheSanteHint": "Pick from the list, then confirm. No free typing — to avoid mistakes.",
+  "profileFicheSanteSection": "Medical identity",
+  "profileFicheSanteGroupe": "Blood type",
+  "profileFicheSanteElectro": "Electrophoresis",
+  "profileFicheSanteTaille": "Height",
+  "profileFicheSanteUnset": "Not set yet",
+  "profileFicheSanteNeSaitPas": "I don’t know",
+  "profileFicheSanteGroupePick": "Choose your blood group",
+  "profileFicheSanteRhesusPick": "Choose Rh factor",
+  "profileFicheSanteElectroPick": "Choose electrophoresis",
+  "profileFicheSanteTaillePick": "Choose your height",
+  "profileFicheSanteTailleValue": "{cm} cm",
+  "@profileFicheSanteTailleValue": {
+    "placeholders": {
+      "cm": {"type": "int"}
+    }
+  },
+  "profileFicheSanteConfirmTitle": "Confirm?",
+  "profileFicheSanteConfirmBody": "Save “{value}” on your profile.",
+  "@profileFicheSanteConfirmBody": {
+    "placeholders": {
+      "value": {"type": "String"}
+    }
+  },
+  "profileFicheSanteConfirmAction": "Confirm",
+  "profileFicheSanteCorrectAction": "Correct",
   "profilePatientSettingsHint": "These options only apply to your patient follow-up on this device and account.",
   "profileNotifGranted": "Notifications allowed",
   "profileNotifGrantedHint": "Whether Fidel may remind you about doses",

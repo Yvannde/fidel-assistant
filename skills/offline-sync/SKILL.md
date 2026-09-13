@@ -55,7 +55,8 @@ Flux type :
 |---|---|---|
 | **P0** | Prises (horizon 48 h + pending outbox), traitements / médicaments / horaires (miroir), prefs alarme locales, outbox `confirm` / `report` | lecture + mutation |
 | **P1** | Constantes (append), historique prises 7–30 j, check-in | lecture + mutation |
-| **Online-only** | Auth OTP / Google / refresh mort, activate patient, sync aidant QR, permissions aidant, upload voix, engagement SOS / alertes tiers | réseau requis |
+| **Online-only** | Auth OTP / Google / refresh mort, activate patient, sync aidant QR, permissions aidant, upload voix, push FCM SOS aidants | réseau requis |
+| **Hybrid SOS** | Countdown / confirm API online ; **appel `ACTION_CALL` local** si offline ou pas d’ack aidant (45 s) | cache 1er contact urgence |
 
 Alarmes H0 / préavis / marquage : **toujours locales** (voir `mobile-flutter`) — hors SyncEngine réseau.
 

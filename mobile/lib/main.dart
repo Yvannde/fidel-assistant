@@ -23,6 +23,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'services/check_in_reminder_service.dart';
 import 'services/live_alarm_test.dart';
+import 'services/push_messaging_service.dart';
 import 'services/reminder_sync.dart';
 import 'services/server_clock.dart';
 import 'services/sync_lifecycle_binder.dart';
@@ -95,14 +96,19 @@ Future<void> main() async {
 
     final checkIn = container.read(checkInReminderServiceProvider);
     await checkIn.ensureChannel();
-    // Debug : forcer une notif pour valider le rendu des 4 icônes.
-    if (kDebugMode) {
-      await checkIn.showNow();
-    }
+    // Retire une éventuelle notif debug forcée des builds précédents.
+    await checkIn.dismissDebugNotification();
   } catch (e, st) {
-    debugPrint('main: checkIn channel/showNow failed: $e\n$st');
+    debugPrint('main: checkIn channel init failed: $e\n$st');
   }
   unawaited(maybeRunLiveAlarmTest(alarms));
+
+  try {
+    await container.read(pushMessagingServiceProvider).init();
+    unawaited(container.read(pushMessagingServiceProvider).pollActiveSos());
+  } catch (e, st) {
+    debugPrint('main: push messaging init failed: $e\n$st');
+  }
 
   final router = container.read(appRouterProvider);
   bindAlarmRingingNavigation(router);

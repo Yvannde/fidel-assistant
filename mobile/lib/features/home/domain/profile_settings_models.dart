@@ -6,6 +6,10 @@ class PatientSettings {
     required this.notificationsDiscretes,
     this.localisation,
     this.nomComplet,
+    this.groupeSanguin,
+    this.rhesus,
+    this.electrophorese,
+    this.tailleCm,
   });
 
   final bool notificationsAccordees;
@@ -13,6 +17,10 @@ class PatientSettings {
   final bool notificationsDiscretes;
   final String? localisation;
   final String? nomComplet;
+  final String? groupeSanguin;
+  final String? rhesus;
+  final String? electrophorese;
+  final int? tailleCm;
 
   factory PatientSettings.fromJson(Map<String, dynamic> json) {
     return PatientSettings(
@@ -21,8 +29,31 @@ class PatientSettings {
       notificationsDiscretes: json['notifications_discretes'] as bool? ?? false,
       localisation: json['localisation'] as String?,
       nomComplet: json['nom_complet'] as String?,
+      groupeSanguin: json['groupe_sanguin'] as String?,
+      rhesus: json['rhesus'] as String?,
+      electrophorese: json['electrophorese'] as String?,
+      tailleCm: (json['taille_cm'] as num?)?.toInt(),
     );
   }
+}
+
+/// Enums fermés fiche santé (alignés API).
+abstract final class FicheSanteOptions {
+  static const groupes = ['A', 'B', 'AB', 'O'];
+  static const rhesus = ['+', '-'];
+  static const electrophoreses = [
+    'AA',
+    'AS',
+    'AC',
+    'SS',
+    'SC',
+    'CC',
+    'ne_sait_pas',
+  ];
+  static const tailleMinCm = 120;
+  static const tailleMaxCm = 220;
+  static List<int> get taillesCm =>
+      List.generate(tailleMaxCm - tailleMinCm + 1, (i) => tailleMinCm + i);
 }
 
 class ContactUrgence {

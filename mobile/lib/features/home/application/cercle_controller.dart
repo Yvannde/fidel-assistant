@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_exception.dart';
+import '../../../services/sos_service.dart';
 import '../../auth/application/auth_providers.dart';
 import '../data/home_repository.dart';
 import '../domain/aidant_models.dart';
+import '../domain/profile_settings_models.dart';
 import 'home_controller.dart';
 
 class CercleUiState {
@@ -135,6 +137,14 @@ class CercleController extends StateNotifier<CercleUiState> {
             : Future.value(const []),
       ]);
       if (!mounted || gen != _loadGen) return;
+      final contacts = futures[2] as List<ContactUrgence>;
+      unawaited(_ref.read(sosServiceProvider).cacheContacts(contacts));
+      unawaited(
+        _ref.read(sosServiceProvider).ensurePersistentNotification(
+              title: 'SOS Fidel',
+              body: 'Appuie pour alerter tes aidants',
+            ),
+      );
       state = state.copyWith(
         loading: false,
         loadedOnce: true,
@@ -142,7 +152,7 @@ class CercleController extends StateNotifier<CercleUiState> {
         isAidant: caps.isAidant,
         accompaniedPatients: futures[0] as List<AidantPatient>,
         aidants: futures[1] as List<AidantRelation>,
-        contactsCount: futures[2].length,
+        contactsCount: contacts.length,
         clearError: true,
       );
     } catch (e) {

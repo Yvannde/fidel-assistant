@@ -11,9 +11,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.exceptions import AppException
-from app.models import CheckIn, ContactUrgence, SosAlerte, User
-from app.services import notification_service
-from app.services.onboarding_service import _require_patient
+from app.models import CheckIn, ContactUrgence, PatientAidant, SosAlerte, User
+from app.services import device_push_service, fcm_service, notification_service
+from app.services.aidant_service import _prenom
+from app.services.onboarding_service import _require_patient, get_user_with_capabilities, is_aidant
 
 VALID_CHECKIN = {"tres_mal", "pas_top", "ca_va", "super"}
 
@@ -180,12 +181,10 @@ async def cancel_sos(db: AsyncSession, *, user: User, sos_id: UUID) -> dict:
             status_code=404,
         )
 
-    await _finalize_sos_if_due(db, sos=sos)
-
     if sos.statut == "annule":
         return {"message": "Alerte SOS déjà annulée."}
 
-    if sos.statut == "envoye":
+    if sos.statut == "envoye" or sos.acked_at is not None:
         raise AppException(
             "SOS_TROP_TARD",
             "La fenêtre d'annulation est passée : l'alerte a déjà été envoyée.",
@@ -194,7 +193,7 @@ async def cancel_sos(db: AsyncSession, *, user: User, sos_id: UUID) -> dict:
 
     now = datetime.now(UTC)
     if now >= _aware(sos.annulable_jusqu_a):
-        await _finalize_sos_if_due(db, sos=sos)
+        await _finalize_sos(db, sos=sos)
         raise AppException(
             "SOS_TROP_TARD",
             "La fenêtre d'annulation est passée : l'alerte a déjà été envoyée.",
@@ -207,12 +206,163 @@ async def cancel_sos(db: AsyncSession, *, user: User, sos_id: UUID) -> dict:
     return {"message": "Alerte SOS annulée. Aucun contact n'a été prévenu."}
 
 
-async def _finalize_sos_if_due(db: AsyncSession, *, sos: SosAlerte) -> None:
+async def confirm_sos(db: AsyncSession, *, user: User, sos_id: UUID) -> dict:
+    """Fin de countdown patient — finalise et pousse les aidants."""
+    patient = _require_patient(user)
+    sos = await db.get(SosAlerte, sos_id)
+    if sos is None or sos.patient_id != patient.user_id:
+        raise AppException(
+            "SOS_NOT_FOUND",
+            "Cette alerte SOS est introuvable.",
+            status_code=404,
+        )
+    if sos.statut == "annule":
+        raise AppException(
+            "SOS_ANNULE",
+            "Cette alerte SOS a déjà été annulée.",
+            status_code=409,
+        )
+
+    return await _finalize_sos(db, sos=sos, force=True)
+
+
+async def get_sos_status(db: AsyncSession, *, user: User, sos_id: UUID) -> dict:
+    patient = _require_patient(user)
+    sos = await db.get(SosAlerte, sos_id)
+    if sos is None or sos.patient_id != patient.user_id:
+        raise AppException(
+            "SOS_NOT_FOUND",
+            "Cette alerte SOS est introuvable.",
+            status_code=404,
+        )
+    return {
+        "sos_id": sos.id,
+        "statut": sos.statut,
+        "acked": sos.acked_at is not None,
+        "envoye_at": sos.envoye_at,
+        "acked_at": sos.acked_at,
+    }
+
+
+async def ack_sos_aidant(db: AsyncSession, *, user: User, sos_id: UUID) -> dict:
+    refreshed = await get_user_with_capabilities(db, user_id=user.id)
+    if refreshed is None or not is_aidant(refreshed):
+        raise AppException(
+            "NOT_AN_AIDANT",
+            "Seul un aidant lié peut acquitter un SOS.",
+            status_code=403,
+        )
+    sos = await db.get(SosAlerte, sos_id)
+    if sos is None:
+        raise AppException(
+            "SOS_NOT_FOUND",
+            "Cette alerte SOS est introuvable.",
+            status_code=404,
+        )
+    link = (
+        await db.execute(
+            select(PatientAidant).where(
+                PatientAidant.patient_id == sos.patient_id,
+                PatientAidant.aidant_id == user.id,
+                PatientAidant.statut == "actif",
+                PatientAidant.revoked_at.is_(None),
+            )
+        )
+    ).scalar_one_or_none()
+    if link is None:
+        raise AppException(
+            "PERMISSION_REFUSEE",
+            "Tu n'accompagnes pas ce patient.",
+            status_code=403,
+        )
+    if sos.statut != "envoye":
+        raise AppException(
+            "SOS_NON_ACTIF",
+            "Cette alerte SOS n'est plus active.",
+            status_code=409,
+        )
+    if sos.acked_at is None:
+        sos.acked_at = datetime.now(UTC)
+        sos.acked_by_aidant_id = user.id
+        await db.commit()
+    return {"message": "SOS acquitté. Le patient est informé."}
+
+
+async def list_active_sos_for_aidant(db: AsyncSession, *, user: User) -> list[dict]:
+    refreshed = await get_user_with_capabilities(db, user_id=user.id)
+    if refreshed is None or not is_aidant(refreshed):
+        return []
+    links = (
+        await db.execute(
+            select(PatientAidant.patient_id).where(
+                PatientAidant.aidant_id == user.id,
+                PatientAidant.statut == "actif",
+                PatientAidant.revoked_at.is_(None),
+            )
+        )
+    ).scalars().all()
+    if not links:
+        return []
+    rows = (
+        await db.execute(
+            select(SosAlerte)
+            .where(
+                SosAlerte.patient_id.in_(list(links)),
+                SosAlerte.statut == "envoye",
+                SosAlerte.acked_at.is_(None),
+            )
+            .order_by(SosAlerte.envoye_at.desc())
+        )
+    ).scalars().all()
+    out: list[dict] = []
+    for sos in rows:
+        user_row = await db.get(User, sos.patient_id)
+        out.append(
+            {
+                "sos_id": sos.id,
+                "patient_id": sos.patient_id,
+                "patient_prenom": _prenom(user_row.nom_complet if user_row else None),
+                "envoye_at": sos.envoye_at,
+            }
+        )
+    return out
+
+
+async def _finalize_sos(
+    db: AsyncSession,
+    *,
+    sos: SosAlerte,
+    force: bool = False,
+) -> dict:
+    """Passe en envoye, journalise, pousse FCM aux aidants."""
+    if sos.statut == "envoye":
+        aidant_count = await _aidant_count(db, patient_id=sos.patient_id)
+        tokens_hint = await _aidant_token_count(db, patient_id=sos.patient_id)
+        return {
+            "sos_id": sos.id,
+            "statut": sos.statut,
+            "aidants_notifies": tokens_hint,
+            "fallback_call_recommended": aidant_count == 0 and sos.acked_at is None,
+            "acked": sos.acked_at is not None,
+        }
     if sos.statut != "en_attente":
-        return
+        return {
+            "sos_id": sos.id,
+            "statut": sos.statut,
+            "aidants_notifies": 0,
+            "fallback_call_recommended": True,
+            "acked": False,
+        }
+
     now = datetime.now(UTC)
-    if now < _aware(sos.annulable_jusqu_a):
-        return
+    if not force and now < _aware(sos.annulable_jusqu_a):
+        return {
+            "sos_id": sos.id,
+            "statut": sos.statut,
+            "aidants_notifies": 0,
+            "fallback_call_recommended": False,
+            "acked": False,
+        }
 
     contacts = (
         await db.execute(
@@ -223,6 +373,21 @@ async def _finalize_sos_if_due(db: AsyncSession, *, sos: SosAlerte) -> None:
         {"id": str(c.id), "nom": c.nom, "telephone": c.telephone, "relation": c.relation}
         for c in contacts
     ]
+
+    aidant_ids = (
+        await db.execute(
+            select(PatientAidant.aidant_id).where(
+                PatientAidant.patient_id == sos.patient_id,
+                PatientAidant.statut == "actif",
+                PatientAidant.revoked_at.is_(None),
+            )
+        )
+    ).scalars().all()
+    aidant_ids_list = list(aidant_ids)
+
+    patient_user = await db.get(User, sos.patient_id)
+    prenom = _prenom(patient_user.nom_complet if patient_user else None)
+
     await notification_service.trigger(
         db,
         type_alerte="sos_declenche",
@@ -231,9 +396,66 @@ async def _finalize_sos_if_due(db: AsyncSession, *, sos: SosAlerte) -> None:
             "sos_id": str(sos.id),
             "patient_id": str(sos.patient_id),
             "contacts": contacts_payload,
+            "aidants": [str(a) for a in aidant_ids_list],
             "event": "sos_envoye",
         },
     )
+
     sos.statut = "envoye"
     sos.envoye_at = now
     await db.commit()
+    await db.refresh(sos)
+
+    tokens = await device_push_service.tokens_for_users(db, user_ids=aidant_ids_list)
+    sent = await fcm_service.send_data_message(
+        tokens=tokens,
+        data={
+            "kind": "sos",
+            "sos_id": str(sos.id),
+            "patient_id": str(sos.patient_id),
+            "patient_prenom": prenom,
+        },
+        title="SOS Fidel",
+        body=f"{prenom} a déclenché un SOS — ouvre Fidel.",
+    )
+
+    # Appel immédiat seulement s'il n'y a aucun aidant lié (pas si FCM a échoué).
+    fallback = len(aidant_ids_list) == 0
+    return {
+        "sos_id": sos.id,
+        "statut": sos.statut,
+        "aidants_notifies": sent if tokens else 0,
+        "fallback_call_recommended": fallback,
+        "acked": False,
+    }
+
+
+async def _aidant_count(db: AsyncSession, *, patient_id: UUID) -> int:
+    rows = (
+        await db.execute(
+            select(PatientAidant.aidant_id).where(
+                PatientAidant.patient_id == patient_id,
+                PatientAidant.statut == "actif",
+                PatientAidant.revoked_at.is_(None),
+            )
+        )
+    ).scalars().all()
+    return len(list(rows))
+
+
+async def _aidant_token_count(db: AsyncSession, *, patient_id: UUID) -> int:
+    aidant_ids = (
+        await db.execute(
+            select(PatientAidant.aidant_id).where(
+                PatientAidant.patient_id == patient_id,
+                PatientAidant.statut == "actif",
+                PatientAidant.revoked_at.is_(None),
+            )
+        )
+    ).scalars().all()
+    tokens = await device_push_service.tokens_for_users(db, user_ids=list(aidant_ids))
+    return len(tokens)
+
+
+async def _finalize_sos_if_due(db: AsyncSession, *, sos: SosAlerte) -> None:
+    await _finalize_sos(db, sos=sos, force=False)

@@ -412,9 +412,93 @@ async def update_patient_me(db: AsyncSession, *, user: User, data: dict) -> dict
             value = value.strip()
         setattr(patient, field, value)
 
+    _apply_fiche_sante(patient, data)
+
     await db.commit()
     await db.refresh(patient)
     return _serialize_patient(patient)
+
+
+GROUPE_SANGUIN_VALUES = frozenset({"A", "B", "AB", "O"})
+RHESUS_VALUES = frozenset({"+", "-"})
+ELECTROPHORESE_VALUES = frozenset(
+    {"AA", "AS", "AC", "SS", "SC", "CC", "ne_sait_pas"}
+)
+TAILLE_CM_MIN = 120
+TAILLE_CM_MAX = 220
+
+
+def _apply_fiche_sante(patient: Patient, data: dict) -> None:
+    wants_groupe = "groupe_sanguin" in data or "rhesus" in data
+    wants_electro = "electrophorese" in data
+    wants_taille = "taille_cm" in data
+
+    if wants_groupe:
+        if data.get("confirm_groupe_rhesus") is not True:
+            raise AppException(
+                "FICHE_SANTE_CONFIRMATION_REQUISE",
+                "Confirme le groupe sanguin et le rhésus avant d’enregistrer.",
+                status_code=400,
+            )
+        groupe = data.get("groupe_sanguin", patient.groupe_sanguin)
+        rhesus = data.get("rhesus", patient.rhesus)
+        if groupe is None or rhesus is None:
+            raise AppException(
+                "FICHE_SANTE_INCOMPLETE",
+                "Groupe sanguin et rhésus sont tous les deux requis.",
+                status_code=400,
+            )
+        if groupe not in GROUPE_SANGUIN_VALUES:
+            raise AppException(
+                "FICHE_SANTE_INVALIDE",
+                "Groupe sanguin invalide.",
+                status_code=400,
+            )
+        if rhesus not in RHESUS_VALUES:
+            raise AppException(
+                "FICHE_SANTE_INVALIDE",
+                "Rhésus invalide.",
+                status_code=400,
+            )
+        now = datetime.now(UTC)
+        patient.groupe_sanguin = groupe
+        patient.rhesus = rhesus
+        patient.groupe_sanguin_confirmed_at = now
+        patient.rhesus_confirmed_at = now
+
+    if wants_electro:
+        if data.get("confirm_electrophorese") is not True:
+            raise AppException(
+                "FICHE_SANTE_CONFIRMATION_REQUISE",
+                "Confirme l’électrophorèse avant d’enregistrer.",
+                status_code=400,
+            )
+        electro = data["electrophorese"]
+        if electro not in ELECTROPHORESE_VALUES:
+            raise AppException(
+                "FICHE_SANTE_INVALIDE",
+                "Électrophorèse invalide.",
+                status_code=400,
+            )
+        patient.electrophorese = electro
+        patient.electrophorese_confirmed_at = datetime.now(UTC)
+
+    if wants_taille:
+        if data.get("confirm_taille") is not True:
+            raise AppException(
+                "FICHE_SANTE_CONFIRMATION_REQUISE",
+                "Confirme la taille avant d’enregistrer.",
+                status_code=400,
+            )
+        taille = data["taille_cm"]
+        if not isinstance(taille, int) or not (TAILLE_CM_MIN <= taille <= TAILLE_CM_MAX):
+            raise AppException(
+                "FICHE_SANTE_INVALIDE",
+                f"Taille invalide (entre {TAILLE_CM_MIN} et {TAILLE_CM_MAX} cm).",
+                status_code=400,
+            )
+        patient.taille_cm = taille
+        patient.taille_cm_confirmed_at = datetime.now(UTC)
 
 
 def _serialize_patient(patient: Patient) -> dict:
@@ -428,6 +512,14 @@ def _serialize_patient(patient: Patient) -> dict:
         "notifications_accordees": patient.notifications_accordees,
         "batterie_exemptee": patient.batterie_exemptee,
         "notifications_discretes": patient.notifications_discretes,
+        "groupe_sanguin": patient.groupe_sanguin,
+        "rhesus": patient.rhesus,
+        "electrophorese": patient.electrophorese,
+        "taille_cm": patient.taille_cm,
+        "groupe_sanguin_confirmed_at": patient.groupe_sanguin_confirmed_at,
+        "rhesus_confirmed_at": patient.rhesus_confirmed_at,
+        "electrophorese_confirmed_at": patient.electrophorese_confirmed_at,
+        "taille_cm_confirmed_at": patient.taille_cm_confirmed_at,
     }
 
 

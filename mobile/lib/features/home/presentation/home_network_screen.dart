@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +12,7 @@ import '../../../l10n/app_localizations.dart';
 import '../application/cercle_controller.dart';
 import '../application/home_controller.dart';
 import '../domain/aidant_models.dart';
+import '../../../services/sos_service.dart';
 import 'widgets/sticky_tab_header.dart';
 
 class HomeNetworkScreen extends ConsumerStatefulWidget {
@@ -24,8 +23,6 @@ class HomeNetworkScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeNetworkScreenState extends ConsumerState<HomeNetworkScreen> {
-  Timer? _sosTicker;
-
   @override
   void initState() {
     super.initState();
@@ -34,19 +31,11 @@ class _HomeNetworkScreenState extends ConsumerState<HomeNetworkScreen> {
     });
   }
 
-  @override
-  void dispose() {
-    _sosTicker?.cancel();
-    super.dispose();
-  }
-
   Future<void> _triggerSos() async {
     final l10n = AppLocalizations.of(context);
-    final cercle = ref.read(cercleControllerProvider.notifier);
     try {
-      final ticket = await cercle.triggerSos();
-      if (!mounted) return;
-      _showSosSheet(ticket);
+      await ref.read(sosServiceProvider).ensureCallPermission();
+      await ref.read(sosServiceProvider).startSosFlow();
     } catch (e) {
       if (!mounted) return;
       AppToast.error(
@@ -54,61 +43,6 @@ class _HomeNetworkScreenState extends ConsumerState<HomeNetworkScreen> {
         e is ApiException ? e.message : l10n.genericError,
       );
     }
-  }
-
-  Future<void> _showSosSheet(SosTicket ticket) async {
-    final notifier = ref.read(cercleControllerProvider.notifier);
-    _sosTicker?.cancel();
-    _sosTicker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() {});
-    });
-    await showModalBottomSheet<void>(
-      context: context,
-      isDismissible: false,
-      enableDrag: false,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModalState) {
-          final remaining = ticket.annulableJusquA.difference(DateTime.now());
-          if (remaining.isNegative) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (Navigator.canPop(ctx)) Navigator.pop(ctx);
-            });
-          } else {
-            _sosTicker?.cancel();
-            _sosTicker = Timer.periodic(const Duration(seconds: 1), (_) {
-              if (!mounted) return;
-              setState(() {});
-              setModalState(() {});
-            });
-          }
-          final seconds = remaining.isNegative ? 0 : remaining.inSeconds + 1;
-          return _SosSheet(
-            secondsLeft: seconds,
-            onCancel: () async {
-              final l10n = AppLocalizations.of(context);
-              try {
-                final msg = await notifier.cancelSos(ticket.id);
-                if (!mounted || !ctx.mounted) return;
-                AppToast.success(
-                  context,
-                  msg.isEmpty ? l10n.cercleSosCancelled : msg,
-                );
-                Navigator.pop(ctx);
-              } catch (e) {
-                if (!mounted) return;
-                AppToast.error(
-                  context,
-                  e is ApiException ? e.message : l10n.genericError,
-                );
-              }
-            },
-          );
-        },
-      ),
-    );
-    _sosTicker?.cancel();
-    notifier.clearSosState();
   }
 
   @override
@@ -906,52 +840,6 @@ class _EmptyCercleState extends StatelessWidget {
           OutlinedButton(
             onPressed: onSync,
             child: Text(l10n.homeAccompanyTitle),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SosSheet extends StatelessWidget {
-  const _SosSheet({required this.secondsLeft, required this.onCancel});
-
-  final int secondsLeft;
-  final Future<void> Function() onCancel;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final tokens = ThemeTokens.of(context);
-    return Container(
-      margin: const EdgeInsets.all(12),
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-      decoration: BoxDecoration(
-        color: tokens.elevated,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            l10n.cercleSosSent,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            l10n.cercleSosCountdown(secondsLeft),
-            style: TextStyle(
-              fontFamily: AppTheme.fontFamily,
-              color: tokens.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 16),
-          OutlinedButton(
-            onPressed: onCancel,
-            child: Text(l10n.cercleSosCancel),
           ),
         ],
       ),

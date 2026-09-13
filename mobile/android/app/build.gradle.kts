@@ -4,6 +4,11 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Firebase / FCM — n’applique le plugin que si google-services.json est présent.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 android {
     namespace = "cm.fidel.fidel_assistant"
     // permission_handler_android exige API 37+.

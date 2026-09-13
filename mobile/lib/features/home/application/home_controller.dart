@@ -287,16 +287,28 @@ class HomeController extends StateNotifier<HomeUiState> {
 
     try {
       final profile = await _repo.fetchProfile();
-      await _persistProfile(profile);
+      var merged = profile;
+      if (profile.hasPatientProfile) {
+        try {
+          final settings = await _repo.fetchPatientSettings();
+          merged = profile.copyWith(
+            groupeSanguin: settings.groupeSanguin,
+            rhesus: settings.rhesus,
+            electrophorese: settings.electrophorese,
+            tailleCm: settings.tailleCm,
+          );
+        } catch (_) {}
+      }
+      await _persistProfile(merged);
       final session = _ref.read(authSessionProvider);
       if (session != null) {
         _ref.read(authSessionProvider.notifier).updateOnboarding(
               step: session.onboardingStep,
-              hasPatientProfile: profile.hasPatientProfile,
+              hasPatientProfile: merged.hasPatientProfile,
             );
       }
       PatientDashboard? dashboard;
-      if (profile.hasPatientProfile) {
+      if (merged.hasPatientProfile) {
         final fetched = await _repo.fetchDashboard();
         if (fetched != null) {
           await _db.upsertDashboard(fetched);
@@ -310,7 +322,7 @@ class HomeController extends StateNotifier<HomeUiState> {
       if (!mounted) return;
       state = state.copyWith(
         loading: false,
-        profile: profile,
+        profile: merged,
         dashboard: dashboard ?? localDashboard,
         selectedDay: homeDateOnly(DateTime.now()),
         clearDashboard: dashboard == null && localDashboard == null,

@@ -1,6 +1,7 @@
 """Modèles SQLAlchemy — voir skills/data-model/SKILL.md."""
 
 from app.models.catalog import MaladieConfig, ProtocoleMedicamentSuggere, ProtocoleTraitement
+from app.models.device import DevicePushToken
 from app.models.medication import Medicament, MedicamentHoraire, Prise
 from app.models.notification import NotificationLog, PreferenceConsentement
 from app.models.patient import (
@@ -49,6 +50,7 @@ __all__ = [
     "MedicamentHoraire",
     "Prise",
     "ClientMutation",
+    "DevicePushToken",
     "NotificationLog",
     "PreferenceConsentement",
 ]

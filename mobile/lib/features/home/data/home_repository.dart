@@ -69,6 +69,13 @@ class HomeRepository {
     bool? batterieExemptee,
     bool? notificationsDiscretes,
     String? localisation,
+    String? groupeSanguin,
+    String? rhesus,
+    String? electrophorese,
+    int? tailleCm,
+    bool? confirmGroupeRhesus,
+    bool? confirmElectrophorese,
+    bool? confirmTaille,
   }) async {
     try {
       final res = await _api.patch<Map<String, dynamic>>(
@@ -80,6 +87,15 @@ class HomeRepository {
           if (notificationsDiscretes != null)
             'notifications_discretes': notificationsDiscretes,
           if (localisation != null) 'localisation': localisation,
+          if (groupeSanguin != null) 'groupe_sanguin': groupeSanguin,
+          if (rhesus != null) 'rhesus': rhesus,
+          if (electrophorese != null) 'electrophorese': electrophorese,
+          if (tailleCm != null) 'taille_cm': tailleCm,
+          if (confirmGroupeRhesus != null)
+            'confirm_groupe_rhesus': confirmGroupeRhesus,
+          if (confirmElectrophorese != null)
+            'confirm_electrophorese': confirmElectrophorese,
+          if (confirmTaille != null) 'confirm_taille': confirmTaille,
         },
       );
       return PatientSettings.fromJson(res.data ?? {});
@@ -600,9 +616,67 @@ class HomeRepository {
     }
   }
 
+  Future<SosConfirmResult> confirmSos(String sosId) async {
+    try {
+      final res = await _api.post<Map<String, dynamic>>(
+        '/patients/me/sos/$sosId/confirm',
+      );
+      return SosConfirmResult.fromJson(res.data ?? {});
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<SosStatusResult> getSosStatus(String sosId) async {
+    try {
+      final res = await _api.get<Map<String, dynamic>>(
+        '/patients/me/sos/$sosId',
+      );
+      return SosStatusResult.fromJson(res.data ?? {});
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
   Future<String> cancelSos(String sosId) async {
     try {
       final res = await _api.post<Map<String, dynamic>>('/sos/$sosId/annuler');
+      return res.data?['message'] as String? ?? '';
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<void> registerPushToken({
+    required String token,
+    String platform = 'android',
+  }) async {
+    try {
+      await _api.post<Map<String, dynamic>>(
+        '/devices/push-token',
+        data: {'token': token, 'platform': platform},
+      );
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<List<ActiveSosAlert>> listActiveSosForAidant() async {
+    try {
+      final res = await _api.get<List<dynamic>>('/aidants/me/sos/active');
+      return (res.data ?? [])
+          .whereType<Map>()
+          .map((e) => ActiveSosAlert.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    } on DioException catch (e) {
+      ApiClient.throwApi(e);
+    }
+  }
+
+  Future<String> ackSosAsAidant(String sosId) async {
+    try {
+      final res =
+          await _api.post<Map<String, dynamic>>('/aidants/me/sos/$sosId/ack');
       return res.data?['message'] as String? ?? '';
     } on DioException catch (e) {
       ApiClient.throwApi(e);
