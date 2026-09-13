@@ -131,7 +131,27 @@
   "onboardingPermsLater": "Plus tard",
   "onboardingDoneToast": "C’est bon — bienvenue sur Fidel",
   "navHome": "Accueil",
-  "navCare": "Soins",
+  "navCare": "Santé",
+  "healthSubtitle": "Tes indicateurs — poids, tension, glycémie…",
+  "healthRecommended": "Recommandé pour toi",
+  "healthAllMetrics": "Tous tes indicateurs",
+  "healthRecent": "Mesures récentes",
+  "healthRecentEmpty": "Aucune mesure pour l’instant. Commence par en ajouter une.",
+  "healthAddCta": "Ajouter une mesure",
+  "healthEmptyHero": "Commence par une mesure. Une fois de temps en temps suffit.",
+  "healthNoData": "Pas encore de mesure",
+  "healthDaysAgo": "il y a {count} j",
+  "@healthDaysAgo": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "healthViewAll": "Voir dans Santé",
+  "healthRecommendedBadge": "Recommandé",
+  "healthLatestMeasure": "Dernière mesure",
+  "healthHistory": "Historique",
+  "healthNoDataForType": "Aucune mesure de {type} pour l’instant.",
+  "@healthNoDataForType": {
+    "placeholders": { "type": { "type": "String" } }
+  },
   "navPeople": "Cercle",
   "navYou": "Profil",
   "homeHelloMorning": "Bonjour {name}",

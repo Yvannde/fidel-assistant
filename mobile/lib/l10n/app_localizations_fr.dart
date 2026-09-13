@@ -415,7 +415,55 @@ class AppLocalizationsFr extends AppLocalizations {
   String get navHome => 'Accueil';
 
   @override
-  String get navCare => 'Soins';
+  String get navCare => 'Santé';
+
+  @override
+  String get healthSubtitle => 'Tes indicateurs — poids, tension, glycémie…';
+
+  @override
+  String get healthRecommended => 'Recommandé pour toi';
+
+  @override
+  String get healthAllMetrics => 'Tous tes indicateurs';
+
+  @override
+  String get healthRecent => 'Mesures récentes';
+
+  @override
+  String get healthRecentEmpty =>
+      'Aucune mesure pour l’instant. Commence par en ajouter une.';
+
+  @override
+  String get healthAddCta => 'Ajouter une mesure';
+
+  @override
+  String get healthEmptyHero =>
+      'Commence par une mesure. Une fois de temps en temps suffit.';
+
+  @override
+  String get healthNoData => 'Pas encore de mesure';
+
+  @override
+  String healthDaysAgo(int count) {
+    return 'il y a $count j';
+  }
+
+  @override
+  String get healthViewAll => 'Voir dans Santé';
+
+  @override
+  String get healthRecommendedBadge => 'Recommandé';
+
+  @override
+  String get healthLatestMeasure => 'Dernière mesure';
+
+  @override
+  String get healthHistory => 'Historique';
+
+  @override
+  String healthNoDataForType(String type) {
+    return 'Aucune mesure de $type pour l’instant.';
+  }
 
   @override
   String get navPeople => 'Cercle';

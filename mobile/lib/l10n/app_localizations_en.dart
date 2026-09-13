@@ -410,7 +410,55 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navHome => 'Home';
 
   @override
-  String get navCare => 'Care';
+  String get navCare => 'Health';
+
+  @override
+  String get healthSubtitle =>
+      'Your vitals — weight, blood pressure, blood sugar…';
+
+  @override
+  String get healthRecommended => 'Recommended for you';
+
+  @override
+  String get healthAllMetrics => 'All your vitals';
+
+  @override
+  String get healthRecent => 'Recent measurements';
+
+  @override
+  String get healthRecentEmpty => 'No measurements yet. Add your first one.';
+
+  @override
+  String get healthAddCta => 'Add a measurement';
+
+  @override
+  String get healthEmptyHero =>
+      'Start with one measurement. Now and then is enough.';
+
+  @override
+  String get healthNoData => 'No measurement yet';
+
+  @override
+  String healthDaysAgo(int count) {
+    return '$count d ago';
+  }
+
+  @override
+  String get healthViewAll => 'View in Health';
+
+  @override
+  String get healthRecommendedBadge => 'Recommended';
+
+  @override
+  String get healthLatestMeasure => 'Latest measurement';
+
+  @override
+  String get healthHistory => 'History';
+
+  @override
+  String healthNoDataForType(String type) {
+    return 'No $type measurements yet.';
+  }
 
   @override
   String get navPeople => 'Circle';

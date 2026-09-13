@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/premium.dart';
 import '../../../services/sync_engine.dart';
 import '../application/home_controller.dart';
-import 'home_care_screen.dart';
+import 'health_screen.dart';
 import 'home_dashboard_screen.dart';
 import 'home_network_screen.dart';
 import 'home_profile_screen.dart';
@@ -41,7 +41,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           index: index,
           children: const [
             HomeDashboardScreen(),
-            HomeCareScreen(),
+            HealthScreen(),
             HomeNetworkScreen(),
             HomeProfileScreen(),
           ],

@@ -146,7 +146,27 @@
   "onboardingPermsLater": "Later",
   "onboardingDoneToast": "You’re all set — welcome to Fidel",
   "navHome": "Home",
-  "navCare": "Care",
+  "navCare": "Health",
+  "healthSubtitle": "Your vitals — weight, blood pressure, blood sugar…",
+  "healthRecommended": "Recommended for you",
+  "healthAllMetrics": "All your vitals",
+  "healthRecent": "Recent measurements",
+  "healthRecentEmpty": "No measurements yet. Add your first one.",
+  "healthAddCta": "Add a measurement",
+  "healthEmptyHero": "Start with one measurement. Now and then is enough.",
+  "healthNoData": "No measurement yet",
+  "healthDaysAgo": "{count} d ago",
+  "@healthDaysAgo": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "healthViewAll": "View in Health",
+  "healthRecommendedBadge": "Recommended",
+  "healthLatestMeasure": "Latest measurement",
+  "healthHistory": "History",
+  "healthNoDataForType": "No {type} measurements yet.",
+  "@healthNoDataForType": {
+    "placeholders": { "type": { "type": "String" } }
+  },
   "navPeople": "Circle",
   "navYou": "Profile",
   "homeHelloMorning": "Good morning {name}",

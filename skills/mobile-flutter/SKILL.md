@@ -128,6 +128,8 @@ L’utilisateur configure dans Fidel (écran Réglages / Alarmes), au minimum V1
 - Mode **discret** : pas de nom de maladie / médicament (confidentialité), **heure toujours visible** ; l’alarme **sonne toujours** (discret ≠ silencieux)
 - Mode normal : titre = **maladie** (puis liste medocs), corps = détail + heure prévue
 - Accueil Aujourd’hui : Matin / Après-midi / Soir → **cartes créneau** (heure + maladie + état N/M) → sous-lignes medocs ; confirm rapide = **créneau entier**
+- **Onglet Santé** (`HealthScreen`) : gestion des **constantes** (poids, tension, glycémie, etc.) — grille par type, hero dernière mesure, historique, détail `/home/sante/:typeCode`. Priorités selon `maladieCode` actif (`HealthPriorities`). **Pas** de traitements ni prises sur cet onglet.
+- **Onglet Accueil** : action du jour (DoseSlot), KPIs, aperçu constantes → lien « Voir dans Santé », traitements / médicaments
 - **Voix personnalisée** : lue au moment de l’**alarme H0** (pas sur le préavis)
 
 ## Onboarding et auth (référence)

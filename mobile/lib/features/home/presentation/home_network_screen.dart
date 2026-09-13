@@ -13,7 +13,7 @@ import '../../../l10n/app_localizations.dart';
 import '../application/cercle_controller.dart';
 import '../application/home_controller.dart';
 import '../domain/aidant_models.dart';
-import 'widgets/home_skeleton.dart';
+import 'widgets/health_skeleton.dart';
 import 'widgets/sticky_tab_header.dart';
 
 class HomeNetworkScreen extends ConsumerStatefulWidget {
@@ -138,7 +138,7 @@ class _HomeNetworkScreenState extends ConsumerState<HomeNetworkScreen> {
               ),
               children: [
           if (cercle.loading)
-            const HomeCareSkeleton()
+            const HealthSkeleton()
           else ...[
             if (cercle.error != null)
               Padding(

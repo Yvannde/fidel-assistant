@@ -851,8 +851,92 @@ abstract class AppLocalizations {
   /// No description provided for @navCare.
   ///
   /// In en, this message translates to:
-  /// **'Care'**
+  /// **'Health'**
   String get navCare;
+
+  /// No description provided for @healthSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your vitals — weight, blood pressure, blood sugar…'**
+  String get healthSubtitle;
+
+  /// No description provided for @healthRecommended.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended for you'**
+  String get healthRecommended;
+
+  /// No description provided for @healthAllMetrics.
+  ///
+  /// In en, this message translates to:
+  /// **'All your vitals'**
+  String get healthAllMetrics;
+
+  /// No description provided for @healthRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent measurements'**
+  String get healthRecent;
+
+  /// No description provided for @healthRecentEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No measurements yet. Add your first one.'**
+  String get healthRecentEmpty;
+
+  /// No description provided for @healthAddCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a measurement'**
+  String get healthAddCta;
+
+  /// No description provided for @healthEmptyHero.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with one measurement. Now and then is enough.'**
+  String get healthEmptyHero;
+
+  /// No description provided for @healthNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'No measurement yet'**
+  String get healthNoData;
+
+  /// No description provided for @healthDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} d ago'**
+  String healthDaysAgo(int count);
+
+  /// No description provided for @healthViewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View in Health'**
+  String get healthViewAll;
+
+  /// No description provided for @healthRecommendedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended'**
+  String get healthRecommendedBadge;
+
+  /// No description provided for @healthLatestMeasure.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest measurement'**
+  String get healthLatestMeasure;
+
+  /// No description provided for @healthHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get healthHistory;
+
+  /// No description provided for @healthNoDataForType.
+  ///
+  /// In en, this message translates to:
+  /// **'No {type} measurements yet.'**
+  String healthNoDataForType(String type);
 
   /// No description provided for @navPeople.
   ///

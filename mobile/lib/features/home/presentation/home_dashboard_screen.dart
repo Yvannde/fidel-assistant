@@ -192,8 +192,10 @@ class HomeDashboardScreen extends ConsumerWidget {
                 TreatmentBlock(
                   traitement: traitements[i],
                   detail: state.traitementDetails[traitements[i].id],
-                  onTap: () =>
-                      ref.read(homeTabIndexProvider.notifier).state = 1,
+                  onTap: () => context.push(
+                    '/home/medicaments',
+                    extra: traitements[i].id,
+                  ),
                 ),
               ],
             ],
@@ -212,6 +214,7 @@ class HomeDashboardScreen extends ConsumerWidget {
           onAdd: () => AddConstanteSheet.show(context),
           onViewAll: () =>
               ref.read(homeTabIndexProvider.notifier).state = 1,
+          onTileTap: (type) => context.push('/home/sante/${type.code}'),
           subtitle: _summarySubtitle(state, l10n),
         ),
       ] else if (state.isTodaySelected && !state.constantesKnown) ...[
