@@ -47,6 +47,7 @@ class NetworkStatus extends ChangeNotifier {
   DateTime? _lastScheduledFlushAt;
   Timer? _probeTimer;
   bool _probing = false;
+  bool _disposed = false;
 
   NetworkLinkState get state => _state;
 
@@ -57,7 +58,7 @@ class NetworkStatus extends ChangeNotifier {
     if (until == null) return false;
     if (_now().isBefore(until)) return true;
     // Fenêtre écoulée → half-open pour la prochaine tentative
-    if (!_halfOpen) {
+    if (!_disposed && !_halfOpen) {
       _halfOpen = true;
       _breakerOpenUntil = null;
       notifyListeners();
@@ -101,7 +102,7 @@ class NetworkStatus extends ChangeNotifier {
   }
 
   Future<void> runProbe() async {
-    if (_probing) return;
+    if (_disposed || _probing) return;
     // Pendant open strict : pas de probe jusqu’à half-open
     final until = _breakerOpenUntil;
     if (until != null && _now().isBefore(until)) return;
@@ -109,12 +110,14 @@ class NetworkStatus extends ChangeNotifier {
     _probing = true;
     try {
       final ok = await _probe();
+      if (_disposed) return;
       if (ok) {
         _onSuccessSignal();
       } else {
         _onFailSignal();
       }
     } catch (_) {
+      if (_disposed) return;
       _onFailSignal();
     } finally {
       _probing = false;
@@ -187,6 +190,8 @@ class NetworkStatus extends ChangeNotifier {
 
   @override
   void dispose() {
+    if (_disposed) return;
+    _disposed = true;
     stopProbing();
     super.dispose();
   }
@@ -194,7 +199,7 @@ class NetworkStatus extends ChangeNotifier {
 
 final networkStatusProvider = ChangeNotifierProvider<NetworkStatus>((ref) {
   final client = ref.watch(apiClientProvider);
-  final status = NetworkStatus(
+  return NetworkStatus(
     probe: () async {
       try {
         final res = await client.get<Map<String, dynamic>>(
@@ -212,6 +217,4 @@ final networkStatusProvider = ChangeNotifierProvider<NetworkStatus>((ref) {
       }
     },
   );
-  ref.onDispose(status.dispose);
-  return status;
 });
