@@ -225,7 +225,6 @@ class HomeController extends StateNotifier<HomeUiState> {
     final prefs = _ref.read(sharedPreferencesProvider);
     final cached = HomeProfileCache.read(prefs);
     if (cached != null) return cached;
-
     final session = _ref.read(authSessionProvider);
     if (session == null && dashboard == null) return null;
 
