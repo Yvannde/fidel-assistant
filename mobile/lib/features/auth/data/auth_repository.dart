@@ -46,7 +46,7 @@ class AuthRepository {
         },
         skipAuth: true,
       );
-      return _persistSession(res.data ?? {});
+      return await _persistSession(res.data ?? {});
     } on DioException catch (e) {
       ApiClient.throwApi(e);
     }
@@ -93,7 +93,7 @@ class AuthRepository {
         },
         skipAuth: true,
       );
-      return _persistSession(res.data ?? {});
+      return await _persistSession(res.data ?? {});
     } on DioException catch (e) {
       ApiClient.throwApi(e);
     }

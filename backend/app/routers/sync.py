@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.deps import get_current_user, get_db
 from app.models import User
-from app.schemas.sync import SyncPushIn, SyncPushOut, SyncPullOut
+from app.schemas.sync import SyncPullOut, SyncPushIn, SyncPushOut
 from app.services import sync_service
 
 router = APIRouter(prefix="/sync", tags=["sync"])
