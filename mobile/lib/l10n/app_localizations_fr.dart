@@ -1013,6 +1013,32 @@ class AppLocalizationsFr extends AppLocalizations {
   String get homeTreatmentOngoing => 'Traitement en cours';
 
   @override
+  String get homeTreatmentEndAction => 'Marquer terminé';
+
+  @override
+  String get homeTreatmentEndTitle => 'Terminer ce traitement ?';
+
+  @override
+  String get homeTreatmentEndBody =>
+      'Les rappels médicaments pour cette maladie s’arrêtent. Tu pourras toujours en ajouter un nouveau plus tard.';
+
+  @override
+  String get homeTreatmentEndConfirm => 'Oui, terminer';
+
+  @override
+  String get homeTreatmentEndedToast => 'Traitement terminé — rappels arrêtés.';
+
+  @override
+  String get configDateFinLabel => 'Date de fin prévue (optionnel)';
+
+  @override
+  String get configDateFinHint =>
+      'Si tu la connais, on arrêtera automatiquement les rappels après cette date.';
+
+  @override
+  String get configDateFinClear => 'Pas de date de fin';
+
+  @override
   String get homePhaseDebut => 'Début';
 
   @override

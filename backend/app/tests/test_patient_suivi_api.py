@@ -234,3 +234,69 @@ async def test_list_traitements_and_medicaments(
     r = await client.get(f"{api}/patients/me/medicaments", headers=headers)
     assert r.status_code == 200, r.text
     assert r.json() == []
+
+
+@pytest.mark.asyncio
+async def test_terminate_traitement_stops_dashboard_and_meds(
+    client: AsyncClient,
+    auth_prefix: str,
+    onboarding_prefix: str,
+    otp_inbox: dict[str, str],
+    cgu_version: str,
+) -> None:
+    from app.core.config import settings
+
+    api = settings.api_v1_prefix
+    headers, _ctx = await _onboard_patient(
+        client,
+        auth_prefix,
+        onboarding_prefix,
+        otp_inbox,
+        cgu_version,
+        email="suivi.termine@example.com",
+    )
+
+    r = await client.get(f"{api}/patients/me/dashboard", headers=headers)
+    assert r.status_code == 200, r.text
+    traitement_id = r.json()["traitements"][0]["id"]
+
+    r = await client.post(
+        f"{api}/traitements/{traitement_id}/medicaments",
+        headers=headers,
+        json={
+            "nom": "Rifampicine",
+            "dosage": "300 mg",
+            "forme": "gelule",
+            "horaires": [{"heure": "09:00:00", "jours": ["tous"]}],
+        },
+    )
+    assert r.status_code == 201, r.text
+    med_id = r.json()["id"]
+
+    r = await client.get(f"{api}/patients/me/prises", headers=headers)
+    assert r.status_code == 200, r.text
+    assert len(r.json()) >= 1
+
+    r = await client.patch(
+        f"{api}/patients/me/traitements/{traitement_id}",
+        headers=headers,
+        json={"statut": "termine"},
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["statut"] == "termine"
+    assert body["date_fin_prevue"] is not None
+
+    r = await client.get(f"{api}/patients/me/dashboard", headers=headers)
+    assert r.status_code == 200, r.text
+    assert r.json()["traitements"] == []
+    assert r.json()["prises_aujourdhui"] == []
+
+    r = await client.get(f"{api}/patients/me/traitements", headers=headers)
+    assert r.status_code == 200, r.text
+    assert r.json() == []
+
+    r = await client.get(f"{api}/patients/me/medicaments", headers=headers)
+    assert r.status_code == 200, r.text
+    meds = r.json()
+    assert any(m["id"] == med_id and m["actif"] is False for m in meds) or meds == []

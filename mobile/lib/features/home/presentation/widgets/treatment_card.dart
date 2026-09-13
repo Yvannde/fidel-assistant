@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/premium.dart';
@@ -12,11 +13,13 @@ class TreatmentBlock extends StatelessWidget {
     required this.traitement,
     required this.detail,
     this.onTap,
+    this.onTerminate,
   });
 
   final DashboardTraitement traitement;
   final TraitementDetail? detail;
   final VoidCallback? onTap;
+  final VoidCallback? onTerminate;
 
   @override
   Widget build(BuildContext context) {
@@ -95,6 +98,32 @@ class TreatmentBlock extends StatelessWidget {
               color: tokens.textSecondary,
             ),
           ),
+        if (onTerminate != null) ...[
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: () {
+                HapticFeedback.selectionClick();
+                onTerminate!();
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: tokens.textSecondary,
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                l10n.homeTreatmentEndAction,
+                style: const TextStyle(
+                  fontFamily: AppTheme.fontFamily,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
 
@@ -123,19 +152,23 @@ class TreatmentCard extends StatelessWidget {
     required this.traitement,
     required this.detail,
     this.onTap,
+    this.onTerminate,
   });
 
   final DashboardTraitement traitement;
   final TraitementDetail? detail;
   final VoidCallback? onTap;
+  final VoidCallback? onTerminate;
 
   @override
   Widget build(BuildContext context) {
     return PremiumCard(
-      onTap: onTap,
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       child: TreatmentBlock(
         traitement: traitement,
         detail: detail,
+        onTap: onTap,
+        onTerminate: onTerminate,
       ),
     );
   }

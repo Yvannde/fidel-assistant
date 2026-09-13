@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/premium.dart';
 import '../application/home_controller.dart';
 import '../domain/constante_models.dart';
+import '../domain/dashboard_models.dart';
 import '../domain/health_view_model.dart';
 import 'widgets/add_constante_sheet.dart';
 import 'widgets/health_hero_card.dart';
@@ -96,6 +97,11 @@ class HealthScreen extends ConsumerWidget {
     final latest = vm.latestOverall;
     final heroSeries = latest != null ? vm.seriesFor(latest.type) : null;
     final recommended = vm.recommendedOrdered;
+    final dash = state.dashboard;
+    final traitements = dash?.traitements ?? const <DashboardTraitement>[];
+    final unconfigured = dash?.firstUnconfigured;
+    final medsTargetId = unconfigured?.id ??
+        (traitements.isNotEmpty ? traitements.first.id : null);
 
     return [
       RepaintBoundary(
@@ -117,8 +123,20 @@ class HealthScreen extends ConsumerWidget {
           vm: vm,
           onTypeTap: (type) => context.push('/home/sante/${type.code}'),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
       ],
+      _CareQuickActions(
+        onTraitement: () => context.push('/home/traitement'),
+        onMeds: medsTargetId == null
+            ? null
+            : () => context.push(
+                  '/home/medicaments',
+                  extra: medsTargetId,
+                ),
+        onVital: () => AddConstanteSheet.show(context),
+        medsNeedsConfig: unconfigured != null,
+      ),
+      const SizedBox(height: 20),
       _SectionLabel(title: l10n.healthAllMetrics),
       const SizedBox(height: 10),
       RepaintBoundary(
@@ -196,6 +214,115 @@ class _SectionLabel extends StatelessWidget {
         fontWeight: FontWeight.w700,
         letterSpacing: 0.2,
         color: tokens.textSecondary,
+      ),
+    );
+  }
+}
+
+/// 3 pastilles : traitement, médicaments, mesure.
+class _CareQuickActions extends StatelessWidget {
+  const _CareQuickActions({
+    required this.onTraitement,
+    required this.onMeds,
+    required this.onVital,
+    required this.medsNeedsConfig,
+  });
+
+  final VoidCallback onTraitement;
+  final VoidCallback? onMeds;
+  final VoidCallback onVital;
+  final bool medsNeedsConfig;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Row(
+      children: [
+        Expanded(
+          child: _QuickActionChip(
+            icon: IconsaxPlusLinear.hospital,
+            label: l10n.homeCareActionTraitement,
+            onTap: onTraitement,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _QuickActionChip(
+            icon: IconsaxPlusLinear.health,
+            label: medsNeedsConfig
+                ? l10n.homeCareActionMedsSetup
+                : l10n.homeCareActionMeds,
+            onTap: onMeds,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _QuickActionChip(
+            icon: IconsaxPlusLinear.activity,
+            label: l10n.homeCareActionVital,
+            onTap: onVital,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _QuickActionChip extends StatelessWidget {
+  const _QuickActionChip({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = ThemeTokens.of(context);
+    final enabled = onTap != null;
+
+    return Material(
+      color: enabled
+          ? AppColors.primary.withValues(alpha: tokens.isDark ? 0.16 : 0.07)
+          : tokens.elevated,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: enabled
+            ? () {
+                HapticFeedback.selectionClick();
+                onTap!();
+              }
+            : null,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          child: Column(
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: enabled ? AppColors.primary : tokens.textSecondary,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: AppTheme.fontFamily,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  height: 1.2,
+                  color: enabled ? tokens.textPrimary : tokens.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -197,6 +197,12 @@ class HomeDashboardScreen extends ConsumerWidget {
                     '/home/medicaments',
                     extra: traitements[i].id,
                   ),
+                  onTerminate: () => _confirmTerminateTraitement(
+                    context,
+                    ref,
+                    traitements[i],
+                    l10n,
+                  ),
                 ),
               ],
             ],
@@ -307,6 +313,49 @@ class HomeDashboardScreen extends ConsumerWidget {
     try {
       await ref.read(homeControllerProvider.notifier).confirmPrises(pending);
       if (context.mounted) AppToast.success(context, l10n.homeTakenToast);
+    } catch (e) {
+      if (context.mounted) {
+        AppToast.error(
+          context,
+          e is ApiException ? e.message : l10n.genericError,
+        );
+      }
+    }
+  }
+
+  Future<void> _confirmTerminateTraitement(
+    BuildContext context,
+    WidgetRef ref,
+    DashboardTraitement traitement,
+    AppLocalizations l10n,
+  ) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.homeTreatmentEndTitle),
+        content: Text(
+          '${traitement.maladieNom}\n\n${l10n.homeTreatmentEndBody}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(MaterialLocalizations.of(ctx).cancelButtonLabel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n.homeTreatmentEndConfirm),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    try {
+      await ref
+          .read(homeControllerProvider.notifier)
+          .terminateTraitement(traitement.id);
+      if (context.mounted) {
+        AppToast.success(context, l10n.homeTreatmentEndedToast);
+      }
     } catch (e) {
       if (context.mounted) {
         AppToast.error(

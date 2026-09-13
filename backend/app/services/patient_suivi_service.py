@@ -65,15 +65,21 @@ def _combine_local(d: date, t: time, tz: ZoneInfo) -> datetime:
 
 
 async def _traitement_for_patient(
-    db: AsyncSession, *, patient_id: UUID, traitement_id: UUID
+    db: AsyncSession,
+    *,
+    patient_id: UUID,
+    traitement_id: UUID,
+    actif_only: bool = True,
 ) -> PatientTraitement:
+    filters = [
+        PatientTraitement.id == traitement_id,
+        PatientTraitement.patient_id == patient_id,
+    ]
+    if actif_only:
+        filters.append(PatientTraitement.statut == "actif")
     result = await db.execute(
         select(PatientTraitement)
-        .where(
-            PatientTraitement.id == traitement_id,
-            PatientTraitement.patient_id == patient_id,
-            PatientTraitement.statut == "actif",
-        )
+        .where(*filters)
         .options(
             selectinload(PatientTraitement.maladie),
             selectinload(PatientTraitement.medicaments).selectinload(Medicament.horaires),
@@ -87,6 +93,52 @@ async def _traitement_for_patient(
             status_code=404,
         )
     return traitement
+
+
+async def _cascade_end_traitement(
+    db: AsyncSession, *, traitement: PatientTraitement, today: date
+) -> None:
+    """Passe le traitement en terminé et coupe meds / horaires / prises en attente."""
+    traitement.statut = "termine"
+    if traitement.date_fin_prevue is None or traitement.date_fin_prevue > today:
+        traitement.date_fin_prevue = today
+    for med in traitement.medicaments or []:
+        med.actif = False
+        for h in med.horaires or []:
+            h.actif = False
+            pending = (
+                await db.execute(
+                    select(Prise).where(
+                        Prise.medicament_horaire_id == h.id,
+                        Prise.statut == "en_attente",
+                    )
+                )
+            ).scalars().all()
+            for prise in pending:
+                prise.statut = "manquee"
+
+
+async def _expire_due_traitements(
+    db: AsyncSession, *, patient_id: UUID, today: date
+) -> None:
+    """Auto-termine les traitements actifs dont la date de fin est dépassée."""
+    result = await db.execute(
+        select(PatientTraitement)
+        .where(
+            PatientTraitement.patient_id == patient_id,
+            PatientTraitement.statut == "actif",
+            PatientTraitement.date_fin_prevue.is_not(None),
+            PatientTraitement.date_fin_prevue < today,
+        )
+        .options(
+            selectinload(PatientTraitement.medicaments).selectinload(Medicament.horaires),
+        )
+    )
+    expired = list(result.scalars().all())
+    for t in expired:
+        await _cascade_end_traitement(db, traitement=t, today=today)
+    if expired:
+        await db.flush()
 
 
 async def _medicament_for_patient(
@@ -204,6 +256,7 @@ async def get_dashboard(db: AsyncSession, *, user: User) -> dict:
     patient = _require_patient(user)
     tz = _patient_tz(user)
     today = datetime.now(tz).date()
+    await _expire_due_traitements(db, patient_id=patient.user_id, today=today)
 
     result = await db.execute(
         select(PatientTraitement)
@@ -260,6 +313,7 @@ async def list_traitements(db: AsyncSession, *, user: User) -> list[dict]:
     patient = _require_patient(user)
     tz = _patient_tz(user)
     today = datetime.now(tz).date()
+    await _expire_due_traitements(db, patient_id=patient.user_id, today=today)
 
     result = await db.execute(
         select(PatientTraitement)
@@ -313,6 +367,54 @@ async def create_traitement(db: AsyncSession, *, user: User, data: dict) -> dict
     await db.commit()
     await db.refresh(traitement, attribute_names=["maladie", "medicaments"])
     today = datetime.now(_patient_tz(user)).date()
+    return _serialize_traitement(traitement, today)
+
+
+VALID_TRAITEMENT_STATUTS = frozenset({"actif", "suspendu", "termine"})
+
+
+async def update_traitement(
+    db: AsyncSession, *, user: User, traitement_id: UUID, data: dict
+) -> dict:
+    patient = _require_patient(user)
+    tz = _patient_tz(user)
+    today = datetime.now(tz).date()
+    traitement = await _traitement_for_patient(
+        db,
+        patient_id=patient.user_id,
+        traitement_id=traitement_id,
+        actif_only=False,
+    )
+
+    if "phase" in data and data["phase"] is not None:
+        if data["phase"] not in VALID_PHASES:
+            raise AppException(
+                "TYPE_INVALIDE", "Phase de traitement invalide.", status_code=400
+            )
+        traitement.phase = data["phase"]
+
+    if "date_fin_prevue" in data:
+        traitement.date_fin_prevue = data["date_fin_prevue"]
+
+    new_statut = data.get("statut")
+    if new_statut is not None:
+        if new_statut not in VALID_TRAITEMENT_STATUTS:
+            raise AppException(
+                "TYPE_INVALIDE", "Statut de traitement invalide.", status_code=400
+            )
+        if new_statut == "termine":
+            await _cascade_end_traitement(db, traitement=traitement, today=today)
+        else:
+            traitement.statut = new_statut
+    elif (
+        traitement.statut == "actif"
+        and traitement.date_fin_prevue is not None
+        and traitement.date_fin_prevue < today
+    ):
+        await _cascade_end_traitement(db, traitement=traitement, today=today)
+
+    await db.commit()
+    await db.refresh(traitement, attribute_names=["maladie", "medicaments"])
     return _serialize_traitement(traitement, today)
 
 
@@ -537,6 +639,7 @@ async def list_prises(
         .join(PatientTraitement, Medicament.patient_traitement_id == PatientTraitement.id)
         .where(
             PatientTraitement.patient_id == patient.user_id,
+            PatientTraitement.statut == "actif",
             Medicament.actif.is_(True),
             MedicamentHoraire.actif.is_(True),
         )
@@ -555,6 +658,8 @@ async def list_prises(
         .join(PatientTraitement, Medicament.patient_traitement_id == PatientTraitement.id)
         .where(
             PatientTraitement.patient_id == patient.user_id,
+            PatientTraitement.statut == "actif",
+            Medicament.actif.is_(True),
             Prise.heure_prevue >= day_start,
             Prise.heure_prevue <= day_end,
         )

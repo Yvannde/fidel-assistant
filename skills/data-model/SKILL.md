@@ -235,10 +235,10 @@ Exécution               medicaments → medicament_horaires → prises
 | phase | enum | `debut`, `en_cours`, `maintenance`, `inconnu` |
 | en_traitement | boolean | |
 | date_debut | date | **obligatoire** si `en_traitement=true` (règle API) |
-| date_fin_prevue | date | nullable |
+| date_fin_prevue | date | nullable — si dépassée et `statut=actif`, le backend auto-termine (cascade meds) |
 | maladie_libelle | string | nullable — si maladie = `autre` |
 | lieu_suivi | string | nullable — hôpital / CMS |
-| statut | enum | `actif`, `suspendu`, `termine` — indexé |
+| statut | enum | `actif`, `suspendu`, `termine` — indexé ; `termine` via `PATCH /patients/me/traitements/{id}` (consentement patient) |
 | created_at / updated_at | timestamp | |
 
 Un patient peut avoir plusieurs traitements actifs simultanément (plusieurs maladies).  

@@ -1868,6 +1868,54 @@ abstract class AppLocalizations {
   /// **'Treatment in progress'**
   String get homeTreatmentOngoing;
 
+  /// No description provided for @homeTreatmentEndAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as finished'**
+  String get homeTreatmentEndAction;
+
+  /// No description provided for @homeTreatmentEndTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'End this treatment?'**
+  String get homeTreatmentEndTitle;
+
+  /// No description provided for @homeTreatmentEndBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Medicine reminders for this condition will stop. You can always add a new treatment later.'**
+  String get homeTreatmentEndBody;
+
+  /// No description provided for @homeTreatmentEndConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, end it'**
+  String get homeTreatmentEndConfirm;
+
+  /// No description provided for @homeTreatmentEndedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Treatment ended — reminders stopped.'**
+  String get homeTreatmentEndedToast;
+
+  /// No description provided for @configDateFinLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected end date (optional)'**
+  String get configDateFinLabel;
+
+  /// No description provided for @configDateFinHint.
+  ///
+  /// In en, this message translates to:
+  /// **'If you know it, we’ll stop reminders automatically after that day.'**
+  String get configDateFinHint;
+
+  /// No description provided for @configDateFinClear.
+  ///
+  /// In en, this message translates to:
+  /// **'No end date'**
+  String get configDateFinClear;
+
   /// No description provided for @homePhaseDebut.
   ///
   /// In en, this message translates to:

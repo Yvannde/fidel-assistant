@@ -1,4 +1,5 @@
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,6 +11,7 @@ from app.schemas.medication import (
     MedicamentOut,
     PatientTraitementCreateIn,
     PatientTraitementOut,
+    PatientTraitementUpdateIn,
     PriseOut,
 )
 from app.services import patient_suivi_service
@@ -43,6 +45,21 @@ async def create_traitement(
     data = body.model_dump()
     return PatientTraitementOut(
         **await patient_suivi_service.create_traitement(db, user=user, data=data)
+    )
+
+
+@router.patch("/me/traitements/{traitement_id}", response_model=PatientTraitementOut)
+async def update_traitement(
+    traitement_id: UUID,
+    body: PatientTraitementUpdateIn,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> PatientTraitementOut:
+    data = body.model_dump(exclude_unset=True)
+    return PatientTraitementOut(
+        **await patient_suivi_service.update_traitement(
+            db, user=user, traitement_id=traitement_id, data=data
+        )
     )
 
 

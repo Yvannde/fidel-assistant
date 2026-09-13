@@ -1004,6 +1004,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeTreatmentOngoing => 'Treatment in progress';
 
   @override
+  String get homeTreatmentEndAction => 'Mark as finished';
+
+  @override
+  String get homeTreatmentEndTitle => 'End this treatment?';
+
+  @override
+  String get homeTreatmentEndBody =>
+      'Medicine reminders for this condition will stop. You can always add a new treatment later.';
+
+  @override
+  String get homeTreatmentEndConfirm => 'Yes, end it';
+
+  @override
+  String get homeTreatmentEndedToast => 'Treatment ended — reminders stopped.';
+
+  @override
+  String get configDateFinLabel => 'Expected end date (optional)';
+
+  @override
+  String get configDateFinHint =>
+      'If you know it, we’ll stop reminders automatically after that day.';
+
+  @override
+  String get configDateFinClear => 'No end date';
+
+  @override
   String get homePhaseDebut => 'Start';
 
   @override

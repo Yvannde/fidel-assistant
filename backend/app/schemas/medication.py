@@ -75,6 +75,16 @@ class PatientTraitementCreateIn(BaseModel):
     attributs: dict[str, object] | None = None
 
 
+class PatientTraitementUpdateIn(BaseModel):
+    statut: str | None = Field(
+        default=None, pattern="^(actif|suspendu|termine)$"
+    )
+    date_fin_prevue: date | None = None
+    phase: str | None = Field(
+        default=None, pattern="^(debut|en_cours|maintenance|inconnu)$"
+    )
+
+
 class PatientTraitementOut(BaseModel):
     id: UUID
     maladie_id: UUID

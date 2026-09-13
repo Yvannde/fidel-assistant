@@ -104,8 +104,9 @@ Pas de `POST /onboarding/role`. Voir `auth-onboarding/SKILL.md`.
 
 | Méthode | Chemin | Entrée | Sortie | Erreurs possibles |
 |---|---|---|---|---|
-| GET | `/patients/me/traitements` | 🔒 | `[PatientTraitement]` | — |
-| POST | `/patients/me/traitements` | 🔒 `maladie_id, phase, date_debut?` | `PatientTraitement` créé | — |
+| GET | `/patients/me/traitements` | 🔒 | `[PatientTraitement]` — uniquement `statut=actif` (auto-expire si `date_fin_prevue` passée) | — |
+| POST | `/patients/me/traitements` | 🔒 `maladie_id, phase, date_debut?, date_fin_prevue?` | `PatientTraitement` créé | — |
+| PATCH | `/patients/me/traitements/{id}` | 🔒 `statut?` (`actif`\|`suspendu`\|`termine`), `date_fin_prevue?`, `phase?` | `PatientTraitement` — `termine` désactive meds/horaires et marque les prises `en_attente` en `manquee` | `TRAITEMENT_NOT_FOUND` |
 | POST | `/traitements/{id}/medicaments` | 🔒 `nom, dosage, forme, horaires: [{heure, jours}]` | `Medicament` créé (avec ses `MedicamentHoraire`) | `TRAITEMENT_NOT_FOUND` |
 | GET | `/patients/me/medicaments` | 🔒 | `[Medicament]` avec horaires imbriqués | — |
 | PATCH | `/medicaments/{id}` | 🔒 champs modifiables | `Medicament` mis à jour | `MEDICAMENT_NOT_FOUND` |
