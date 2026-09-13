@@ -96,12 +96,10 @@ Future<void> main() async {
 
     final checkIn = container.read(checkInReminderServiceProvider);
     await checkIn.ensureChannel();
-    // Debug : forcer une notif pour valider le rendu des 4 icônes.
-    if (kDebugMode) {
-      await checkIn.showNow();
-    }
+    // Retire une éventuelle notif debug forcée des builds précédents.
+    await checkIn.dismissDebugNotification();
   } catch (e, st) {
-    debugPrint('main: checkIn channel/showNow failed: $e\n$st');
+    debugPrint('main: checkIn channel init failed: $e\n$st');
   }
   unawaited(maybeRunLiveAlarmTest(alarms));
 

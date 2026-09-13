@@ -9,19 +9,7 @@ abstract final class HomeProfileCache {
   static const key = 'home_profile_cache_v1';
 
   static Future<void> save(SharedPreferences prefs, HomeProfile profile) async {
-    await prefs.setString(
-      key,
-      jsonEncode({
-        'nom_complet': profile.nomComplet,
-        'has_patient_profile': profile.hasPatientProfile,
-        'is_aidant': profile.isAidant,
-        'email': profile.email,
-        'phone': profile.phone,
-        'langue': profile.langue,
-        'fuseau_horaire': profile.fuseauHoraire,
-        'has_password': profile.hasPassword,
-      }),
-    );
+    await prefs.setString(key, jsonEncode(profile.toCacheJson()));
   }
 
   static HomeProfile? read(SharedPreferences prefs) {

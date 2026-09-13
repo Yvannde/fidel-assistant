@@ -99,6 +99,12 @@ class HomeProfileScreen extends ConsumerWidget {
                 ),
                 if (state.hasPatient) ...[
                   ProfileSettingsTile(
+                    icon: IconsaxPlusLinear.heart,
+                    title: l10n.profileFicheSanteTitle,
+                    subtitle: l10n.profileFicheSanteTileHint,
+                    onTap: () => context.push('/home/profile/fiche-sante'),
+                  ),
+                  ProfileSettingsTile(
                     icon: IconsaxPlusLinear.setting_2,
                     title: l10n.profilePatientSettingsTitle,
                     subtitle: l10n.profilePatientSettingsTileHint,

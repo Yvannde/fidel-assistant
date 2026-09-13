@@ -85,8 +85,8 @@ Pas de `POST /onboarding/role`. Voir `auth-onboarding/SKILL.md`.
 | Méthode | Chemin | Entrée | Sortie | Erreurs possibles |
 |---|---|---|---|---|
 | GET | `/patients/me/dashboard` | 🔒 | `{prochaine_action, medicaments_configures, notifications_accordees, traitements[], prises_aujourdhui[]}` — `prochaine_action` : `activer_notifications` \| `configurer_medicaments` \| `aucune` | `NOT_A_PATIENT` |
-| GET | `/patients/me` | 🔒 | objet `Patient` complet | `NOT_A_PATIENT` |
-| PATCH | `/patients/me` | 🔒 `localisation?`, `nom_complet?`, `photo_url?`, `notifications_accordees?`, `batterie_exemptee?`, `notifications_discretes?` | objet `Patient` mis à jour | `NOT_A_PATIENT` |
+| GET | `/patients/me` | 🔒 | objet `Patient` complet (incl. fiche santé identité) | `NOT_A_PATIENT` |
+| PATCH | `/patients/me` | 🔒 `localisation?`, `nom_complet?`, `photo_url?`, `notifications_accordees?`, `batterie_exemptee?`, `notifications_discretes?`, `groupe_sanguin?`+`rhesus?`+`confirm_groupe_rhesus`, `electrophorese?`+`confirm_electrophorese`, `taille_cm?`+`confirm_taille` — enums fermés ; flags confirm obligatoires pour écrire la fiche santé | objet `Patient` mis à jour | `NOT_A_PATIENT`, `FICHE_SANTE_CONFIRMATION_REQUISE`, `FICHE_SANTE_INVALIDE`, `FICHE_SANTE_INCOMPLETE` |
 | POST | `/patients/me/sync-code` | 🔒 | `{code, qr_payload, expires_at}` | — |
 | GET | `/patients/me/aidants` | 🔒 | `[{aidant_id, nom, statut, niveau_permission}]` | — |
 | PATCH | `/patients/me/aidants/{aidant_id}/permissions` | 🔒 `niveau_permission` | objet mis à jour | `AIDANT_NOT_FOUND` |

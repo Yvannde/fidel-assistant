@@ -147,6 +147,14 @@ Un user **sans** ligne `Patient` peut quand même être aidant.
 | notifications_accordees | boolean | |
 | batterie_exemptee | boolean | |
 | notifications_discretes | boolean | défaut false — ex. VIH |
+| groupe_sanguin | string | nullable — enum `A`\|`B`\|`AB`\|`O` — fiche santé identité |
+| rhesus | string | nullable — enum `+`\|`-` |
+| electrophorese | string | nullable — enum `AA`\|`AS`\|`AC`\|`SS`\|`SC`\|`CC`\|`ne_sait_pas` |
+| taille_cm | integer | nullable — 120–220 |
+| groupe_sanguin_confirmed_at | timestamp | nullable — 2ᵉ validation patient |
+| rhesus_confirmed_at | timestamp | nullable |
+| electrophorese_confirmed_at | timestamp | nullable |
+| taille_cm_confirmed_at | timestamp | nullable |
 | created_at / updated_at | timestamp | |
 
 ---

@@ -5,7 +5,7 @@ import '../../../../core/theme/premium.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/dashboard_models.dart';
 
-/// En-tête compte : avatar, nom, email, chips capacités.
+/// En-tête compte : avatar, nom, email, chips capacités + fiche santé.
 class ProfileHeaderCard extends StatelessWidget {
   const ProfileHeaderCard({super.key, required this.profile});
 
@@ -18,6 +18,7 @@ class ProfileHeaderCard extends StatelessWidget {
     final name = profile.headerName.isEmpty
         ? l10n.profileFallbackName
         : profile.headerName;
+    final ficheChips = profile.ficheSanteChips;
 
     return PremiumCard(
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
@@ -61,6 +62,16 @@ class ProfileHeaderCard extends StatelessWidget {
                     color: tokens.textPrimary,
                   ),
                 ),
+                if (ficheChips.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      for (final label in ficheChips) _Chip(label: label),
+                    ],
+                  ),
+                ],
                 if (profile.email.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(

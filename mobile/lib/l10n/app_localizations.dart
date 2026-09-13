@@ -2666,6 +2666,114 @@ abstract class AppLocalizations {
   /// **'Notifications, battery, discreet mode'**
   String get profilePatientSettingsTileHint;
 
+  /// No description provided for @profileFicheSanteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Health profile'**
+  String get profileFicheSanteTitle;
+
+  /// No description provided for @profileFicheSanteTileHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Blood type, electrophoresis, height'**
+  String get profileFicheSanteTileHint;
+
+  /// No description provided for @profileFicheSanteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick from the list, then confirm. No free typing — to avoid mistakes.'**
+  String get profileFicheSanteHint;
+
+  /// No description provided for @profileFicheSanteSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Medical identity'**
+  String get profileFicheSanteSection;
+
+  /// No description provided for @profileFicheSanteGroupe.
+  ///
+  /// In en, this message translates to:
+  /// **'Blood type'**
+  String get profileFicheSanteGroupe;
+
+  /// No description provided for @profileFicheSanteElectro.
+  ///
+  /// In en, this message translates to:
+  /// **'Electrophoresis'**
+  String get profileFicheSanteElectro;
+
+  /// No description provided for @profileFicheSanteTaille.
+  ///
+  /// In en, this message translates to:
+  /// **'Height'**
+  String get profileFicheSanteTaille;
+
+  /// No description provided for @profileFicheSanteUnset.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set yet'**
+  String get profileFicheSanteUnset;
+
+  /// No description provided for @profileFicheSanteNeSaitPas.
+  ///
+  /// In en, this message translates to:
+  /// **'I don’t know'**
+  String get profileFicheSanteNeSaitPas;
+
+  /// No description provided for @profileFicheSanteGroupePick.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your blood group'**
+  String get profileFicheSanteGroupePick;
+
+  /// No description provided for @profileFicheSanteRhesusPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Rh factor'**
+  String get profileFicheSanteRhesusPick;
+
+  /// No description provided for @profileFicheSanteElectroPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose electrophoresis'**
+  String get profileFicheSanteElectroPick;
+
+  /// No description provided for @profileFicheSanteTaillePick.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your height'**
+  String get profileFicheSanteTaillePick;
+
+  /// No description provided for @profileFicheSanteTailleValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{cm} cm'**
+  String profileFicheSanteTailleValue(int cm);
+
+  /// No description provided for @profileFicheSanteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm?'**
+  String get profileFicheSanteConfirmTitle;
+
+  /// No description provided for @profileFicheSanteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Save “{value}” on your profile.'**
+  String profileFicheSanteConfirmBody(String value);
+
+  /// No description provided for @profileFicheSanteConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get profileFicheSanteConfirmAction;
+
+  /// No description provided for @profileFicheSanteCorrectAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Correct'**
+  String get profileFicheSanteCorrectAction;
+
   /// No description provided for @profilePatientSettingsHint.
   ///
   /// In en, this message translates to:

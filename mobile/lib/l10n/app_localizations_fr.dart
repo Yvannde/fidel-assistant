@@ -1443,6 +1443,66 @@ class AppLocalizationsFr extends AppLocalizations {
       'Notifications, batterie, mode discret';
 
   @override
+  String get profileFicheSanteTitle => 'Fiche santé';
+
+  @override
+  String get profileFicheSanteTileHint =>
+      'Groupe sanguin, électrophorèse, taille';
+
+  @override
+  String get profileFicheSanteHint =>
+      'Choisis parmi les propositions, puis confirme. Aucune saisie libre — pour éviter une erreur.';
+
+  @override
+  String get profileFicheSanteSection => 'Identité médicale';
+
+  @override
+  String get profileFicheSanteGroupe => 'Groupe sanguin';
+
+  @override
+  String get profileFicheSanteElectro => 'Électrophorèse';
+
+  @override
+  String get profileFicheSanteTaille => 'Taille';
+
+  @override
+  String get profileFicheSanteUnset => 'À renseigner';
+
+  @override
+  String get profileFicheSanteNeSaitPas => 'Je ne sais pas';
+
+  @override
+  String get profileFicheSanteGroupePick => 'Choisis ton groupe';
+
+  @override
+  String get profileFicheSanteRhesusPick => 'Choisis le rhésus';
+
+  @override
+  String get profileFicheSanteElectroPick => 'Choisis ton électrophorèse';
+
+  @override
+  String get profileFicheSanteTaillePick => 'Choisis ta taille';
+
+  @override
+  String profileFicheSanteTailleValue(int cm) {
+    return '$cm cm';
+  }
+
+  @override
+  String get profileFicheSanteConfirmTitle => 'Tu confirmes ?';
+
+  @override
+  String profileFicheSanteConfirmBody(String value) {
+    return 'Enregistrer « $value » sur ton profil.';
+  }
+
+  @override
+  String get profileFicheSanteConfirmAction => 'Confirmer';
+
+  @override
+  String get profileFicheSanteCorrectAction => 'Corriger';
+
+  @override
   String get profilePatientSettingsHint =>
       'Ces options concernent uniquement ton suivi patient sur cet appareil et ce compte.';
 

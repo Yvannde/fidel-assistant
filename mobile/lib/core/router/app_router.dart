@@ -29,6 +29,7 @@ import '../../features/home/presentation/profile_alarm_settings_screen.dart';
 import '../../features/home/presentation/profile_consent_screen.dart';
 import '../../features/home/presentation/profile_contacts_urgence_screen.dart';
 import '../../features/home/presentation/profile_delete_account_screen.dart';
+import '../../features/home/presentation/profile_fiche_sante_screen.dart';
 import '../../features/home/presentation/profile_patient_settings_screen.dart';
 import '../../features/home/presentation/profile_voix_screen.dart';
 import '../../features/home/presentation/alarm_ring_screen.dart';
@@ -387,6 +388,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => _softPage(
           state: state,
           child: const ProfilePatientSettingsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/home/profile/fiche-sante',
+        pageBuilder: (context, state) => _softPage(
+          state: state,
+          child: const ProfileFicheSanteScreen(),
         ),
       ),
       GoRoute(

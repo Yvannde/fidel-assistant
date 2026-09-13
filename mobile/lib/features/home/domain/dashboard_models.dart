@@ -8,6 +8,10 @@ class HomeProfile {
     this.langue,
     this.fuseauHoraire,
     this.hasPassword = false,
+    this.groupeSanguin,
+    this.rhesus,
+    this.electrophorese,
+    this.tailleCm,
   });
 
   final String nomComplet;
@@ -18,6 +22,39 @@ class HomeProfile {
   final String? langue;
   final String? fuseauHoraire;
   final bool hasPassword;
+  final String? groupeSanguin;
+  final String? rhesus;
+  final String? electrophorese;
+  final int? tailleCm;
+
+  /// Chip « O+ » si groupe + rhésus confirmés.
+  String? get groupeRhesusLabel {
+    final g = groupeSanguin;
+    final r = rhesus;
+    if (g == null || g.isEmpty || r == null || r.isEmpty) return null;
+    return '$g$r';
+  }
+
+  /// Chip électrophorèse (masque ne_sait_pas).
+  String? get electrophoreseChip {
+    final e = electrophorese;
+    if (e == null || e.isEmpty || e == 'ne_sait_pas') return null;
+    return e;
+  }
+
+  String? get tailleChip {
+    final t = tailleCm;
+    if (t == null) return null;
+    return '$t cm';
+  }
+
+  List<String> get ficheSanteChips {
+    return [
+      if (groupeRhesusLabel != null) groupeRhesusLabel!,
+      if (electrophoreseChip != null) electrophoreseChip!,
+      if (tailleChip != null) tailleChip!,
+    ];
+  }
 
   String get firstName {
     final parts = nomComplet.trim().split(RegExp(r'\s+'));
@@ -51,6 +88,39 @@ class HomeProfile {
     return '${cap(parts[0])} ${cap(parts[1])}';
   }
 
+  HomeProfile copyWith({
+    String? nomComplet,
+    bool? hasPatientProfile,
+    bool? isAidant,
+    String? email,
+    String? phone,
+    String? langue,
+    String? fuseauHoraire,
+    bool? hasPassword,
+    String? groupeSanguin,
+    String? rhesus,
+    String? electrophorese,
+    int? tailleCm,
+    bool clearFicheSante = false,
+  }) {
+    return HomeProfile(
+      nomComplet: nomComplet ?? this.nomComplet,
+      hasPatientProfile: hasPatientProfile ?? this.hasPatientProfile,
+      isAidant: isAidant ?? this.isAidant,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+      langue: langue ?? this.langue,
+      fuseauHoraire: fuseauHoraire ?? this.fuseauHoraire,
+      hasPassword: hasPassword ?? this.hasPassword,
+      groupeSanguin:
+          clearFicheSante ? null : (groupeSanguin ?? this.groupeSanguin),
+      rhesus: clearFicheSante ? null : (rhesus ?? this.rhesus),
+      electrophorese:
+          clearFicheSante ? null : (electrophorese ?? this.electrophorese),
+      tailleCm: clearFicheSante ? null : (tailleCm ?? this.tailleCm),
+    );
+  }
+
   factory HomeProfile.fromMeJson(Map<String, dynamic> json) {
     return HomeProfile(
       nomComplet: json['nom_complet'] as String? ?? '',
@@ -61,8 +131,27 @@ class HomeProfile {
       langue: json['langue'] as String?,
       fuseauHoraire: json['fuseau_horaire'] as String?,
       hasPassword: json['has_password'] as bool? ?? false,
+      groupeSanguin: json['groupe_sanguin'] as String?,
+      rhesus: json['rhesus'] as String?,
+      electrophorese: json['electrophorese'] as String?,
+      tailleCm: (json['taille_cm'] as num?)?.toInt(),
     );
   }
+
+  Map<String, dynamic> toCacheJson() => {
+        'nom_complet': nomComplet,
+        'has_patient_profile': hasPatientProfile,
+        'is_aidant': isAidant,
+        'email': email,
+        'phone': phone,
+        'langue': langue,
+        'fuseau_horaire': fuseauHoraire,
+        'has_password': hasPassword,
+        'groupe_sanguin': groupeSanguin,
+        'rhesus': rhesus,
+        'electrophorese': electrophorese,
+        'taille_cm': tailleCm,
+      };
 }
 
 class DoseSuggestion {

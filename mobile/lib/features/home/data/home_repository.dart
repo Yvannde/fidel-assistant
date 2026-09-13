@@ -69,6 +69,13 @@ class HomeRepository {
     bool? batterieExemptee,
     bool? notificationsDiscretes,
     String? localisation,
+    String? groupeSanguin,
+    String? rhesus,
+    String? electrophorese,
+    int? tailleCm,
+    bool? confirmGroupeRhesus,
+    bool? confirmElectrophorese,
+    bool? confirmTaille,
   }) async {
     try {
       final res = await _api.patch<Map<String, dynamic>>(
@@ -80,6 +87,15 @@ class HomeRepository {
           if (notificationsDiscretes != null)
             'notifications_discretes': notificationsDiscretes,
           if (localisation != null) 'localisation': localisation,
+          if (groupeSanguin != null) 'groupe_sanguin': groupeSanguin,
+          if (rhesus != null) 'rhesus': rhesus,
+          if (electrophorese != null) 'electrophorese': electrophorese,
+          if (tailleCm != null) 'taille_cm': tailleCm,
+          if (confirmGroupeRhesus != null)
+            'confirm_groupe_rhesus': confirmGroupeRhesus,
+          if (confirmElectrophorese != null)
+            'confirm_electrophorese': confirmElectrophorese,
+          if (confirmTaille != null) 'confirm_taille': confirmTaille,
         },
       );
       return PatientSettings.fromJson(res.data ?? {});
