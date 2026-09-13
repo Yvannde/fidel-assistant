@@ -84,6 +84,7 @@ class HomeDashboardScreen extends ConsumerWidget {
     final prises = state.visiblePrises;
     final cta = _onboardingCta(context, state, l10n);
     final showCheckIn = state.isTodaySelected &&
+        state.hasConfiguredMaladie &&
         (state.needsCheckIn || state.todayCheckIn != null);
     final traitements = dash?.traitements ?? const <DashboardTraitement>[];
     final dashLoading = state.loading && state.dashboard == null;
@@ -232,7 +233,7 @@ class HomeDashboardScreen extends ConsumerWidget {
   static String? _summarySubtitle(HomeUiState state, AppLocalizations l10n) {
     final checkIn = state.todayCheckIn;
     if (checkIn != null) {
-      return checkIn.isOk ? l10n.homeCheckInDoneOk : l10n.homeCheckInDoneBad;
+      return CheckInRow.doneLabelFor(l10n, checkIn.statut);
     }
     return null;
   }

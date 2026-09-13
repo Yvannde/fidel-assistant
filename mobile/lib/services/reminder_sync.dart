@@ -9,6 +9,7 @@ import '../features/home/application/home_controller.dart';
 import '../features/home/data/home_repository.dart';
 import '../features/home/domain/dashboard_models.dart';
 import 'alarm_prefs.dart';
+import 'check_in_reminder_service.dart';
 import 'dose_slot.dart';
 import 'reminder_alarm_service.dart';
 import 'reminder_sync_perf.dart';
@@ -19,6 +20,12 @@ final reminderAlarmServiceProvider = Provider<ReminderAlarmService>((ref) {
   return ReminderAlarmService(ref.watch(sharedPreferencesProvider));
 });
 
+final checkInReminderServiceProvider = Provider<CheckInReminderService>((ref) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  final alarms = ref.watch(reminderAlarmServiceProvider);
+  return CheckInReminderService(prefs, alarms.plugin);
+});
+
 final alarmPrefsProvider = Provider<AlarmPrefs>((ref) {
   return AlarmPrefs(ref.watch(sharedPreferencesProvider));
 });
@@ -26,7 +33,7 @@ final alarmPrefsProvider = Provider<AlarmPrefs>((ref) {
 const _syncGateKey = 'reminder_sync_gate_v1';
 const _voixMetaPrefsKey = 'reminder_voix_meta_v1';
 
-/// Traite une réponse notif (foreground) : confirm / snooze / tap.
+/// Traite une réponse notif (foreground) : check-in / confirm / snooze / tap.
 class ReminderActionDispatcher {
   ReminderActionDispatcher(this._container);
 
@@ -34,8 +41,14 @@ class ReminderActionDispatcher {
 
   Future<void> handle(NotificationResponse response) async {
     final payload = parseReminderPayload(response.payload);
-    final slot = DoseSlot.fromPayload(payload);
     final kind = payload['kind'] as String?;
+
+    if (CheckInReminderService.isCheckInPayload(payload)) {
+      await _handleCheckIn(response);
+      return;
+    }
+
+    final slot = DoseSlot.fromPayload(payload);
     final alarms = _container.read(reminderAlarmServiceProvider);
     final engine = _container.read(syncEngineProvider);
     final snoozeMin = _container.read(alarmPrefsProvider).snoozeMinutes;
@@ -91,6 +104,30 @@ class ReminderActionDispatcher {
             .read(homeControllerProvider.notifier)
             .reloadProjection();
       } catch (_) {}
+    }
+  }
+
+  Future<void> _handleCheckIn(NotificationResponse response) async {
+    debugPrint(
+      'ReminderAction check-in: actionId=${response.actionId} '
+      'type=${response.notificationResponseType}',
+    );
+
+    final statut = CheckInReminderService.statutFromAction(response.actionId);
+    if (statut == null) {
+      if (response.notificationResponseType ==
+          NotificationResponseType.selectedNotification) {
+        _container.read(homeTabIndexProvider.notifier).state = 0;
+      }
+      return;
+    }
+
+    try {
+      await _container
+          .read(homeControllerProvider.notifier)
+          .submitCheckIn(statut);
+    } catch (e) {
+      debugPrint('ReminderAction check-in submit: $e');
     }
   }
 }

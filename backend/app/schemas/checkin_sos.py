@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 
 class CheckInIn(BaseModel):
-    statut: str = Field(pattern="^(ca_va|pas_top)$")
+    statut: str = Field(pattern="^(tres_mal|pas_top|ca_va|super)$")
     client_mutation_id: UUID | None = None
 
 

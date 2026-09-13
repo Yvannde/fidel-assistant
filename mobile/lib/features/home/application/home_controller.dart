@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -135,6 +136,10 @@ class HomeUiState {
   }
 
   bool get needsCheckIn => checkInKnown && todayCheckIn == null;
+
+  /// Au moins une maladie configurée (traitement actif sur le dashboard).
+  bool get hasConfiguredMaladie =>
+      (dashboard?.traitements.isNotEmpty ?? false);
 
   HomeUiState copyWith({
     bool? loading,
@@ -347,6 +352,18 @@ class HomeController extends StateNotifier<HomeUiState> {
       _loadCheckIn(),
       _loadConstantes(),
     ]);
+    unawaited(_syncCheckInReminder());
+  }
+
+  Future<void> _syncCheckInReminder() async {
+    try {
+      await _ref.read(checkInReminderServiceProvider).syncSchedule(
+            hasMaladie: state.hasConfiguredMaladie,
+            alreadyCheckedInToday: state.todayCheckIn != null,
+          );
+    } catch (e) {
+      debugPrint('HomeController: check-in reminder sync failed: $e');
+    }
   }
 
   static const _constantesWindow = Duration(days: 30);
@@ -563,6 +580,7 @@ class HomeController extends StateNotifier<HomeUiState> {
         checkInKnown: true,
       );
       unawaited(_engine.flush(force: true));
+      unawaited(_syncCheckInReminder());
     } catch (e) {
       state = state.copyWith(checkInBusy: false);
       if (e is ApiException && e.code == 'CHECK_IN_DEJA_FAIT_AUJOURDHUI') {

@@ -66,6 +66,8 @@ Chaque feature suit le même découpage interne : `presentation/` (écrans, widg
 
 C'est la partie la plus critique techniquement. **Tout est local** (offline, même avion) : FastAPI ne sonne pas et ne poll pas les doses. Les notifications push serveur (FCM, plus tard) restent réservées à l’aidant / engagement — **ne pas confondre** avec l’alarme patient.
 
+**Check-in quotidien (15:00 local)** : si le patient a au moins une maladie, `CheckInReminderService` planifie une notif récurrente (`DateTimeComponents.time`) avec 4 actions (`tres_mal` → `super`). Réponse → Drift + outbox `create_check_in` + flush (immédiat si online). Distinct des alarmes doses (`DoseSlot`).
+
 ### Trois moments distincts par **DoseSlot** (maladie × heure)
 
 L’unité de planification n’est **pas** la prise individuelle, mais le **créneau thérapeutique** :

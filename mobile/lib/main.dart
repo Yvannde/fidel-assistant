@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:alarm/alarm.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,6 +19,9 @@ import 'features/auth/application/auth_providers.dart';
 import 'features/auth/data/auth_repository.dart';
 import 'features/home/presentation/alarm_ring_screen.dart';
 import 'l10n/app_localizations.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
+import 'services/check_in_reminder_service.dart';
 import 'services/live_alarm_test.dart';
 import 'services/reminder_sync.dart';
 import 'services/server_clock.dart';
@@ -67,6 +71,36 @@ Future<void> main() async {
     await alarms.restoreFromLocalCache();
   } catch (e, st) {
     debugPrint('main: restoreFromLocalCache failed: $e\n$st');
+  }
+  try {
+    final dispatcher = ReminderActionDispatcher(container);
+    void dispatchCheckInAction(String actionId) {
+      unawaited(
+        dispatcher.handle(
+          NotificationResponse(
+            notificationResponseType:
+                NotificationResponseType.selectedNotificationAction,
+            actionId: actionId,
+            payload: CheckInReminderService.payloadJson(),
+          ),
+        ),
+      );
+    }
+
+    CheckInReminderService.bindNativeActionHandler(dispatchCheckInAction);
+    final pending = await CheckInReminderService.consumePendingNativeAction();
+    if (pending != null) {
+      dispatchCheckInAction(pending);
+    }
+
+    final checkIn = container.read(checkInReminderServiceProvider);
+    await checkIn.ensureChannel();
+    // Debug : forcer une notif pour valider le rendu des 4 icônes.
+    if (kDebugMode) {
+      await checkIn.showNow();
+    }
+  } catch (e, st) {
+    debugPrint('main: checkIn channel/showNow failed: $e\n$st');
   }
   unawaited(maybeRunLiveAlarmTest(alarms));
 

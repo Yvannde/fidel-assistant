@@ -394,7 +394,7 @@ Utilisé par le bouton SOS et l'escalade du Volet 1/3.
 | id | UUID | |
 | patient_id | UUID (FK → Patient) | |
 | date | date | unique avec `patient_id` — un check-in par jour |
-| statut | enum | `ca_va`, `pas_top`, `sans_reponse` |
+| statut | enum | `tres_mal`, `pas_top`, `ca_va`, `super`, `sans_reponse` |
 | created_at | timestamp | |
 
 Un check-in par jour et par patient.

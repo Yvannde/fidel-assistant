@@ -16,6 +16,7 @@ import '../core/network/api_client.dart';
 import '../core/storage/token_storage.dart';
 import '../features/home/data/home_repository.dart';
 import 'alarm_prefs.dart';
+import 'check_in_reminder_service.dart';
 import 'dose_slot.dart';
 import 'reminder_sync_perf.dart';
 import 'scheduled_dose.dart';
@@ -57,6 +58,9 @@ class ReminderAlarmService {
   final SharedPreferences _prefs;
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
+
+  /// Exposé pour le rappel check-in (même plugin / même init).
+  FlutterLocalNotificationsPlugin get plugin => _plugin;
 
   late final AlarmPrefs alarmPrefs = AlarmPrefs(_prefs);
 
@@ -219,6 +223,10 @@ class ReminderAlarmService {
             DarwinNotificationAction.plain(actionConfirm, _labelConfirmFr),
             DarwinNotificationAction.plain(actionSnooze, _labelSnoozeFr),
           ],
+        ),
+        DarwinNotificationCategory(
+          CheckInReminderService.iosCategory,
+          actions: CheckInReminderService.iosActions(en: false),
         ),
       ],
     );
@@ -854,6 +862,11 @@ Future<void> reminderBackgroundHandler(NotificationResponse response) async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     final payload = parseReminderPayload(response.payload);
+    if (CheckInReminderService.isCheckInPayload(payload)) {
+      await _handleCheckInBackground(response);
+      return;
+    }
+
     final slot = DoseSlot.fromPayload(payload);
     if (slot.priseIds.isEmpty) return;
 
@@ -914,4 +927,52 @@ Future<void> reminderBackgroundHandler(NotificationResponse response) async {
   } catch (e, st) {
     debugPrint('reminderBackgroundHandler: $e\n$st');
   }
+}
+
+Future<void> _handleCheckInBackground(NotificationResponse response) async {
+  final statut = CheckInReminderService.statutFromAction(response.actionId);
+  if (statut == null) return;
+
+  final prefs = await SharedPreferences.getInstance();
+  final db = AppDatabase();
+  final outbox = SyncOutbox(db, prefs: prefs);
+  final engine = SyncEngine(
+    outbox: outbox,
+    gatewayFactory: () => HomeSyncPriseGateway(
+      HomeRepository(apiClient: ApiClient(tokenStorage: TokenStorage())),
+    ),
+  );
+
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final key =
+      '${today.year.toString().padLeft(4, '0')}-'
+      '${today.month.toString().padLeft(2, '0')}-'
+      '${today.day.toString().padLeft(2, '0')}';
+
+  final existing = await db.getCheckInForDateKey(key);
+  if (existing != null) {
+    await db.close();
+    return;
+  }
+
+  final clientId = DateTime.now().microsecondsSinceEpoch.toString();
+  await db.transaction(() async {
+    await db.upsertCheckInLocal(id: clientId, date: today, statut: statut);
+    await engine.enqueueCreateCheckIn(dateKey: key, statut: statut);
+  });
+  try {
+    await engine.flush(force: true);
+  } catch (e) {
+    debugPrint('reminderBackgroundHandler check-in: $e');
+  }
+  await db.close();
+
+  final alarms = ReminderAlarmService(prefs);
+  await alarms.init();
+  final checkIn = CheckInReminderService(prefs, alarms.plugin);
+  await checkIn.syncSchedule(
+    hasMaladie: true,
+    alreadyCheckedInToday: true,
+  );
 }

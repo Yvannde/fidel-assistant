@@ -945,6 +945,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeCheckInThanks => 'Thanks, noted.';
 
   @override
+  String get homeCheckInLevelTresMal => 'Very bad';
+
+  @override
+  String get homeCheckInLevelPasTop => 'Not great';
+
+  @override
+  String get homeCheckInLevelCaVa => 'Okay';
+
+  @override
+  String get homeCheckInLevelSuper => 'Great';
+
+  @override
+  String get homeCheckInDoneTresMal => 'Today: very bad';
+
+  @override
+  String get homeCheckInDonePasTop => 'Today: not great';
+
+  @override
+  String get homeCheckInDoneCaVa => 'Today: okay';
+
+  @override
+  String get homeCheckInDoneSuper => 'Today: great';
+
+  @override
+  String get homeCheckInReminderTitle => 'How are you feeling today?';
+
+  @override
+  String get homeCheckInReminderBody =>
+      'One tap, four choices — helps keep your follow-up on track.';
+
+  @override
+  String get homeCheckInActionTresMal => 'Very bad';
+
+  @override
+  String get homeCheckInActionPasTop => 'Not great';
+
+  @override
+  String get homeCheckInActionCaVa => 'Okay';
+
+  @override
+  String get homeCheckInActionSuper => 'Great';
+
+  @override
   String homeTreatmentDay(int day) {
     return 'Day $day';
   }

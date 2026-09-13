@@ -1760,6 +1760,90 @@ abstract class AppLocalizations {
   /// **'Thanks, noted.'**
   String get homeCheckInThanks;
 
+  /// No description provided for @homeCheckInLevelTresMal.
+  ///
+  /// In en, this message translates to:
+  /// **'Very bad'**
+  String get homeCheckInLevelTresMal;
+
+  /// No description provided for @homeCheckInLevelPasTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Not great'**
+  String get homeCheckInLevelPasTop;
+
+  /// No description provided for @homeCheckInLevelCaVa.
+  ///
+  /// In en, this message translates to:
+  /// **'Okay'**
+  String get homeCheckInLevelCaVa;
+
+  /// No description provided for @homeCheckInLevelSuper.
+  ///
+  /// In en, this message translates to:
+  /// **'Great'**
+  String get homeCheckInLevelSuper;
+
+  /// No description provided for @homeCheckInDoneTresMal.
+  ///
+  /// In en, this message translates to:
+  /// **'Today: very bad'**
+  String get homeCheckInDoneTresMal;
+
+  /// No description provided for @homeCheckInDonePasTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Today: not great'**
+  String get homeCheckInDonePasTop;
+
+  /// No description provided for @homeCheckInDoneCaVa.
+  ///
+  /// In en, this message translates to:
+  /// **'Today: okay'**
+  String get homeCheckInDoneCaVa;
+
+  /// No description provided for @homeCheckInDoneSuper.
+  ///
+  /// In en, this message translates to:
+  /// **'Today: great'**
+  String get homeCheckInDoneSuper;
+
+  /// No description provided for @homeCheckInReminderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How are you feeling today?'**
+  String get homeCheckInReminderTitle;
+
+  /// No description provided for @homeCheckInReminderBody.
+  ///
+  /// In en, this message translates to:
+  /// **'One tap, four choices — helps keep your follow-up on track.'**
+  String get homeCheckInReminderBody;
+
+  /// No description provided for @homeCheckInActionTresMal.
+  ///
+  /// In en, this message translates to:
+  /// **'Very bad'**
+  String get homeCheckInActionTresMal;
+
+  /// No description provided for @homeCheckInActionPasTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Not great'**
+  String get homeCheckInActionPasTop;
+
+  /// No description provided for @homeCheckInActionCaVa.
+  ///
+  /// In en, this message translates to:
+  /// **'Okay'**
+  String get homeCheckInActionCaVa;
+
+  /// No description provided for @homeCheckInActionSuper.
+  ///
+  /// In en, this message translates to:
+  /// **'Great'**
+  String get homeCheckInActionSuper;
+
   /// No description provided for @homeTreatmentDay.
   ///
   /// In en, this message translates to:

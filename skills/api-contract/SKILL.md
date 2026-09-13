@@ -159,7 +159,7 @@ Notes :
 
 | Méthode | Chemin | Entrée | Sortie | Erreurs possibles |
 |---|---|---|---|---|
-| POST | `/patients/me/check-in` | 🔒 `statut` (`ca_va`\|`pas_top`), `client_mutation_id?` | `CheckIn` créé | `CHECK_IN_DEJA_FAIT_AUJOURDHUI` |
+| POST | `/patients/me/check-in` | 🔒 `statut` (`tres_mal`\|`pas_top`\|`ca_va`\|`super`), `client_mutation_id?` | `CheckIn` créé | `CHECK_IN_DEJA_FAIT_AUJOURDHUI` |
 | GET | `/patients/me/check-in` | 🔒 `depuis?` | `[CheckIn]` | — |
 | POST | `/patients/me/sos` | 🔒 | `{sos_id, annulable_jusqu_a}` — déclenche l'alerte silencieuse après la fenêtre de 30s | `AUCUN_CONTACT_URGENCE` |
 | POST | `/sos/{id}/annuler` | 🔒 | `{message}` | `SOS_TROP_TARD`, `SOS_NOT_FOUND` |

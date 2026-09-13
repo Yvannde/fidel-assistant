@@ -173,14 +173,24 @@ class TraitementDetail {
   }
 }
 
-/// Check-in du jour — `ca_va` | `pas_top`, un seul par jour côté backend.
+/// Check-in du jour — `tres_mal` | `pas_top` | `ca_va` | `super`.
 class CheckInEntry {
   const CheckInEntry({required this.date, required this.statut});
+
+  static const levels = ['tres_mal', 'pas_top', 'ca_va', 'super'];
 
   final DateTime date;
   final String statut;
 
-  bool get isOk => statut == 'ca_va';
+  bool get isPositive => statut == 'ca_va' || statut == 'super';
+
+  /// @deprecated Prefer [isPositive] / level helpers.
+  bool get isOk => isPositive;
+
+  int get levelIndex {
+    final i = levels.indexOf(statut);
+    return i < 0 ? 2 : i;
+  }
 
   factory CheckInEntry.fromJson(Map<String, dynamic> json) {
     return CheckInEntry(

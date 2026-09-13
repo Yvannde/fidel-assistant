@@ -87,6 +87,50 @@ async def test_check_in_once_per_day(
 
 
 @pytest.mark.asyncio
+async def test_check_in_four_levels_and_reject_invalid(
+    client: AsyncClient,
+    auth_prefix: str,
+    onboarding_prefix: str,
+    otp_inbox: dict[str, str],
+    cgu_version: str,
+) -> None:
+    from app.core.config import settings
+
+    api = settings.api_v1_prefix
+    for i, statut in enumerate(("tres_mal", "pas_top", "ca_va", "super")):
+        headers = await _onboard_patient(
+            client,
+            auth_prefix,
+            onboarding_prefix,
+            otp_inbox,
+            cgu_version,
+            email=f"checkin.level{i}@example.com",
+        )
+        r = await client.post(
+            f"{api}/patients/me/check-in",
+            headers=headers,
+            json={"statut": statut},
+        )
+        assert r.status_code == 201, r.text
+        assert r.json()["statut"] == statut
+
+    headers = await _onboard_patient(
+        client,
+        auth_prefix,
+        onboarding_prefix,
+        otp_inbox,
+        cgu_version,
+        email="checkin.invalid@example.com",
+    )
+    r = await client.post(
+        f"{api}/patients/me/check-in",
+        headers=headers,
+        json={"statut": "moyen"},
+    )
+    assert r.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_sos_requires_contact_cancel_and_too_late(
     client: AsyncClient,
     auth_prefix: str,
