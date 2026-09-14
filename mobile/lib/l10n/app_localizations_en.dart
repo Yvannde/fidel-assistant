@@ -1452,6 +1452,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileFicheSanteTaille => 'Height';
 
   @override
+  String get profileFicheSanteGroupeShort => 'Blood';
+
+  @override
+  String get profileFicheSanteElectroShort => 'Hb type';
+
+  @override
+  String get profileFicheSanteTailleShort => 'Height';
+
+  @override
   String get profileFicheSanteUnset => 'Not set yet';
 
   @override

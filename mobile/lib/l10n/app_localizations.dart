@@ -2708,6 +2708,24 @@ abstract class AppLocalizations {
   /// **'Height'**
   String get profileFicheSanteTaille;
 
+  /// No description provided for @profileFicheSanteGroupeShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Blood'**
+  String get profileFicheSanteGroupeShort;
+
+  /// No description provided for @profileFicheSanteElectroShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Hb type'**
+  String get profileFicheSanteElectroShort;
+
+  /// No description provided for @profileFicheSanteTailleShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Height'**
+  String get profileFicheSanteTailleShort;
+
   /// No description provided for @profileFicheSanteUnset.
   ///
   /// In en, this message translates to:

@@ -476,7 +476,8 @@ class ReminderAlarmService {
     );
   }
 
-  /// Snooze / one-shot : H0' = [slot.heurePrevue], préavis = H0'−Δ, mark = H0'+5.
+  /// Snooze / one-shot : H0' = [slot.heurePrevue], préavis = H0'−Δ.
+  /// Le marquage H+5 est ancré à la sonnerie réelle ([scheduleMarkAfterRing]).
   Future<void> scheduleOneShotSlot(DoseSlot slot) async {
     if (!_ready) return;
     await ensureExactAlarmPermission();
@@ -641,10 +642,46 @@ class ReminderAlarmService {
     await FlutterLocalNotificationsPlugin().cancel(id);
   }
 
+  /// Annule uniquement la notif de marquage H+5 du slot.
+  static Future<void> cancelMarkStatic(String slotId) async {
+    if (slotId.isEmpty) return;
+    await FlutterLocalNotificationsPlugin().cancel(markNotificationId(slotId));
+  }
+
   /// Annule uniquement le préavis (appelable hors instance, isolate / ring).
   static Future<void> cancelPreavisStatic(String slotId) async {
     if (slotId.isEmpty) return;
     await FlutterLocalNotificationsPlugin().cancel(preavisNotificationId(slotId));
+  }
+
+  /// Quand H0 sonne : ancre le marquage à now+5 (pas à l’ancienne heure prévue).
+  ///
+  /// Si l’utilisateur reporte (« Plus tard »), [cancelSlot] / snooze annule ce mark
+  /// avant de replanifier la prochaine sonnerie.
+  Future<void> scheduleMarkAfterRing(DoseSlot slot) async {
+    if (!_ready || slot.slotId.isEmpty) return;
+    final ids = _trackedIds();
+    final markId = markNotificationId(slot.slotId);
+    await _plugin.cancel(markId);
+    ids.remove(markId);
+
+    final when = tz.TZDateTime.now(tz.local).add(markDelay);
+    final ok = await _scheduleMark(slot, when: when);
+    if (ok) {
+      ids.add(markId);
+      await _prefs.setString(_idsKey, jsonEncode(ids));
+      debugPrint(
+        'ReminderAlarmService: mark after ring slot=${slot.slotId} at $when',
+      );
+    }
+  }
+
+  /// Compat pour isolate / navigation sans instance prête.
+  static Future<void> scheduleMarkAfterRingStatic(DoseSlot slot) async {
+    final prefs = await SharedPreferences.getInstance();
+    final alarms = ReminderAlarmService(prefs);
+    await alarms.init();
+    await alarms.scheduleMarkAfterRing(slot);
   }
 
   Future<({int preavis, int alarms, int marks})> _scheduleTriple(
@@ -655,10 +692,9 @@ class ReminderAlarmService {
   }) async {
     final h0 = tz.TZDateTime.from(slot.heurePrevue.toLocal(), tz.local);
     final preavisAt = h0.subtract(Duration(minutes: alarmPrefs.preavisMinutes));
-    final markAt = h0.add(markDelay);
     var preavis = 0;
     var alarms = 0;
-    var marks = 0;
+    const marks = 0;
 
     if (preavisAt.isAfter(now) && preavisAt.isBefore(h0)) {
       final ok = await _schedulePreavis(slot, when: preavisAt);
@@ -676,14 +712,9 @@ class ReminderAlarmService {
       }
     }
 
-    if (markAt.isAfter(now)) {
-      final ok = await _scheduleMark(slot, when: markAt);
-      if (ok) {
-        track.add(markNotificationId(slot.slotId));
-        marks = 1;
-      }
-    }
-
+    // Mark H+5 : planifié uniquement quand l’alarme sonne vraiment
+    // (voir [scheduleMarkAfterRing]) — sinon un « Plus tard » laisse
+    // apparaître la notif de l’ancienne H0.
     return (preavis: preavis, alarms: alarms, marks: marks);
   }
 

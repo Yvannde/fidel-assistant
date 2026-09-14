@@ -1466,6 +1466,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get profileFicheSanteTaille => 'Taille';
 
   @override
+  String get profileFicheSanteGroupeShort => 'Groupe';
+
+  @override
+  String get profileFicheSanteElectroShort => 'Electro';
+
+  @override
+  String get profileFicheSanteTailleShort => 'Taille';
+
+  @override
   String get profileFicheSanteUnset => 'À renseigner';
 
   @override
