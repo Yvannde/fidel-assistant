@@ -1848,6 +1848,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get profileAlertCheckin => 'Absence de check-in';
 
   @override
+  String get profileAlertPriseConfirmee =>
+      'Informer mes aidants quand je confirme une prise';
+
+  @override
+  String get profileAlertPriseNonConfirmee =>
+      'Prévenir mes aidants si je ne confirme pas (2 h)';
+
+  @override
   String get profileAlertDepistage => 'Dépistage recommandé';
 
   @override

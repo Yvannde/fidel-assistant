@@ -61,6 +61,8 @@ class _ProfileConsentScreenState extends ConsumerState<ProfileConsentScreen> {
       'constante_amelioration' => l10n.profileAlertConstanteUp,
       'constante_degradation' => l10n.profileAlertConstanteDown,
       'checkin_absence' => l10n.profileAlertCheckin,
+      'prise_confirmee_aidant' => l10n.profileAlertPriseConfirmee,
+      'prise_non_confirmee_aidant' => l10n.profileAlertPriseNonConfirmee,
       'depistage_recommande' => l10n.profileAlertDepistage,
       _ => type,
     };
@@ -74,7 +76,13 @@ class _ProfileConsentScreenState extends ConsumerState<ProfileConsentScreen> {
       if (!value &&
           PreferenceConsentement.configurableAutoTypes.contains(p.typeAlerte)) {
         // Opt-in explicite — jamais pré-coché sans geste.
-        regle = {'delai_heures': 48};
+        if (p.typeAlerte == 'prise_confirmee_aidant') {
+          regle = {'enabled': true};
+        } else if (p.typeAlerte == 'prise_non_confirmee_aidant') {
+          regle = {'delai_heures': 2};
+        } else {
+          regle = {'delai_heures': 48};
+        }
       }
       final updated = await ref
           .read(homeRepositoryProvider)

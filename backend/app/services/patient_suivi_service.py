@@ -817,6 +817,7 @@ async def confirmer_prise(
         await db.commit()
         return result
 
+    newly_confirmed = True
     prise.statut = "confirmee"
     prise.confirmee_at = datetime.now(UTC)
     prise.canal = canal
@@ -840,6 +841,13 @@ async def confirmer_prise(
             result=result,
         )
     await db.commit()
+    if newly_confirmed:
+        from app.services import aidant_push_service
+
+        await db.refresh(prise)
+        await aidant_push_service.notify_prise_confirmee(
+            db, patient_id=patient.user_id, prise=prise
+        )
     return result
 
 
@@ -896,6 +904,7 @@ async def sync_prises_offline(
     synced: list[UUID] = []
     conflicts: list[UUID] = []
     duplicates: list[UUID] = []
+    newly_confirmed: list[Prise] = []
 
     for item in items:
         prise_id = item["id"]
@@ -920,10 +929,13 @@ async def sync_prises_offline(
             conflicts.append(prise_id)
             continue
 
+        was_confirmee = prise.statut == "confirmee"
         prise.statut = incoming_statut
         if incoming_statut == "confirmee":
             prise.confirmee_at = item.get("confirmee_at") or datetime.now(UTC)
             prise.canal = prise.canal or "app"
+            if not was_confirmee:
+                newly_confirmed.append(prise)
         _bump_server_version(prise)
 
         if mutation_id is not None:
@@ -939,4 +951,13 @@ async def sync_prises_offline(
         synced.append(prise_id)
 
     await db.commit()
+    if newly_confirmed:
+        from app.services import aidant_push_service
+
+        for prise_id in [p.id for p in newly_confirmed]:
+            row = await db.get(Prise, prise_id)
+            if row is not None:
+                await aidant_push_service.notify_prise_confirmee(
+                    db, patient_id=patient.user_id, prise=row
+                )
     return {"synced": synced, "conflicts": conflicts, "duplicates": duplicates}

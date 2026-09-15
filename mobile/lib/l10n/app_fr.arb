@@ -671,6 +671,8 @@
   "profileAlertConstanteUp": "Constante en amélioration",
   "profileAlertConstanteDown": "Constante à surveiller",
   "profileAlertCheckin": "Absence de check-in",
+  "profileAlertPriseConfirmee": "Informer mes aidants quand je confirme une prise",
+  "profileAlertPriseNonConfirmee": "Prévenir mes aidants si je ne confirme pas (2 h)",
   "profileAlertDepistage": "Dépistage recommandé",
   "profileSectionCaregiver": "Accompagner quelqu’un",
   "profileSyncTileHint": "Entrer un code pour devenir aidant",

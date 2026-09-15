@@ -3386,6 +3386,18 @@ abstract class AppLocalizations {
   /// **'Missed check-in'**
   String get profileAlertCheckin;
 
+  /// No description provided for @profileAlertPriseConfirmee.
+  ///
+  /// In en, this message translates to:
+  /// **'Notify caregivers when I confirm a dose'**
+  String get profileAlertPriseConfirmee;
+
+  /// No description provided for @profileAlertPriseNonConfirmee.
+  ///
+  /// In en, this message translates to:
+  /// **'Alert caregivers if I don’t confirm (2 h)'**
+  String get profileAlertPriseNonConfirmee;
+
   /// No description provided for @profileAlertDepistage.
   ///
   /// In en, this message translates to:

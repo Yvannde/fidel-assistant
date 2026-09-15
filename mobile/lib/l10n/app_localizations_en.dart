@@ -1833,6 +1833,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileAlertCheckin => 'Missed check-in';
 
   @override
+  String get profileAlertPriseConfirmee =>
+      'Notify caregivers when I confirm a dose';
+
+  @override
+  String get profileAlertPriseNonConfirmee =>
+      'Alert caregivers if I don’t confirm (2 h)';
+
+  @override
   String get profileAlertDepistage => 'Screening recommended';
 
   @override
