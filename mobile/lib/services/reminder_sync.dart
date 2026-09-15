@@ -102,13 +102,15 @@ class ReminderActionDispatcher {
 
     if (response.actionId == ReminderAlarmService.actionSnooze) {
       final when = DateTime.now().add(Duration(minutes: snoozeMin));
-      for (final priseId in slot.priseIds) {
-        await engine.enqueueReport(priseId: priseId, nouvelleHeure: when);
-      }
       try {
-        await engine.flush(force: true);
+        await _container
+            .read(homeControllerProvider.notifier)
+            .reportPrises(slot.priseIds, when);
       } catch (e) {
-        debugPrint('ReminderAction snooze: $e');
+        debugPrint('ReminderAction snooze report: $e');
+        for (final priseId in slot.priseIds) {
+          await engine.enqueueReport(priseId: priseId, nouvelleHeure: when);
+        }
       }
       await alarms.scheduleOneShotSlot(slot.copyWithHeure(when));
       try {
@@ -199,26 +201,26 @@ Future<void> syncRemindersFromHome(
 
   final now = DateTime.now();
   final today = homeDateOnly(now);
-  final doses = <ScheduledDose>[];
+  final byId = <String, ScheduledDose>{};
 
-  void addPrises(List<PriseDuJour> prises) {
+  void addPrises(List<PriseDuJour> prises, {bool overwrite = true}) {
     for (final p in prises) {
       if (!p.isPending) continue;
       if (!ReminderSyncPerf.isWithinHorizon(p.heurePrevue, now)) continue;
-      doses.add(
-        ScheduledDose(
-          priseId: p.id,
-          medicamentNom: p.medicamentNom,
-          dosage: p.dosage,
-          heurePrevue: p.heurePrevue,
-          traitementId: p.traitementId,
-          maladieNom: p.maladieNom,
-        ),
+      if (!overwrite && byId.containsKey(p.id)) continue;
+      byId[p.id] = ScheduledDose(
+        priseId: p.id,
+        medicamentNom: p.medicamentNom,
+        dosage: p.dosage,
+        heurePrevue: p.heurePrevue,
+        traitementId: p.traitementId,
+        maladieNom: p.maladieNom,
       );
     }
   }
 
-  addPrises(dashboard.prisesAujourdhui);
+  // Dashboard projeté (snapshot ⊕ outbox) gagne toujours sur le serveur.
+  addPrises(dashboard.prisesAujourdhui, overwrite: true);
   try {
     await db.upsertPrises(dashboard.prisesAujourdhui);
   } catch (_) {}
@@ -230,13 +232,9 @@ Future<void> syncRemindersFromHome(
       try {
         await db.upsertPrises(list);
       } catch (_) {}
-      addPrises(list);
+      // Ne pas écraser une heure déjà reportée localement / outbox.
+      addPrises(list, overwrite: false);
     } catch (_) {}
-  }
-
-  final byId = <String, ScheduledDose>{};
-  for (final d in doses) {
-    byId[d.priseId] = d;
   }
 
   await alarms.rescheduleAll(byId.values.toList(), force: force);

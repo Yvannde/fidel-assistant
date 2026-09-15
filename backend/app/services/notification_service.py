@@ -19,6 +19,8 @@ ALERT_REGISTRY: dict[str, dict] = {
     "constante_degradation": {"proposition": True},
     "checkin_absence": {"proposition": True},
     "sos_declenche": {"proposition": False},
+    "prise_confirmee_aidant": {"proposition": False},
+    "prise_non_confirmee_aidant": {"proposition": False},
     "education_contextuelle": {"proposition": False},
     "depistage_recommande": {"proposition": True},
     "aidant_sync": {"proposition": False},
@@ -309,5 +311,14 @@ def _default_contenu(type_alerte: str, contexte: dict) -> str:
             f"Le stock de {nom} est bas"
             + (f" ({stock} restant)" if stock is not None else "")
             + ". Pense à te réapprovisionner."
+        )
+    if type_alerte == "prise_confirmee_aidant":
+        med = contexte.get("medicament") or "médicament"
+        return f"Tes aidants ont été informés de ta prise ({med})."
+    if type_alerte == "prise_non_confirmee_aidant":
+        med = contexte.get("medicament") or "médicament"
+        return (
+            f"Pas de confirmation reçue pour {med}. "
+            "Tes aidants peuvent être prévenus selon tes préférences."
         )
     return f"Notification {type_alerte}."

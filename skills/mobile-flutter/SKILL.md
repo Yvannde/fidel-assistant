@@ -93,7 +93,7 @@ Les **notifications** (préavis + marquage + bandeau H0) et l’**alarme applica
 |---|---|---|---|
 | **H0 − Δ** (préavis) | Notif locale | Avertir avant la prise | Texte du type « dans Δ min — {maladie} ». **Pas** d’alarme sonore. Δ configurable dans l’app (**défaut 5 min** ; options typiques 2 / 5 / 10). Annulé automatiquement à H0. |
 | **H0** (`heure_prevue`) | **Alarme app** + notif locale | Réveil effectif | L’alarme **lancée par Fidel** (écran plein / Activity, son en boucle jusqu’à action utilisateur) **et** une notification en parallèle. **Sans** boutons « J’ai pris » sur ce moment (le marquage vient à H+5). |
-| **H0 + 5 min** | Notif locale (marquage) | Confirmer la prise | Actions **« J’ai pris »** / **« Plus tard »** (confirm / snooze) sur **tout le slot**. File offline → N confirms/reports outbox. |
+| **H0 + 5 min** | Notif locale (marquage) | Confirmer la prise | Ancrée sur **l’instant réel de sonnerie** (pas l’heure prévue initiale). Actions **« J’ai pris »** / **« Plus tard »**. Un **Plus tard** (snooze) **annule** ce marquage ; il ne revient qu’après la **prochaine** sonnerie (+5 min). File offline → N confirms/reports outbox. |
 
 > Une notif canal « alarm » **ne suffit pas** : H0 doit être une **expérience alarme** (son insistent, UI Fidel, pas un simple bandeau type messagerie).
 

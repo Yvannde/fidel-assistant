@@ -192,6 +192,16 @@ Notes :
 | GET | `/users/me/notifications` | 🔒 `depuis?` | `[NotificationLog]` — historique, pour transparence | — |
 | POST | `/notifications/{id}/reponse` | 🔒 `reponse` (`oui`\|`non`\|`reporter`) | `{message, action_declenchee: bool}` — réponse à une proposition (ex: "veux-tu qu'on prévienne ton aidant ?") | `NOTIFICATION_NOT_FOUND`, `DEJA_REPONDU` |
 
+> **Observance → aidant (FCM)** : après `POST /prises/{id}/confirmer`, `/prises/sync-offline` (statut `confirmee`) ou `/sync/push` op `confirm`, si le patient a opt-in `prise_confirmee_aidant` (`toujours_demander=false` + `regle_auto`), le serveur journalise + FCM aux aidants avec `observance=true`. Types : voir `engagement-principle`.
+
+## 9bis. Jobs internes (cron)
+
+| Méthode | Chemin | Entrée | Sortie | Erreurs possibles |
+|---|---|---|---|---|
+| POST | `/internal/jobs/scan-prises-non-confirmees` | Header `X-Cron-Secret` (= `CRON_SECRET` env) — body vide | `{scanned, notified, skipped}` | `UNAUTHORIZED` (secret manquant/invalide) |
+
+> Scan périodique (Railway cron, ex. toutes les 15–30 min) : prises `en_attente` avec `heure_prevue + delai_heures` dépassé, patient opt-in `prise_non_confirmee_aidant`. Dédup 1 notif / `prise_id`. Pas de JWT utilisateur.
+
 ---
 
 ## Conventions transverses

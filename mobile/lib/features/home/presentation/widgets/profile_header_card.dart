@@ -5,7 +5,7 @@ import '../../../../core/theme/premium.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/dashboard_models.dart';
 
-/// En-tête compte : avatar, nom, email, chips capacités + fiche santé.
+/// En-tête compte : avatar, nom, fiche santé (bande clinique), email, rôles.
 class ProfileHeaderCard extends StatelessWidget {
   const ProfileHeaderCard({super.key, required this.profile});
 
@@ -18,7 +18,18 @@ class ProfileHeaderCard extends StatelessWidget {
     final name = profile.headerName.isEmpty
         ? l10n.profileFallbackName
         : profile.headerName;
-    final ficheChips = profile.ficheSanteChips;
+
+    final ficheItems = <({String label, String value})>[
+      if (profile.groupeRhesusLabel != null)
+        (label: l10n.profileFicheSanteGroupeShort, value: profile.groupeRhesusLabel!),
+      if (profile.electrophoreseChip != null)
+        (
+          label: l10n.profileFicheSanteElectroShort,
+          value: profile.electrophoreseChip!,
+        ),
+      if (profile.tailleChip != null)
+        (label: l10n.profileFicheSanteTailleShort, value: profile.tailleChip!),
+    ];
 
     return PremiumCard(
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
@@ -31,9 +42,10 @@ class ProfileHeaderCard extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.primary.withValues(
-                alpha: tokens.isDark ? 0.22 : 0.1,
-              ),
+              border: Border.all(color: tokens.border),
+              color: tokens.isDark
+                  ? AppColors.primary.withValues(alpha: 0.12)
+                  : AppColors.primary.withValues(alpha: 0.06),
             ),
             child: Text(
               profile.initial,
@@ -62,18 +74,8 @@ class ProfileHeaderCard extends StatelessWidget {
                     color: tokens.textPrimary,
                   ),
                 ),
-                if (ficheChips.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: [
-                      for (final label in ficheChips) _Chip(label: label),
-                    ],
-                  ),
-                ],
                 if (profile.email.isNotEmpty) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
                   Text(
                     profile.email,
                     maxLines: 1,
@@ -85,17 +87,21 @@ class ProfileHeaderCard extends StatelessWidget {
                     ),
                   ),
                 ],
-                const SizedBox(height: 10),
+                if (ficheItems.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _FicheSanteStrip(items: ficheItems),
+                ],
+                const SizedBox(height: 12),
                 Wrap(
                   spacing: 6,
                   runSpacing: 6,
                   children: [
                     if (profile.hasPatientProfile)
-                      _Chip(label: l10n.profileChipPatient),
+                      _RoleBadge(label: l10n.profileChipPatient),
                     if (profile.isAidant)
-                      _Chip(label: l10n.profileChipAidant),
+                      _RoleBadge(label: l10n.profileChipAidant),
                     if (!profile.hasPatientProfile && !profile.isAidant)
-                      _Chip(label: l10n.profileChipAccount),
+                      _RoleBadge(label: l10n.profileChipAccount),
                   ],
                 ),
               ],
@@ -107,8 +113,92 @@ class ProfileHeaderCard extends StatelessWidget {
   }
 }
 
-class _Chip extends StatelessWidget {
-  const _Chip({required this.label});
+/// Bande identité médicale — clinique, bordée, sans pastilles « wellness ».
+class _FicheSanteStrip extends StatelessWidget {
+  const _FicheSanteStrip({required this.items});
+
+  final List<({String label, String value})> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = ThemeTokens.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: tokens.isDark
+            ? Colors.white.withValues(alpha: 0.03)
+            : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(Premium.radiusSm),
+        border: Border.all(color: tokens.border),
+      ),
+      child: Row(
+        children: [
+          for (var i = 0; i < items.length; i++) ...[
+            if (i > 0)
+              Container(
+                width: 1,
+                height: 28,
+                margin: const EdgeInsets.symmetric(horizontal: 10),
+                color: tokens.divider.withValues(alpha: 0.7),
+              ),
+            Expanded(
+              child: _FicheMetric(
+                label: items[i].label,
+                value: items[i].value,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _FicheMetric extends StatelessWidget {
+  const _FicheMetric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = ThemeTokens.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label.toUpperCase(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontFamily: AppTheme.fontFamily,
+            fontSize: 9.5,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.7,
+            color: tokens.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontFamily: AppTheme.fontFamily,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
+            color: tokens.textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RoleBadge extends StatelessWidget {
+  const _RoleBadge({required this.label});
 
   final String label;
 
@@ -116,18 +206,19 @@ class _Chip extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = ThemeTokens.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: tokens.isDark ? 0.2 : 0.08),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(Premium.radiusSm),
+        border: Border.all(color: tokens.border),
+        color: Colors.transparent,
       ),
       child: Text(
         label,
         style: TextStyle(
           fontFamily: AppTheme.fontFamily,
           fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: AppColors.primary,
+          fontWeight: FontWeight.w600,
+          color: tokens.textSecondary,
         ),
       ),
     );

@@ -12,7 +12,6 @@ import '../../../l10n/app_localizations.dart';
 import '../../../services/dose_slot.dart';
 import '../../../services/reminder_alarm_service.dart';
 import '../../../services/reminder_sync.dart';
-import '../../../services/sync_engine.dart';
 import '../application/home_controller.dart';
 
 /// Args pour `/alarm-ring` (multi-medocs + maladie).
@@ -102,9 +101,12 @@ class _AlarmRingScreenState extends ConsumerState<AlarmRingScreen> {
   @override
   void initState() {
     super.initState();
-    // Cancel préavis du slot dès que l’alarme H0 affiche l’UI.
+    // Cancel préavis + ancre le marquage H+5 sur l’instant réel de sonnerie.
     unawaited(
       ReminderAlarmService.cancelPreavisStatic(widget.slot.slotId),
+    );
+    unawaited(
+      ref.read(reminderAlarmServiceProvider).scheduleMarkAfterRing(widget.slot),
     );
 
     _sub = Alarm.ringing.listen((set) {
@@ -149,21 +151,14 @@ class _AlarmRingScreenState extends ConsumerState<AlarmRingScreen> {
     try {
       final alarms = ref.read(reminderAlarmServiceProvider);
       final prefs = ref.read(alarmPrefsProvider);
-      final engine = ref.read(syncEngineProvider);
       final when = DateTime.now().add(Duration(minutes: prefs.snoozeMinutes));
 
+      // Annule H0 + mark H+5 de cette sonnerie, puis reporte en local.
       await alarms.cancelSlot(widget.slot.slotId);
-      for (final priseId in widget.slot.priseIds) {
-        await engine.enqueueReport(priseId: priseId, nouvelleHeure: when);
-      }
-      try {
-        await engine.flush(force: true);
-      } catch (_) {}
-
+      await ref
+          .read(homeControllerProvider.notifier)
+          .reportPrises(widget.slot.priseIds, when);
       await alarms.scheduleOneShotSlot(widget.slot.copyWithHeure(when));
-      try {
-        await ref.read(homeControllerProvider.notifier).reloadProjection();
-      } catch (_) {}
 
       if (!mounted) return;
       if (context.canPop()) {
@@ -334,8 +329,9 @@ void bindAlarmRingingNavigation(GoRouter router) {
     final payload = parseReminderPayload(alarm.payload);
     final slot = DoseSlot.fromPayload(payload);
 
-    // Cancel préavis dès le ring H0 (même sans UI encore montée).
+    // Cancel préavis + ancre mark H+5 dès le ring (même sans UI encore montée).
     unawaited(ReminderAlarmService.cancelPreavisStatic(slot.slotId));
+    unawaited(ReminderAlarmService.scheduleMarkAfterRingStatic(slot));
 
     final args = AlarmRingArgs(slot: slot, alarmId: alarm.id);
     final loc = router.routerDelegate.currentConfiguration.uri.path;

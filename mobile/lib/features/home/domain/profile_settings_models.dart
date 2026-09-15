@@ -109,6 +109,8 @@ class PreferenceConsentement {
     'checkin_absence',
     'constante_degradation',
     'rappel_medicament',
+    'prise_confirmee_aidant',
+    'prise_non_confirmee_aidant',
   };
 }
 

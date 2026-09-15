@@ -19,6 +19,7 @@ async def send_data_message(
     data: dict[str, str],
     title: str,
     body: str,
+    channel_id: str = "fidel_sos_aidant",
 ) -> int:
     """Envoie une notif haute priorité. Retourne le nombre de tokens acceptés."""
     if not tokens:
@@ -28,6 +29,7 @@ async def send_data_message(
         logger.info("FCM skipped (no FCM_SERVER_KEY): %s tokens, data=%s", len(tokens), data)
         return 0
 
+    channel = (channel_id or "fidel_sos_aidant").strip() or "fidel_sos_aidant"
     sent = 0
     headers = {
         "Authorization": f"key={key}",
@@ -43,13 +45,13 @@ async def send_data_message(
                     "title": title,
                     "body": body,
                     "sound": "default",
-                    "channel_id": "fidel_sos_aidant",
+                    "channel_id": channel,
                 },
                 "data": data,
                 "android": {
                     "priority": "high",
                     "notification": {
-                        "channel_id": "fidel_sos_aidant",
+                        "channel_id": channel,
                         "priority": "max",
                         "default_vibrate_timings": True,
                     },

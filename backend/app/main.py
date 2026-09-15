@@ -12,6 +12,7 @@ from app.routers import (
     devices,
     health,
     horaires,
+    internal_jobs,
     medicaments,
     notifications,
     onboarding,
@@ -62,3 +63,4 @@ app.include_router(sos.router, prefix=settings.api_v1_prefix)
 app.include_router(aidants.router, prefix=settings.api_v1_prefix)
 app.include_router(devices.router, prefix=settings.api_v1_prefix)
 app.include_router(notifications.router, prefix=settings.api_v1_prefix)
+app.include_router(internal_jobs.router, prefix=settings.api_v1_prefix)

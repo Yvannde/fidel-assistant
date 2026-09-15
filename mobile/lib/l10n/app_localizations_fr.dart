@@ -1466,6 +1466,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get profileFicheSanteTaille => 'Taille';
 
   @override
+  String get profileFicheSanteGroupeShort => 'Groupe';
+
+  @override
+  String get profileFicheSanteElectroShort => 'Electro';
+
+  @override
+  String get profileFicheSanteTailleShort => 'Taille';
+
+  @override
   String get profileFicheSanteUnset => 'À renseigner';
 
   @override
@@ -1837,6 +1846,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get profileAlertCheckin => 'Absence de check-in';
+
+  @override
+  String get profileAlertPriseConfirmee =>
+      'Informer mes aidants quand je confirme une prise';
+
+  @override
+  String get profileAlertPriseNonConfirmee =>
+      'Prévenir mes aidants si je ne confirme pas (2 h)';
 
   @override
   String get profileAlertDepistage => 'Dépistage recommandé';

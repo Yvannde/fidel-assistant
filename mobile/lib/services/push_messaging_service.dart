@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/home/application/home_controller.dart';
 import '../features/home/data/home_repository.dart';
 import '../features/home/domain/aidant_models.dart';
+import 'aidant_observance_notif.dart';
 import 'sos_aidant_alarm.dart';
 
 @pragma('vm:entry-point')
@@ -17,16 +18,29 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     await Firebase.initializeApp();
   } catch (_) {}
   final data = message.data;
-  if (data['kind'] != 'sos') return;
-  final sosId = data['sos_id']?.toString() ?? '';
-  if (sosId.isEmpty) return;
-  await SosAidantAlarm.show(
-    ActiveSosAlert(
-      sosId: sosId,
-      patientId: data['patient_id']?.toString() ?? '',
+  final kind = data['kind']?.toString() ?? '';
+  if (kind == 'sos') {
+    final sosId = data['sos_id']?.toString() ?? '';
+    if (sosId.isEmpty) return;
+    await SosAidantAlarm.show(
+      ActiveSosAlert(
+        sosId: sosId,
+        patientId: data['patient_id']?.toString() ?? '',
+        patientPrenom: data['patient_prenom']?.toString() ?? 'Patient',
+      ),
+    );
+    return;
+  }
+  if (kind == 'prise_confirmee' || kind == 'prise_non_confirmee') {
+    await AidantObservanceNotif.show(
+      kind: kind,
       patientPrenom: data['patient_prenom']?.toString() ?? 'Patient',
-    ),
-  );
+      medicament: data['medicament']?.toString() ?? 'médicament',
+      heure: data['heure']?.toString() ?? '',
+      priseId: data['prise_id']?.toString() ?? '',
+      patientId: data['patient_id']?.toString() ?? '',
+    );
+  }
 }
 
 /// FCM + enregistrement token + poll SOS actifs.
@@ -83,16 +97,29 @@ class PushMessagingService {
 
   Future<void> handleMessage(RemoteMessage message) async {
     final data = message.data;
-    if (data['kind']?.toString() != 'sos') return;
-    final sosId = data['sos_id']?.toString() ?? '';
-    if (sosId.isEmpty) return;
-    await SosAidantAlarm.show(
-      ActiveSosAlert(
-        sosId: sosId,
-        patientId: data['patient_id']?.toString() ?? '',
+    final kind = data['kind']?.toString() ?? '';
+    if (kind == 'sos') {
+      final sosId = data['sos_id']?.toString() ?? '';
+      if (sosId.isEmpty) return;
+      await SosAidantAlarm.show(
+        ActiveSosAlert(
+          sosId: sosId,
+          patientId: data['patient_id']?.toString() ?? '',
+          patientPrenom: data['patient_prenom']?.toString() ?? 'Patient',
+        ),
+      );
+      return;
+    }
+    if (kind == 'prise_confirmee' || kind == 'prise_non_confirmee') {
+      await AidantObservanceNotif.show(
+        kind: kind,
         patientPrenom: data['patient_prenom']?.toString() ?? 'Patient',
-      ),
-    );
+        medicament: data['medicament']?.toString() ?? 'médicament',
+        heure: data['heure']?.toString() ?? '',
+        priseId: data['prise_id']?.toString() ?? '',
+        patientId: data['patient_id']?.toString() ?? '',
+      );
+    }
   }
 
   Future<void> pollActiveSos() async {

@@ -1452,6 +1452,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileFicheSanteTaille => 'Height';
 
   @override
+  String get profileFicheSanteGroupeShort => 'Blood';
+
+  @override
+  String get profileFicheSanteElectroShort => 'Hb type';
+
+  @override
+  String get profileFicheSanteTailleShort => 'Height';
+
+  @override
   String get profileFicheSanteUnset => 'Not set yet';
 
   @override
@@ -1822,6 +1831,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileAlertCheckin => 'Missed check-in';
+
+  @override
+  String get profileAlertPriseConfirmee =>
+      'Notify caregivers when I confirm a dose';
+
+  @override
+  String get profileAlertPriseNonConfirmee =>
+      'Alert caregivers if I don’t confirm (2 h)';
 
   @override
   String get profileAlertDepistage => 'Screening recommended';

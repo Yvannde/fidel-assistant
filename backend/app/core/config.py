@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     sos_aidant_ack_timeout_seconds: int = 45
     # FCM HTTP legacy (optionnel) — si vide, finalize journalise sans push.
     fcm_server_key: str = ""
+    # Cron interne (POST /internal/jobs/…) — header X-Cron-Secret
+    cron_secret: str = ""
     media_root: str = "media"
     voix_rappel_max_bytes: int = 2 * 1024 * 1024  # 2 Mo
     login_max_attempts: int = 8
