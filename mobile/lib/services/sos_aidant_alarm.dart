@@ -9,6 +9,21 @@ class SosAidantAlarm {
   static const channelName = 'SOS patient';
   static const notificationIdBase = 92002000;
 
+  static final FlutterLocalNotificationsPlugin _plugin =
+      FlutterLocalNotificationsPlugin();
+  static bool _initialized = false;
+
+  static Future<void> _ensurePlugin() async {
+    if (_initialized) return;
+    const initSettings = InitializationSettings(
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      iOS: DarwinInitializationSettings(),
+    );
+    await _plugin.initialize(initSettings);
+    await ensureChannel(_plugin);
+    _initialized = true;
+  }
+
   static Future<void> ensureChannel(
     FlutterLocalNotificationsPlugin plugin,
   ) async {
@@ -27,16 +42,10 @@ class SosAidantAlarm {
   }
 
   static Future<void> show(ActiveSosAlert alert) async {
-    final plugin = FlutterLocalNotificationsPlugin();
-    const initSettings = InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-      iOS: DarwinInitializationSettings(),
-    );
-    await plugin.initialize(initSettings);
-    await ensureChannel(plugin);
+    await _ensurePlugin();
 
     final id = notificationIdBase + (alert.sosId.hashCode.abs() % 1000);
-    await plugin.show(
+    await _plugin.show(
       id,
       'SOS — ${alert.patientPrenom}',
       'Ton proche a besoin d’aide. Ouvre Fidel pour acquitter.',
@@ -53,6 +62,7 @@ class SosAidantAlarm {
           ongoing: true,
           autoCancel: false,
           playSound: true,
+          onlyAlertOnce: true,
         ),
         iOS: const DarwinNotificationDetails(
           presentAlert: true,
@@ -66,9 +76,9 @@ class SosAidantAlarm {
   }
 
   static Future<void> cancel(String sosId) async {
-    final plugin = FlutterLocalNotificationsPlugin();
+    await _ensurePlugin();
     final id = notificationIdBase + (sosId.hashCode.abs() % 1000);
-    await plugin.cancel(id);
+    await _plugin.cancel(id);
   }
 }
 

@@ -1,12 +1,14 @@
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 
-from app.core.config import settings
+from app.core.config import get_settings
 from app.core.exceptions import AppException
 
 
 def verify_google_id_token(token: str) -> dict:
-    audiences = settings.google_client_ids
+    # Ne pas réutiliser un Settings figé à l'import (lru_cache + reload uvicorn).
+    get_settings.cache_clear()
+    audiences = get_settings().google_client_ids
     if not audiences:
         raise AppException(
             "GOOGLE_TOKEN_INVALID",

@@ -64,20 +64,72 @@ class AuthRepository {
       );
     }
 
-    final account = await _google.signIn();
-    if (account == null) {
+    // ignore: avoid_print
+    print(
+      'Google Sign-In: serverClientId='
+      '${AppConfig.googleClientIdWeb.substring(0, 20)}… '
+      'androidIdConfigured=${AppConfig.googleClientIdAndroid.isNotEmpty}',
+    );
+
+    late final GoogleSignInAccount account;
+    try {
+      final signedIn = await _google.signIn();
+      if (signedIn == null) {
+        throw ApiException(
+          code: 'GOOGLE_CANCELLED',
+          message: 'Connexion Google annulée.',
+        );
+      }
+      account = signedIn;
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      // ignore: avoid_print
+      print('Google Sign-In platform error: $e');
+      final detail = e.toString();
+      if (detail.contains('ApiException: 10') ||
+          detail.contains('DEVELOPER_ERROR')) {
+        throw ApiException(
+          code: 'GOOGLE_DEVELOPER_ERROR',
+          message:
+              'Erreur Google 10 (DEVELOPER_ERROR) : package/SHA-1 '
+              'ou client OAuth Android incorrect.',
+        );
+      }
+      if (detail.contains('ApiException: 7') ||
+          detail.contains('NETWORK_ERROR')) {
+        throw ApiException(
+          code: 'GOOGLE_NETWORK',
+          message: 'Réseau indisponible pour Google Sign-In.',
+        );
+      }
+      if (detail.contains('ApiException: 12500')) {
+        throw ApiException(
+          code: 'GOOGLE_SIGNIN_FAILED',
+          message:
+              'Échec Google 12500 — vérifie l’écran de consentement OAuth '
+              '(mode test + utilisateurs de test).',
+        );
+      }
       throw ApiException(
-        code: 'GOOGLE_CANCELLED',
-        message: 'Connexion Google annulée.',
+        code: 'GOOGLE_SIGNIN_FAILED',
+        message: 'Échec Google Sign-In: $detail',
       );
     }
 
     final auth = await account.authentication;
     final idToken = auth.idToken;
     if (idToken == null || idToken.isEmpty) {
+      // ignore: avoid_print
+      print(
+        'Google Sign-In: idToken null (accessToken='
+        '${auth.accessToken != null}) — serverClientId WEB requis.',
+      );
       throw ApiException(
         code: 'GOOGLE_TOKEN_INVALID',
-        message: 'Impossible d’obtenir le jeton Google (id_token).',
+        message:
+            'Pas d’id_token Google. Vérifie que GOOGLE_CLIENT_ID_WEB '
+            'est bien un client OAuth de type « Application Web ».',
       );
     }
 
