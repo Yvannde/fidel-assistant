@@ -73,6 +73,7 @@ class CercleController extends StateNotifier<CercleUiState> {
 
   final Ref _ref;
   int _loadGen = 0;
+  bool _persistentShortcutPosted = false;
 
   HomeRepository get _repo => _ref.read(homeRepositoryProvider);
 
@@ -100,6 +101,11 @@ class CercleController extends StateNotifier<CercleUiState> {
   }
 
   Future<void> load({bool force = false}) async {
+    // Évite de recharger + re-poster la notif SOS à chaque resume / tab switch.
+    if (!force && state.loadedOnce && !state.loading) {
+      return;
+    }
+
     final gen = ++_loadGen;
     state = state.copyWith(loading: true, clearError: true);
 
@@ -114,6 +120,10 @@ class CercleController extends StateNotifier<CercleUiState> {
 
     if (!caps.hasPatient && !caps.isAidant) {
       if (!mounted) return;
+      if (_persistentShortcutPosted) {
+        unawaited(_ref.read(sosServiceProvider).hidePersistentNotification());
+        _persistentShortcutPosted = false;
+      }
       state = state.copyWith(
         loading: false,
         loadedOnce: true,
@@ -139,12 +149,24 @@ class CercleController extends StateNotifier<CercleUiState> {
       if (!mounted || gen != _loadGen) return;
       final contacts = futures[2] as List<ContactUrgence>;
       unawaited(_ref.read(sosServiceProvider).cacheContacts(contacts));
-      unawaited(
-        _ref.read(sosServiceProvider).ensurePersistentNotification(
-              title: 'SOS Fidel',
-              body: 'Appuie pour alerter tes aidants',
-            ),
-      );
+
+      // Raccourci lock-screen : uniquement profil patient, une seule fois
+      // par session process (pas à chaque ouverture / resume).
+      if (caps.hasPatient) {
+        if (!_persistentShortcutPosted) {
+          _persistentShortcutPosted = true;
+          unawaited(
+            _ref.read(sosServiceProvider).ensurePersistentNotification(
+                  title: 'SOS Fidel',
+                  body: 'Appuie pour alerter tes aidants',
+                ),
+          );
+        }
+      } else if (_persistentShortcutPosted) {
+        _persistentShortcutPosted = false;
+        unawaited(_ref.read(sosServiceProvider).hidePersistentNotification());
+      }
+
       state = state.copyWith(
         loading: false,
         loadedOnce: true,

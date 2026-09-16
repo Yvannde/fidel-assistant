@@ -6,6 +6,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../features/auth/application/auth_providers.dart';
 import '../features/home/application/home_controller.dart';
 import '../features/home/data/home_repository.dart';
 import '../features/home/domain/aidant_models.dart';
@@ -51,6 +52,9 @@ class PushMessagingService {
   StreamSubscription<String>? _tokenSub;
   bool _initialized = false;
 
+  /// SOS déjà signalés localement (évite re-alarme à chaque cold start).
+  final Set<String> _shownSosIds = {};
+
   HomeRepository get _repo => _ref.read(homeRepositoryProvider);
 
   Future<void> init() async {
@@ -72,10 +76,11 @@ class PushMessagingService {
     await messaging.requestPermission(alert: true, sound: true, badge: true);
 
     FirebaseMessaging.onMessage.listen((msg) {
-      unawaited(handleMessage(msg));
+      unawaited(handleMessage(msg, fromUserTap: false));
     });
+    // Tap sur notif : ne pas re-poster l’alarme.
     FirebaseMessaging.onMessageOpenedApp.listen((msg) {
-      unawaited(handleMessage(msg));
+      unawaited(handleMessage(msg, fromUserTap: true));
     });
 
     final token = await messaging.getToken();
@@ -95,12 +100,17 @@ class PushMessagingService {
     }
   }
 
-  Future<void> handleMessage(RemoteMessage message) async {
+  Future<void> handleMessage(
+    RemoteMessage message, {
+    bool fromUserTap = false,
+  }) async {
     final data = message.data;
     final kind = data['kind']?.toString() ?? '';
     if (kind == 'sos') {
+      if (fromUserTap) return;
       final sosId = data['sos_id']?.toString() ?? '';
       if (sosId.isEmpty) return;
+      if (!_shownSosIds.add(sosId)) return;
       await SosAidantAlarm.show(
         ActiveSosAlert(
           sosId: sosId,
@@ -124,13 +134,21 @@ class PushMessagingService {
 
   Future<void> pollActiveSos() async {
     try {
+      final session = _ref.read(authSessionProvider);
+      if (session?.isAidant != true) return;
+
       final active = await _repo.listActiveSosForAidant();
       for (final alert in active) {
+        if (!_shownSosIds.add(alert.sosId)) continue;
         await SosAidantAlarm.show(alert);
       }
     } catch (e) {
       debugPrint('PushMessaging pollActiveSos: $e');
     }
+  }
+
+  void markSosHandled(String sosId) {
+    _shownSosIds.add(sosId);
   }
 
   void dispose() {

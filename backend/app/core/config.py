@@ -1,11 +1,16 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Toujours résoudre .env depuis backend/, même si le CWD uvicorn change.
+_BACKEND_ROOT = Path(__file__).resolve().parents[2]
+_ENV_FILE = _BACKEND_ROOT / ".env"
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(_ENV_FILE),
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -67,13 +72,13 @@ class Settings(BaseSettings):
     @property
     def google_client_ids(self) -> list[str]:
         return [
-            cid
+            cid.strip()
             for cid in (
                 self.google_client_id_android,
                 self.google_client_id_ios,
                 self.google_client_id_web,
             )
-            if cid
+            if cid and cid.strip()
         ]
 
 

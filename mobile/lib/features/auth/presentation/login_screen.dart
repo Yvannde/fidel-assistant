@@ -119,10 +119,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         setState(() => _error = e.message);
         AppToast.error(context, e.message.isNotEmpty ? e.message : l10n.googleFailed);
       }
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
-      setState(() => _error = l10n.googleFailed);
-      AppToast.error(context, l10n.googleFailed);
+      // ignore: avoid_print
+      print('Google Sign-In error: $e');
+      final detail = e.toString();
+      final msg = detail.contains('ApiException: 10') || detail.contains('DEVELOPER_ERROR')
+          ? 'Config Google Android invalide (SHA-1 / package). '
+              'Ajoute le SHA-1 debug dans Google Cloud Console.'
+          : (detail.length > 160 ? l10n.googleFailed : detail);
+      setState(() => _error = msg);
+      AppToast.error(context, msg);
     } finally {
       if (mounted) setState(() => _busy = false);
     }

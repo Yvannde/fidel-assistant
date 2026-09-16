@@ -11,25 +11,29 @@ import androidx.core.app.NotificationManagerCompat
 
 /** Notif persistante SOS (visible lock screen) + pending actions. */
 object SosNotificationHelper {
-    const val CHANNEL_ID = "fidel_sos_trigger"
+    // v2 : importance DEFAULT — l’ancien canal HIGH (fidel_sos_trigger) restait bruyant.
+    const val CHANNEL_ID = "fidel_sos_shortcut_v2"
     const val NOTIFICATION_ID = 91001600
     const val ACTION_TRIGGER = "sos_trigger"
     const val ACTION_CANCEL_COUNTDOWN = "sos_cancel_countdown"
     const val EXTRA_ACTION = "sos_action"
     const val PREFS = "fidel_sos_notif"
     const val KEY_PENDING = "pending_action"
-    const val CHANNEL_NAME = "SOS Fidel"
-    const val CHANNEL_DESC = "Bouton SOS accessible même écran verrouillé"
+    const val CHANNEL_NAME = "Raccourci SOS"
+    const val CHANNEL_DESC = "Bouton SOS discret, accessible depuis l’écran verrouillé"
 
     fun ensureChannel(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        // Retire l’ancien canal bruyant s’il existe (sans casser les builds précédents).
+        runCatching { nm.deleteNotificationChannel("fidel_sos_trigger") }
         if (nm.getNotificationChannel(CHANNEL_ID) != null) return
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH).apply {
+            NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT).apply {
                 description = CHANNEL_DESC
-                setShowBadge(true)
-                enableVibration(true)
+                setShowBadge(false)
+                enableVibration(false)
+                setSound(null, null)
             },
         )
     }
@@ -60,8 +64,10 @@ object SosNotificationHelper {
             .setContentText(body)
             .setContentIntent(open)
             .setOngoing(true)
-            .setPriority(NotificationCompat.PRIORITY_MAX)
-            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setOnlyAlertOnce(true)
+            .setSilent(true)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .addAction(0, "SOS", trigger)
             .build()

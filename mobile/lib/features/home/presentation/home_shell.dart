@@ -148,7 +148,8 @@ class _HomeShellState extends ConsumerState<HomeShell>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       ref.read(homeControllerProvider.notifier).ensureLoaded();
-      ref.read(cercleControllerProvider.notifier).load(force: true);
+      // Pas de force : évite rechargement + re-notif SOS à chaque retour app.
+      ref.read(cercleControllerProvider.notifier).load();
       unawaited(ref.read(sosServiceProvider).drainPendingAction());
     }
   }
