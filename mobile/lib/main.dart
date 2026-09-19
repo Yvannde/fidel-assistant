@@ -16,6 +16,7 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
 import 'features/auth/application/auth_providers.dart';
 import 'features/auth/data/auth_repository.dart';
+import 'features/auth/domain/auth_session.dart';
 import 'features/home/presentation/alarm_ring_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -42,12 +43,21 @@ Future<void> main() async {
       clock.observeHttpDate(headers.value('date'));
     },
   );
-  final restored = await AuthRepository(
-    apiClient: api,
-    tokenStorage: tokens,
-  ).restoreSession();
+  AuthSession? restored;
+  try {
+    restored = await AuthRepository(
+      apiClient: api,
+      tokenStorage: tokens,
+    ).restoreSession();
+  } catch (e, st) {
+    debugPrint('main: restoreSession failed: $e\n$st');
+  }
 
-  await Alarm.init();
+  try {
+    await Alarm.init();
+  } catch (e, st) {
+    debugPrint('main: Alarm.init failed: $e\n$st');
+  }
 
   final container = ProviderContainer(
     overrides: [
@@ -60,11 +70,15 @@ Future<void> main() async {
   );
 
   final alarms = container.read(reminderAlarmServiceProvider);
-  await alarms.init(
-    onResponse: (response) {
-      unawaited(ReminderActionDispatcher(container).handle(response));
-    },
-  );
+  try {
+    await alarms.init(
+      onResponse: (response) {
+        unawaited(ReminderActionDispatcher(container).handle(response));
+      },
+    );
+  } catch (e, st) {
+    debugPrint('main: reminderAlarmService.init failed: $e\n$st');
+  }
   // Réarme H0 / préavis / mark depuis le cache local (reboot / kill),
   // sans attendre le load home ni le réseau.
   try {
