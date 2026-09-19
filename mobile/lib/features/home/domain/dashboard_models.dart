@@ -366,6 +366,9 @@ class PriseDuJour {
   bool get isTaken => statut == 'confirmee';
   bool get isMissed => statut == 'manquee';
 
+  /// Confirmable côté UI / sync : encore `en_attente` ou déjà `manquee` (tardif OK).
+  bool get isConfirmable => isPending || isMissed;
+
   bool isLate(DateTime now) =>
       isMissed || (isPending && heurePrevue.isBefore(now));
 

@@ -549,6 +549,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeStatLate => 'Late';
 
   @override
+  String get homeMissedCanStillConfirm => 'Missed — you can still confirm';
+
+  @override
   String get homeNoDoses => 'No schedule yet today. Add a medication to start.';
 
   @override

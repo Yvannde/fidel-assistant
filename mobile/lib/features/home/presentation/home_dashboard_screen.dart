@@ -307,7 +307,7 @@ class HomeDashboardScreen extends ConsumerWidget {
     };
     final pending = [
       for (final id in slot.priseIds)
-        if (byId[id]?.isPending == true) id,
+        if (byId[id]?.isConfirmable == true) id,
     ];
     if (pending.isEmpty) return;
     try {

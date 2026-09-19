@@ -70,6 +70,8 @@ C'est la partie la plus critique techniquement. **Tout est local** (offline, mê
 
 **Fin de traitement** : `PATCH /patients/me/traitements/{id}` `{statut: termine}` — cascade meds/horaires + prises `en_attente` → `manquee` ; dashboard vide pour ce traitement → `rescheduleAll` annule les DoseSlots ; check-in si dernier actif.
 
+**Prise manquée (serveur)** : après `heure_prevue + 12 h`, job `mark-prises-manquees` passe `en_attente` → `manquee`. L’UI Accueil traite `manquee` comme **encore confirmable** (`isConfirmable` / `DoseSlot.confirmablePriseIds`) — confirmation tardive → `confirmee`. Les alarmes locales ne replanifient que les `en_attente` (`pendingPriseIds`).
+
 **SOS (lock + aidants + fallback appel)** :
 - Notif persistante Android (`cm.fidel.assistant/sos`) + Cercle → `SosService.startSosFlow` → countdown 30 s (annulable).
 - Online : `POST /patients/me/sos` puis `…/confirm` → FCM aidants liés ; attente ack 45 s (`SosEscalationService`) sinon `ACTION_CALL` 1er contact (cache `EmergencyContactCache`).

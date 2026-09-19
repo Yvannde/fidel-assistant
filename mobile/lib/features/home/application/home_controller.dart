@@ -688,7 +688,7 @@ class HomeController extends StateNotifier<HomeUiState> {
     }
   }
 
-  /// Confirme toutes les prises encore `en_attente` d’un créneau (DoseSlot).
+  /// Confirme les prises encore confirmables d’un créneau (`en_attente` ou `manquee`).
   Future<void> confirmPrises(List<String> ids) async {
     final unique = ids.where((id) => id.isNotEmpty).toSet().toList();
     if (unique.isEmpty) return;

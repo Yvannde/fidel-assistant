@@ -197,6 +197,22 @@ void main() {
       expect(slot?.priseIds, ['late']);
     });
 
+    test('manquee is confirmable but not pending', () {
+      final prises = [
+        prise(
+          id: 'missed',
+          nom: 'Metformine',
+          heure: h2000,
+          maladieNom: 'Diabète',
+          statut: 'manquee',
+        ),
+      ];
+      final slot = DoseSlot.findNextUntaken(prises, now);
+      expect(slot, isNotNull);
+      expect(DoseSlot.pendingPriseIds(slot!, prises), isEmpty);
+      expect(DoseSlot.confirmablePriseIds(slot, prises), ['missed']);
+    });
+
     test('groups multi-medocs into one next slot', () {
       final prises = [
         for (var i = 1; i <= 3; i++)

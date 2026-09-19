@@ -188,6 +188,7 @@
   "homeStatPending": "À prendre",
   "homeStatTaken": "Prises",
   "homeStatLate": "En retard",
+  "homeMissedCanStillConfirm": "Manquée — tu peux encore confirmer",
   "homeNoDoses": "Pas encore d’horaire aujourd’hui. Ajoute un médicament pour commencer.",
   "homeTakeCta": "J’ai pris",
   "homeTakenBadge": "Pris",

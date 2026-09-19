@@ -1082,6 +1082,12 @@ abstract class AppLocalizations {
   /// **'Late'**
   String get homeStatLate;
 
+  /// No description provided for @homeMissedCanStillConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Missed — you can still confirm'**
+  String get homeMissedCanStillConfirm;
+
   /// No description provided for @homeNoDoses.
   ///
   /// In en, this message translates to:

@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.exceptions import AppException
 from app.deps import get_db
-from app.services import aidant_push_service
+from app.services import aidant_push_service, patient_suivi_service
 
 router = APIRouter(prefix="/internal/jobs", tags=["internal-jobs"])
 
@@ -31,3 +31,12 @@ async def scan_prises_non_confirmees(
 ) -> dict:
     """Scan prises en_attente hors délai — FCM aidants si opt-in patient."""
     return await aidant_push_service.scan_prises_non_confirmees(db)
+
+
+@router.post("/mark-prises-manquees")
+async def mark_prises_manquees(
+    db: AsyncSession = Depends(get_db),
+    _: None = Depends(_require_cron_secret),
+) -> dict:
+    """en_attente → manquee après grâce (PRISE_MANQUEE_GRACE_HOURS, défaut 12 h)."""
+    return await patient_suivi_service.mark_prises_manquees(db)
