@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,8 +28,8 @@ def _require_cron_secret(x_cron_secret: str | None = Header(default=None)) -> No
 
 @router.post("/scan-prises-non-confirmees")
 async def scan_prises_non_confirmees(
-    db: AsyncSession = Depends(get_db),
-    _: None = Depends(_require_cron_secret),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[None, Depends(_require_cron_secret)],
 ) -> dict:
     """Scan prises en_attente hors délai — FCM aidants si opt-in patient."""
     return await aidant_push_service.scan_prises_non_confirmees(db)
@@ -35,8 +37,8 @@ async def scan_prises_non_confirmees(
 
 @router.post("/mark-prises-manquees")
 async def mark_prises_manquees(
-    db: AsyncSession = Depends(get_db),
-    _: None = Depends(_require_cron_secret),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[None, Depends(_require_cron_secret)],
 ) -> dict:
     """en_attente → manquee après grâce (PRISE_MANQUEE_GRACE_HOURS, défaut 12 h)."""
     return await patient_suivi_service.mark_prises_manquees(db)
