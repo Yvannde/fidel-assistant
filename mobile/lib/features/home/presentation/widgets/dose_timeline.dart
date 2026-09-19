@@ -83,7 +83,7 @@ class DoseTimeline extends StatelessWidget {
       if (items == null || items.isEmpty) continue;
       rows.add(_MomentHeader(moment: moment, l10n: l10n, tokens: tokens));
       for (final slot in items) {
-        final pendingIds = _pendingIds(slot, prises);
+        final pendingIds = DoseSlot.confirmablePriseIds(slot, prises);
         final isNext = slot.slotId == nextSlotId;
         rows.add(
           _SlotCard(
@@ -112,10 +112,6 @@ class DoseTimeline extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       child: body,
     );
-  }
-
-  static List<String> _pendingIds(DoseSlot slot, List<PriseDuJour> prises) {
-    return DoseSlot.pendingPriseIds(slot, prises);
   }
 
   static _Moment _momentOf(DateTime time) {
@@ -199,6 +195,7 @@ class _SlotCard extends StatelessWidget {
       final p = byId[i.priseId];
       return p != null && !p.isTaken && p.isLate(now);
     });
+    final anyMissed = slot.items.any((i) => byId[i.priseId]?.isMissed == true);
     final takenCount = slot.items
         .where((i) => byId[i.priseId]?.isTaken == true)
         .length;
@@ -302,7 +299,9 @@ class _SlotCard extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
-                      l10n.homeStatLate,
+                      anyMissed
+                          ? l10n.homeMissedCanStillConfirm
+                          : l10n.homeStatLate,
                       style: const TextStyle(
                         fontFamily: AppTheme.fontFamily,
                         fontSize: 11,

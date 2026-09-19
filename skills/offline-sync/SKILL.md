@@ -97,7 +97,7 @@ Alarmes H0 / préavis / marquage : **toujours locales** (voir `mobile-flutter`) 
 
 | Entité | Règle |
 |---|---|
-| `Prise.statut` | Intention locale gagne si `client_ts` ≥ `updated_at` serveur ; sinon serveur. Si égalité : hiérarchie `confirmee` > reportée / `en_attente`. Serveur déjà `confirmee` + client veut downgrade → **conflict** (comportement actuel `sync_prises_offline` conservé). |
+| `Prise.statut` | Intention locale gagne si `client_ts` ≥ `updated_at` serveur ; sinon serveur. Si égalité : hiérarchie `confirmee` > `manquee` > reportée / `en_attente`. Serveur `manquee` + client `confirm` → appliquer `confirmee` (**pas** conflict). Serveur déjà `confirmee` + client veut downgrade → **conflict** (comportement actuel `sync_prises_offline` conservé). |
 | `Prise.heure_prevue` (report / snooze) | Dernière mutation outbox appliquée gagne ; serveur applique si version / conflit OK. |
 | `Constante` | **Append-only** ; jamais d’écrasement. |
 | Traitements / médicaments / horaires | **Serveur autoritaire** ; local = miroir pull. |

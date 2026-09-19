@@ -961,3 +961,30 @@ async def sync_prises_offline(
                     db, patient_id=patient.user_id, prise=row
                 )
     return {"synced": synced, "conflicts": conflicts, "duplicates": duplicates}
+
+
+async def mark_prises_manquees(db: AsyncSession) -> dict:
+    """Job cron : en_attente → manquee après heure_prevue + grâce (défaut 12 h)."""
+    from app.core.config import settings
+
+    grace_hours = max(1, int(settings.prise_manquee_grace_hours or 12))
+    cutoff = datetime.now(UTC) - timedelta(hours=grace_hours)
+
+    result = await db.execute(
+        select(Prise).where(
+            Prise.statut == "en_attente",
+            Prise.heure_prevue <= cutoff,
+        )
+    )
+    pending = list(result.scalars().all())
+    scanned = len(pending)
+    marked = 0
+    for prise in pending:
+        prise.statut = "manquee"
+        _bump_server_version(prise)
+        marked += 1
+
+    if marked:
+        await db.commit()
+    return {"scanned": scanned, "marked": marked}
+

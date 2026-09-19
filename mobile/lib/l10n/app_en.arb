@@ -203,6 +203,7 @@
   "homeStatPending": "Due",
   "homeStatTaken": "Taken",
   "homeStatLate": "Late",
+  "homeMissedCanStillConfirm": "Missed — you can still confirm",
   "homeNoDoses": "No schedule yet today. Add a medication to start.",
   "homeTakeCta": "I took it",
   "homeTakenBadge": "Taken",

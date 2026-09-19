@@ -121,7 +121,7 @@ Pas de `POST /onboarding/role`. Voir `auth-onboarding/SKILL.md`.
 | Méthode | Chemin | Entrée | Sortie | Erreurs possibles |
 |---|---|---|---|---|
 | GET | `/patients/me/prises` | 🔒 `date?` (défaut: aujourd'hui) | `[Prise]` — inclut `traitement_id`, `maladie_id`, `maladie_nom` (groupement DoseSlot mobile) | — |
-| POST | `/prises/{id}/confirmer` | 🔒 `canal` (`app`\|`sms`), `client_mutation_id?` (UUID — **requis** dès Phase 1 mobile) | `Prise` mise à jour (`statut: confirmee`) ; si `client_mutation_id` déjà appliqué → même `Prise` (idempotent, pas d’erreur) | `PRISE_NOT_FOUND`, `PRISE_DEJA_CONFIRMEE` |
+| POST | `/prises/{id}/confirmer` | 🔒 `canal` (`app`\|`sms`), `client_mutation_id?` (UUID — **requis** dès Phase 1 mobile) | `Prise` mise à jour (`statut: confirmee`) depuis `en_attente` **ou** `manquee` (confirmation tardive OK) ; si déjà `confirmee` → `PRISE_DEJA_CONFIRMEE` sauf idempotence `client_mutation_id` | `PRISE_NOT_FOUND`, `PRISE_DEJA_CONFIRMEE` |
 | POST | `/prises/{id}/reporter` | 🔒 `nouvelle_heure`, `client_mutation_id?` (UUID — **requis** dès Phase 1 mobile) | `Prise` mise à jour ; idempotent si `client_mutation_id` déjà vu | `PRISE_NOT_FOUND` |
 | POST | `/prises/sync-offline` | 🔒 `[{id, statut, confirmee_at, client_mutation_id?}]` | `{synced: [...], conflicts: [...], duplicates?: [...]}` — lot hors-ligne ; `duplicates` = mutations déjà appliquées | — |
 
@@ -199,8 +199,11 @@ Notes :
 | Méthode | Chemin | Entrée | Sortie | Erreurs possibles |
 |---|---|---|---|---|
 | POST | `/internal/jobs/scan-prises-non-confirmees` | Header `X-Cron-Secret` (= `CRON_SECRET` env) — body vide | `{scanned, notified, skipped}` | `UNAUTHORIZED` (secret manquant/invalide) |
+| POST | `/internal/jobs/mark-prises-manquees` | Header `X-Cron-Secret` (= `CRON_SECRET` env) — body vide | `{scanned, marked}` | `UNAUTHORIZED` (secret manquant/invalide) |
 
-> Scan périodique (Railway cron, ex. toutes les 15–30 min) : prises `en_attente` avec `heure_prevue + delai_heures` dépassé, patient opt-in `prise_non_confirmee_aidant`. Dédup 1 notif / `prise_id`. Pas de JWT utilisateur.
+> Scan aidant (Railway cron, ex. toutes les 15–30 min) : prises `en_attente` avec `heure_prevue + delai_heures` dépassé, patient opt-in `prise_non_confirmee_aidant`. Dédup 1 notif / `prise_id`. **Notifie seulement** — ne change pas le statut. Pas de JWT utilisateur.
+
+> Marquage manqué (même cadence cron recommandée) : prises `en_attente` avec `heure_prevue + PRISE_MANQUEE_GRACE_HOURS` (défaut **12 h**) dépassé → `statut: manquee` + bump `server_version`. Pas de FCM à la bascule. Confirmation tardive ensuite toujours possible via `/prises/{id}/confirmer`.
 
 ---
 

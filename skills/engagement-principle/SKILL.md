@@ -80,7 +80,7 @@ Chaque `type_alerte` est déclaré une seule fois, avec son comportement par dé
 | `checkin_absence` | Pas de check-in après délai configuré | neutre puis préoccupant | Selon `regle_auto` du patient — peut déclencher automatiquement si pré-configuré | Cercle de soutien |
 | `sos_declenche` | Bouton SOS activé (confirm post-30s) | urgent ; alarme + push FCM chez **aidants liés** | Aucune (le geste SOS *est* le consentement) | Aidants liés (`PatientAidant`) ; fallback local = appel `ACTION_CALL` 1er contact d’urgence si offline / 0 token / pas d’ack sous 45 s |
 | `prise_confirmee_aidant` | `Prise` passée à `confirmee` côté serveur (confirm API / sync-offline / sync push) | positif / informatif | Aucune — FCM direct aux aidants **si** `regle_auto` opt-in (`toujours_demander=false`) | Aidants liés avec `niveau_permission.observance=true` |
-| `prise_non_confirmee_aidant` | Job cron : prise encore `en_attente` après `heure_prevue + delai_heures` (`regle_auto.delai_heures`, défaut 2) | neutre, jamais alarmiste | Aucune — FCM direct aux aidants **si** opt-in ; message « pas de confirmation reçue, tu peux vérifier auprès de {prenom} » | Aidants liés avec `observance=true` |
+| `prise_non_confirmee_aidant` | Job cron `scan-prises-non-confirmees` : prise encore `en_attente` après `heure_prevue + delai_heures` (`regle_auto.delai_heures`, défaut 2) — **notif seulement**, ne passe pas en `manquee` | neutre, jamais alarmiste | Aucune — FCM direct aux aidants **si** opt-in ; message « pas de confirmation reçue, tu peux vérifier auprès de {prenom} » | Aidants liés avec `observance=true` |
 | `education_contextuelle` | Ajout d'un traitement correspondant à une fiche existante | informatif | Aucune, contenu informatif poussé une seule fois | — |
 | `depistage_recommande` | Échéance calendaire de prévention (Volet 6) | informatif | Proposer d'orienter vers un centre proche | — |
 
@@ -89,6 +89,8 @@ Chaque `type_alerte` est déclaré une seule fois, avec son comportement par dé
 > **Cas particulier `sos_declenche`** : consentement = geste SOS. Fenêtre d’annulation 30 s (`POST /sos/{id}/annuler`). Après `POST /patients/me/sos/{id}/confirm`, le moteur journalise + pousse FCM aux aidants liés. Côté patient : si offline ou `fallback_call_recommended` / timeout ack 45 s → appel système vers le 1er `ContactUrgence` (cache local).
 
 > **Observance aidant (FCM)** : `prise_confirmee_aidant` et `prise_non_confirmee_aidant` ne partent **jamais** par défaut. Opt-in patient via `PreferenceConsentement` (`toujours_demander=false` + `regle_auto`). Dédup 1 notif / `prise_id` via `NotificationLog.declencheur.prise_id`. Envoi via `aidant_push_service` (journal + FCM), pas d’appel FCM brut depuis un router. Job absence : `POST /internal/jobs/scan-prises-non-confirmees` (header `X-Cron-Secret`) — pas de Celery ; le serveur ne ping pas l’app.
+
+> **Marquage `manquee` (métier, pas alerte tiers)** : job distinct `POST /internal/jobs/mark-prises-manquees` — `en_attente` → `manquee` après `heure_prevue + PRISE_MANQUEE_GRACE_HOURS` (défaut 12 h, typiquement **après** le délai aidant). Aucun FCM / `NotificationEngine` à la bascule. Timeline attendue : H0 → (opt-in) notif aidant à H0+`delai_heures` → `manquee` à H0+12 h → confirmation tardive possible.
 
 ## Templates de messages
 

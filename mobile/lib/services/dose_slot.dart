@@ -67,7 +67,7 @@ class DoseSlot {
     return l10n.homeSlotMedCount(items.length);
   }
 
-  /// Ids des prises encore `en_attente` dans ce slot.
+  /// Ids des prises encore `en_attente` dans ce slot (alarmes / snooze).
   static List<String> pendingPriseIds(
     DoseSlot slot,
     List<PriseDuJour> prises,
@@ -79,13 +79,25 @@ class DoseSlot {
     ];
   }
 
-  /// Prochain créneau non entièrement confirmé (retard prioritaire).
+  /// Ids confirmables : `en_attente` **ou** `manquee` (confirmation tardive).
+  static List<String> confirmablePriseIds(
+    DoseSlot slot,
+    List<PriseDuJour> prises,
+  ) {
+    final byId = {for (final p in prises) p.id: p};
+    return [
+      for (final id in slot.priseIds)
+        if (byId[id]?.isConfirmable == true) id,
+    ];
+  }
+
+  /// Prochain créneau non entièrement confirmé (retard / manquée prioritaire).
   static DoseSlot? findNextUntaken(List<PriseDuJour> prises, DateTime now) {
     final slots = groupPrises(prises);
     DoseSlot? overdue;
     DoseSlot? upcoming;
     for (final s in slots) {
-      if (pendingPriseIds(s, prises).isEmpty) continue;
+      if (confirmablePriseIds(s, prises).isEmpty) continue;
       final t = s.heurePrevue;
       if (t.isBefore(now) || t.isAtSameMomentAs(now)) {
         overdue ??= s;

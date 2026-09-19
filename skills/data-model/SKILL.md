@@ -317,6 +317,12 @@ Un médicament peut avoir plusieurs horaires de prise par jour.
 
 Une ligne `Prise` est générée à chaque échéance prévue par `MedicamentHoraire` (via job planifié ou génération à la volée).
 
+**Cycle de vie `statut`** :
+- `en_attente` à la création (échéances prévues, y compris futures).
+- `en_attente` → `manquee` : job serveur `POST /internal/jobs/mark-prises-manquees` quand `heure_prevue + PRISE_MANQUEE_GRACE_HOURS` (défaut **12 h**) est dépassé ; **ou** cascade fin de traitement (`termine` / `date_fin_prevue` passée) sur toutes les `en_attente` restantes.
+- `en_attente` | `manquee` → `confirmee` : confirmation patient (`POST /prises/{id}/confirmer`, sync-offline, sync push) — **confirmation tardive autorisée** après `manquee`.
+- Jamais de downgrade `confirmee` → autre statut.
+
 Règles de conflit sync : voir `offline-sync/SKILL.md` (pas de last-write-wins générique).
 
 ---

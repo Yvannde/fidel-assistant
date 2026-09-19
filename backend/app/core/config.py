@@ -41,6 +41,8 @@ class Settings(BaseSettings):
     fcm_server_key: str = ""
     # Cron interne (POST /internal/jobs/…) — header X-Cron-Secret
     cron_secret: str = ""
+    # en_attente → manquee après heure_prevue + grâce (doit rester > délai aidant typique)
+    prise_manquee_grace_hours: int = 12
     media_root: str = "media"
     voix_rappel_max_bytes: int = 2 * 1024 * 1024  # 2 Mo
     login_max_attempts: int = 8

@@ -555,6 +555,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get homeStatLate => 'En retard';
 
   @override
+  String get homeMissedCanStillConfirm =>
+      'Manquée — tu peux encore confirmer';
+
+  @override
   String get homeNoDoses =>
       'Pas encore d’horaire aujourd’hui. Ajoute un médicament pour commencer.';
 
