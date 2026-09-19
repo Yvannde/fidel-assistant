@@ -10,8 +10,8 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Prise
-from app.tests.test_aidant_prise_push_api import _add_med_and_prise
 from app.tests.test_aidant_api import _patient_and_aidant
+from app.tests.test_aidant_prise_push_api import _add_med_and_prise
 
 
 @pytest.mark.asyncio
